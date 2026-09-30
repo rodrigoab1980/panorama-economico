@@ -36,9 +36,11 @@ const PALAVRAS_MERCADO = /bolsa|ibovespa|d[óo]lar|juro|selic|copom|infla[çc][�
 
 // Cotações via CNBC (servidor) — usadas no resumo da IA e nos painéis que os widgets não cobrem.
 const QUOTES = [
-  { grupo: "EUA", s: "@SP.1", nome: "S&P 500 Futuro" },
-  { grupo: "EUA", s: "@ND.1", nome: "Nasdaq 100 Futuro" },
-  { grupo: "EUA", s: "@DJ.1", nome: "Dow Jones Futuro" },
+  // Contratos cheios da CME (1º vencimento); o mês do contrato é acrescentado ao nome.
+  { grupo: "EUA", s: "@SP.1", nome: "ES · S&P 500 futuro", contrato: true },
+  { grupo: "EUA", s: "@ND.1", nome: "NQ · Nasdaq 100 futuro", contrato: true },
+  { grupo: "EUA", s: "@DJ.1", nome: "YM · Dow Jones futuro", contrato: true },
+  { grupo: "EUA", s: "@TFS.1", nome: "RTY · Russell 2000 futuro", contrato: true },
   { grupo: "EUA", s: ".SPX", nome: "S&P 500" },
   { grupo: "EUA", s: ".IXIC", nome: "Nasdaq Composto" },
   { grupo: "EUA", s: ".DJI", nome: "Dow Jones" },
@@ -168,9 +170,13 @@ async function coletarCotacoes() {
   const j = await get(url, { json: true });
   const porSimbolo = Object.fromEntries((j?.FormattedQuoteResult?.FormattedQuote || []).map((q) => [q.symbol, q]));
   const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[,%+]/g, "")); return Number.isFinite(n) ? n : 0; };
-  const ativos = QUOTES.map(({ grupo, s, nome }) => {
+  const MESES = { Jan: "jan", Feb: "fev", Mar: "mar", Apr: "abr", May: "mai", Jun: "jun", Jul: "jul", Aug: "ago", Sep: "set", Oct: "out", Nov: "nov", Dec: "dez" };
+  const ativos = QUOTES.map(({ grupo, s, nome, contrato }) => {
     const q = porSimbolo[s];
     if (!q || q.last == null) return null;
+    // "S&P 500 Fut (Dec'26)" -> "(dez/26)"
+    const venc = contrato && /\((\w{3})'(\d{2})\)/.exec(q.name || "");
+    if (venc) nome = `${nome} (${MESES[venc[1]] || venc[1]}/${venc[2]})`;
     const juros = grupo === "Juros";
     const ultimo = num(q.last);
     const variacao = q.change === "UNCH" ? 0 : num(q.change);

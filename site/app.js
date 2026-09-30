@@ -6,10 +6,15 @@ const REFRESH_MS = 5 * 60 * 1000;
 
 // Abas de ativos: [símbolo TradingView, nome exibido]. "extras" vem de data/cotacoes.json (CNBC)
 // para o que os widgets gratuitos não mostram (Kospi, juros globais, minério de ferro).
+const CONTRATOS_CME = { titulo: "Contratos CME · preço real, atualiza a cada 15 min", simbolos: ["@SP.1", "@ND.1", "@DJ.1", "@TFS.1"] };
+
 const ABAS = [
+  // Os contratos da CME (ES, NQ...) não aparecem nos widgets gratuitos; ao vivo mostramos CFDs, que seguem
+  // o índice à vista, e o preço real dos contratos vem da CNBC na tabela "extras" (atualiza a cada 15 min).
   { id: "eua", nome: "Futuros EUA", simbolos: [
-    ["CAPITALCOM:US500", "S&P 500 futuro"], ["CAPITALCOM:US100", "Nasdaq 100 futuro"], ["CAPITALCOM:US30", "Dow Jones futuro"],
-    ["FOREXCOM:US2000", "Russell 2000"], ["CAPITALCOM:VIX", "VIX (volatilidade)"]] },
+    ["CAPITALCOM:US500", "S&P 500 (CFD)"], ["CAPITALCOM:US100", "Nasdaq 100 (CFD)"], ["CAPITALCOM:US30", "Dow Jones (CFD)"],
+    ["FOREXCOM:US2000", "Russell 2000 (CFD)"], ["CAPITALCOM:VIX", "VIX (volatilidade)"]],
+    extras: CONTRATOS_CME },
   { id: "acoeseua", nome: "Ações EUA", simbolos: [
     ["AMEX:SPY", "S&P 500 (ETF SPY)"], ["NASDAQ:QQQ", "Nasdaq 100 (ETF QQQ)"],
     ["NASDAQ:NVDA", "Nvidia"], ["NASDAQ:AAPL", "Apple"], ["NASDAQ:MSFT", "Microsoft"], ["NASDAQ:AMZN", "Amazon"],
@@ -56,14 +61,15 @@ const ABAS = [
     ["BMFBOVESPA:PETR4", "Petrobras PN"], ["BMFBOVESPA:PRIO3", "PRIO ON"]] },
   { id: "futuros", nome: "Futuros", simbolos: [
     ["BMFBOVESPA:WIN1!", "Mini Ibovespa"], ["BMFBOVESPA:WDO1!", "Mini dólar"], ["BMFBOVESPA:DOL1!", "Dólar cheio"],
-    ["CAPITALCOM:US500", "S&P 500"], ["CAPITALCOM:US100", "Nasdaq 100"], ["CAPITALCOM:EU50", "Euro Stoxx 50"], ["CAPITALCOM:DE40", "DAX"],
-    ["CAPITALCOM:UK100", "FTSE 100"], ["CAPITALCOM:J225", "Nikkei 225"], ["CAPITALCOM:CN50", "China A50"], ["CAPITALCOM:AU200", "ASX 200"],
-    ["BITSTAMP:BTCUSD", "Bitcoin"], ["BITSTAMP:ETHUSD", "Ethereum"]] },
+    ["CAPITALCOM:US500", "S&P 500 (CFD)"], ["CAPITALCOM:US100", "Nasdaq 100 (CFD)"], ["CAPITALCOM:EU50", "Euro Stoxx 50 (CFD)"], ["CAPITALCOM:DE40", "DAX (CFD)"],
+    ["CAPITALCOM:UK100", "FTSE 100 (CFD)"], ["CAPITALCOM:J225", "Nikkei 225 (CFD)"], ["CAPITALCOM:CN50", "China A50 (CFD)"], ["CAPITALCOM:AU200", "ASX 200 (CFD)"],
+    ["BITSTAMP:BTCUSD", "Bitcoin"], ["BITSTAMP:ETHUSD", "Ethereum"]],
+    extras: CONTRATOS_CME },
 ];
 
 const FITA = [
-  ["BMFBOVESPA:IBOV", "Ibovespa"], ["FX_IDC:USDBRL", "Dólar"], ["INDEX:DXY", "DXY"], ["CAPITALCOM:US500", "S&P fut"],
-  ["CAPITALCOM:US100", "Nasdaq fut"], ["TVC:UKOIL", "Brent"], ["TVC:GOLD", "Ouro"], ["PYTH:US10Y", "Treasury 10a"],
+  ["BMFBOVESPA:IBOV", "Ibovespa"], ["FX_IDC:USDBRL", "Dólar"], ["INDEX:DXY", "DXY"], ["CAPITALCOM:US500", "S&P 500 (CFD)"],
+  ["CAPITALCOM:US100", "Nasdaq 100 (CFD)"], ["TVC:UKOIL", "Brent"], ["TVC:GOLD", "Ouro"], ["PYTH:US10Y", "Treasury 10a"],
   ["BMFBOVESPA:DI1F2029", "DI jan/29"], ["CAPITALCOM:VIX", "VIX"], ["BITSTAMP:BTCUSD", "Bitcoin"],
 ];
 
@@ -81,7 +87,7 @@ const PRACAS = [
 const PLACAR = [
   ["Ásia/Pacífico", [".N225", ".HSI", ".SSEC", ".KS11", ".AXJO"]],
   ["Europa", [".STOXX50E", ".GDAXI", ".FTSE", ".FCHI"]],
-  ["EUA", ["@SP.1", "@ND.1", "@DJ.1", ".VIX"]],
+  ["EUA", ["@SP.1", "@ND.1", "@DJ.1", "@TFS.1", ".VIX"]],
   ["Brasil e emergentes", [".BVSP", "BRL=", ".MXX", ".DXY"]],
   ["Commodities", ["@LCO.1", "@CL.1", "@GC.1", "@HG.1", "@TIO.1", "@S.1"]],
   ["Juros 10 anos", ["US10Y", "BR10Y-BR", "DE10Y-DE", "JP10Y-JP"]],
