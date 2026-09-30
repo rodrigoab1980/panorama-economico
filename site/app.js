@@ -150,7 +150,9 @@ async function sincronizarRelogio() {
 
 function tiqueRelogio() {
   const agora = agoraCerto();
-  $("#hora-agora").textContent = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(agora);
+  const hora = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(agora);
+  $("#hora-agora").textContent = hora;
+  $("#hora-flutuante").textContent = hora;
   if (agora.getSeconds() === 0) atualizarTopo();
   // Agenda o próximo tique para a virada exata do segundo.
   setTimeout(tiqueRelogio, 1000 - (agora.getTime() % 1000) + 5);
@@ -418,6 +420,10 @@ async function atualizarDados() {
   atualizarNoticias(noticias);
   renderAgenda(agenda, resumo);
 }
+
+// Sombra no cabeçalho fixo ao rolar; no celular, mostra o relógio flutuante quando o cabeçalho some.
+addEventListener("scroll", () => document.body.classList.toggle("rolou", scrollY > 4), { passive: true });
+new IntersectionObserver(([e]) => document.body.classList.toggle("topo-fora", !e.isIntersecting)).observe($("#relogio-principal"));
 
 atualizarTopo();
 tiqueRelogio();
