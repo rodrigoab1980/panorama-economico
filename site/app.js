@@ -10,6 +10,12 @@ const ABAS = [
   { id: "eua", nome: "Futuros EUA", simbolos: [
     ["CAPITALCOM:US500", "S&P 500 futuro"], ["CAPITALCOM:US100", "Nasdaq 100 futuro"], ["CAPITALCOM:US30", "Dow Jones futuro"],
     ["FOREXCOM:US2000", "Russell 2000"], ["CAPITALCOM:VIX", "VIX (volatilidade)"]] },
+  { id: "acoeseua", nome: "Ações EUA", simbolos: [
+    ["AMEX:SPY", "S&P 500 (ETF SPY)"], ["NASDAQ:QQQ", "Nasdaq 100 (ETF QQQ)"],
+    ["NASDAQ:NVDA", "Nvidia"], ["NASDAQ:AAPL", "Apple"], ["NASDAQ:MSFT", "Microsoft"], ["NASDAQ:AMZN", "Amazon"],
+    ["NASDAQ:GOOGL", "Alphabet (Google)"], ["NASDAQ:META", "Meta"], ["NASDAQ:AVGO", "Broadcom"], ["NASDAQ:TSLA", "Tesla"],
+    ["NYSE:BRK.B", "Berkshire Hathaway"], ["NYSE:JPM", "JPMorgan"], ["NYSE:LLY", "Eli Lilly"], ["NYSE:V", "Visa"],
+    ["NYSE:XOM", "ExxonMobil"], ["NASDAQ:NFLX", "Netflix"], ["NYSE:WMT", "Walmart"]] },
   { id: "europa", nome: "Europa", simbolos: [
     ["INDEX:SX5E", "Euro Stoxx 50"], ["XETR:DAX", "DAX · Alemanha"], ["CAPITALCOM:UK100", "FTSE 100 · Reino Unido"],
     ["EURONEXT:PX1", "CAC 40 · França"], ["BME:IBC", "IBEX 35 · Espanha"], ["INDEX:FTSEMIB", "FTSE MIB · Itália"], ["SIX:SMI", "SMI · Suíça"]] },
