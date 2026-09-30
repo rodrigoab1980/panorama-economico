@@ -6,7 +6,7 @@ const REFRESH_MS = 5 * 60 * 1000;
 
 // Abas de ativos: [símbolo TradingView, nome exibido]. "extras" vem de data/cotacoes.json (CNBC)
 // para o que os widgets gratuitos não mostram (Kospi, juros globais, minério de ferro).
-const CONTRATOS_CME = { titulo: "Contratos CME · preço real, atualiza a cada 15 min", simbolos: ["@SP.1", "@ND.1", "@DJ.1", "@TFS.1"] };
+const CONTRATOS_CME = { titulo: "Contratos CME (preço real, atualiza a cada 15 min)", simbolos: ["@SP.1", "@ND.1", "@DJ.1", "@TFS.1"] };
 
 const ABAS = [
   // Os contratos da CME (ES, NQ...) não aparecem nos widgets gratuitos; ao vivo mostramos CFDs, que seguem
@@ -22,19 +22,19 @@ const ABAS = [
     ["NYSE:BRK.B", "Berkshire Hathaway"], ["NYSE:JPM", "JPMorgan"], ["NYSE:LLY", "Eli Lilly"], ["NYSE:V", "Visa"],
     ["NYSE:XOM", "ExxonMobil"], ["NASDAQ:NFLX", "Netflix"], ["NYSE:WMT", "Walmart"]] },
   { id: "europa", nome: "Europa", simbolos: [
-    ["INDEX:SX5E", "Euro Stoxx 50"], ["XETR:DAX", "DAX · Alemanha"], ["CAPITALCOM:UK100", "FTSE 100 · Reino Unido"],
-    ["EURONEXT:PX1", "CAC 40 · França"], ["BME:IBC", "IBEX 35 · Espanha"], ["INDEX:FTSEMIB", "FTSE MIB · Itália"], ["SIX:SMI", "SMI · Suíça"]] },
+    ["INDEX:SX5E", "Euro Stoxx 50"], ["XETR:DAX", "DAX (Alemanha)"], ["CAPITALCOM:UK100", "FTSE 100 (Reino Unido)"],
+    ["EURONEXT:PX1", "CAC 40 (França)"], ["BME:IBC", "IBEX 35 (Espanha)"], ["INDEX:FTSEMIB", "FTSE MIB (Itália)"], ["SIX:SMI", "SMI (Suíça)"]] },
   { id: "asia", nome: "Ásia/Pacífico", simbolos: [
-    ["INDEX:NKY", "Nikkei 225 · Japão"], ["INDEX:HSI", "Hang Seng · Hong Kong"], ["SSE:000001", "Xangai · China"],
-    ["SZSE:399001", "Shenzhen · China"], ["CAPITALCOM:CN50", "China A50"], ["ASX:XJO", "ASX 200 · Austrália"], ["BSE:SENSEX", "Sensex · Índia"]],
+    ["INDEX:NKY", "Nikkei 225 (Japão)"], ["INDEX:HSI", "Hang Seng (Hong Kong)"], ["SSE:000001", "Xangai (China)"],
+    ["SZSE:399001", "Shenzhen (China)"], ["CAPITALCOM:CN50", "China A50"], ["ASX:XJO", "ASX 200 (Austrália)"], ["BSE:SENSEX", "Sensex (Índia)"]],
     extras: { titulo: "Coreia do Sul", simbolos: [".KS11"] } },
   { id: "dxy", nome: "Dólar DXY", simbolos: [
     ["INDEX:DXY", "DXY (índice do dólar)"], ["FX_IDC:USDBRL", "USD/BRL"], ["FX:EURUSD", "EUR/USD"], ["FX:USDJPY", "USD/JPY"],
     ["FX:GBPUSD", "GBP/USD"], ["FX:USDCHF", "USD/CHF"], ["FX:USDCAD", "USD/CAD"], ["FX:AUDUSD", "AUD/USD"], ["FX:USDCNH", "USD/CNH"]] },
   { id: "emergentes", nome: "Emergentes", simbolos: [
-    ["FX_IDC:USDBRL", "USD/BRL · Brasil"], ["FX_IDC:USDMXN", "USD/MXN · México"], ["FX_IDC:USDCLP", "USD/CLP · Chile"],
-    ["FX_IDC:USDCOP", "USD/COP · Colômbia"], ["FX_IDC:USDZAR", "USD/ZAR · África do Sul"], ["FX_IDC:USDTRY", "USD/TRY · Turquia"],
-    ["FX_IDC:USDINR", "USD/INR · Índia"], ["FX_IDC:USDARS", "USD/ARS · Argentina"], ["AMEX:EEM", "ETF Emergentes (EEM)"], ["AMEX:EWZ", "ETF Brasil (EWZ)"]],
+    ["FX_IDC:USDBRL", "USD/BRL (Brasil)"], ["FX_IDC:USDMXN", "USD/MXN (México)"], ["FX_IDC:USDCLP", "USD/CLP (Chile)"],
+    ["FX_IDC:USDCOP", "USD/COP (Colômbia)"], ["FX_IDC:USDZAR", "USD/ZAR (África do Sul)"], ["FX_IDC:USDTRY", "USD/TRY (Turquia)"],
+    ["FX_IDC:USDINR", "USD/INR (Índia)"], ["FX_IDC:USDARS", "USD/ARS (Argentina)"], ["AMEX:EEM", "ETF Emergentes (EEM)"], ["AMEX:EWZ", "ETF Brasil (EWZ)"]],
     extras: { titulo: "Bolsa do México", simbolos: [".MXX"] } },
   { id: "titbr", nome: "Títulos Brasil", simbolos: [
     ["BMFBOVESPA:DI1F2027", "DI jan/27"], ["BMFBOVESPA:DI1F2028", "DI jan/28"], ["BMFBOVESPA:DI1F2029", "DI jan/29"],
@@ -47,9 +47,9 @@ const ABAS = [
     ["TVC:GOLD", "Ouro"], ["TVC:SILVER", "Prata"], ["CAPITALCOM:COPPER", "Cobre"], ["TVC:PLATINUM", "Platina"], ["TVC:PALLADIUM", "Paládio"]],
     extras: { titulo: "Minério de ferro", simbolos: ["@TIO.1"] } },
   { id: "agro", nome: "Agrícolas", simbolos: [
-    ["CAPITALCOM:SOYBEAN", "Soja · Chicago"], ["CAPITALCOM:CORN", "Milho · Chicago"], ["CAPITALCOM:WHEAT", "Trigo · Chicago"],
+    ["CAPITALCOM:SOYBEAN", "Soja (Chicago)"], ["CAPITALCOM:CORN", "Milho (Chicago)"], ["CAPITALCOM:WHEAT", "Trigo (Chicago)"],
     ["CAPITALCOM:COFFEEARABICA", "Café arábica"], ["CAPITALCOM:SUGAR", "Açúcar"], ["CAPITALCOM:COTTON", "Algodão"],
-    ["BMFBOVESPA:BGI1!", "Boi gordo · B3"], ["BMFBOVESPA:CCM1!", "Milho · B3"], ["BMFBOVESPA:SJC1!", "Soja · B3"]] },
+    ["BMFBOVESPA:BGI1!", "Boi gordo (B3)"], ["BMFBOVESPA:CCM1!", "Milho (B3)"], ["BMFBOVESPA:SJC1!", "Soja (B3)"]] },
   { id: "b3", nome: "B3", simbolos: [
     ["BMFBOVESPA:IBOV", "Ibovespa"], ["BMFBOVESPA:PETR4", "Petrobras PN"], ["BMFBOVESPA:VALE3", "Vale ON"], ["BMFBOVESPA:ITUB4", "Itaú PN"],
     ["BMFBOVESPA:BBDC4", "Bradesco PN"], ["BMFBOVESPA:BBAS3", "Banco do Brasil ON"], ["BMFBOVESPA:ITSA4", "Itaúsa PN"], ["BMFBOVESPA:BPAC11", "BTG Pactual"],
@@ -73,14 +73,15 @@ const FITA = [
   ["BMFBOVESPA:DI1F2029", "DI jan/29"], ["CAPITALCOM:VIX", "VIX"], ["BITSTAMP:BTCUSD", "Bitcoin"],
 ];
 
-// Pregões (hora local de cada praça) para os relógios do topo.
+// Pregões na hora local de cada praça (com o intervalo de almoço de Tóquio e Hong Kong),
+// desenhados na faixa do dia convertidos para o horário de Brasília.
 const PRACAS = [
-  { nome: "Tóquio", tz: "Asia/Tokyo", abre: "09:00", fecha: "15:30" },
-  { nome: "Hong Kong", tz: "Asia/Hong_Kong", abre: "09:30", fecha: "16:00" },
-  { nome: "Londres", tz: "Europe/London", abre: "08:00", fecha: "16:30" },
-  { nome: "Frankfurt", tz: "Europe/Berlin", abre: "09:00", fecha: "17:30" },
-  { nome: "Nova York", tz: "America/New_York", abre: "09:30", fecha: "16:00" },
-  { nome: "São Paulo", tz: TZ, abre: "10:00", fecha: "17:00" },
+  { nome: "Tóquio", tz: "Asia/Tokyo", sessoes: [["09:00", "11:30"], ["12:30", "15:30"]] },
+  { nome: "Hong Kong", tz: "Asia/Hong_Kong", sessoes: [["09:30", "12:00"], ["13:00", "16:00"]] },
+  { nome: "Londres", tz: "Europe/London", sessoes: [["08:00", "16:30"]] },
+  { nome: "Frankfurt", tz: "Europe/Berlin", sessoes: [["09:00", "17:30"]] },
+  { nome: "Nova York", tz: "America/New_York", sessoes: [["09:30", "16:00"]] },
+  { nome: "São Paulo", tz: TZ, sessoes: [["10:00", "17:00"]] },
 ];
 
 // Grupos do placar (data/cotacoes.json).
@@ -174,14 +175,78 @@ function atualizarTopo() {
   const agora = agoraCerto();
   const data = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(agora);
   $("#data-hoje").textContent = data.charAt(0).toUpperCase() + data.slice(1);
-  $("#relogios").innerHTML = PRACAS.map((p) => {
-    const f = new Intl.DateTimeFormat("en-GB", { timeZone: p.tz, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(agora);
-    const get = (t) => f.find((x) => x.type === t).value;
-    const hora = `${get("hour")}:${get("minute")}`;
-    const util = !["Sat", "Sun"].includes(get("weekday"));
-    const aberto = util && hora >= p.abre && hora < p.fecha;
-    return `<div class="relogio"><span>${p.nome}</span><b>${hora}</b><span class="st ${aberto ? "aberto" : "fechado"}">${aberto ? "aberta" : "fechada"}</span></div>`;
+  renderFaixaDia(agora);
+}
+
+// ---------- faixa do dia ----------
+
+// Partes da data/hora de um instante num fuso.
+function partes(instante, tz) {
+  const f = new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", weekday: "short", hourCycle: "h23" }).formatToParts(instante);
+  const o = Object.fromEntries(f.map((x) => [x.type, x.value]));
+  return { a: +o.year, m: +o.month, d: +o.day, h: +o.hour, min: +o.minute, sem: o.weekday };
+}
+// Instante (ms) de uma hora "de parede" num fuso: acerta o desvio do fuso em duas passadas (horário de verão).
+function instanteLocal(a, m, d, hhmm, tz) {
+  const [h, min] = hhmm.split(":").map(Number);
+  let t = Date.UTC(a, m - 1, d, h, min);
+  for (let i = 0; i < 2; i++) {
+    const p = partes(new Date(t), tz);
+    t += Date.UTC(a, m - 1, d, h, min) - Date.UTC(p.a, p.m - 1, p.d, p.h, p.min);
+  }
+  return t;
+}
+// Sessões da praça entre dois instantes (percorre os dias locais, pulando sábado e domingo).
+function sessoesEntre(praca, inicio, fim) {
+  const lista = [];
+  for (let t = inicio - 86400e3; t < fim + 86400e3; t += 86400e3) {
+    const p = partes(new Date(t), praca.tz);
+    if (p.sem === "Sat" || p.sem === "Sun") continue;
+    for (const [abre, fecha] of praca.sessoes) {
+      const ini = instanteLocal(p.a, p.m, p.d, abre, praca.tz);
+      const fin = instanteLocal(p.a, p.m, p.d, fecha, praca.tz);
+      if (fin > inicio && ini < fim && !lista.some((s) => s[0] === ini)) lista.push([ini, fin]);
+    }
+  }
+  return lista.sort((x, y) => x[0] - y[0]);
+}
+const duracao = (ms) => {
+  const min = Math.round(ms / 60000);
+  const h = Math.floor(min / 60);
+  return h ? `${h}h${String(min % 60).padStart(2, "0")}` : `${min} min`;
+};
+
+function renderFaixaDia(agora) {
+  const t = agora.getTime();
+  const hoje = partes(agora, TZ);
+  const meiaNoite = instanteLocal(hoje.a, hoje.m, hoje.d, "00:00", TZ);
+  const fimDia = meiaNoite + 86400e3;
+  const pct = (x) => (Math.min(Math.max(x, meiaNoite), fimDia) - meiaNoite) / 864e3;
+
+  const linhas = PRACAS.map((praca) => {
+    const hojeSessoes = sessoesEntre(praca, meiaNoite, fimDia);
+    const proximas = sessoesEntre(praca, t, t + 5 * 86400e3);
+    const atual = proximas.find(([ini, fin]) => ini <= t && t < fin);
+    let estado;
+    if (atual) {
+      estado = `fecha em ${duracao(atual[1] - t)}`;
+    } else {
+      const prox = proximas.find(([ini]) => ini > t);
+      if (!prox) estado = "fechada";
+      else if (prox[0] - t < 20 * 3600e3) estado = `abre em ${duracao(prox[0] - t)}`;
+      else estado = `abre ${new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, weekday: "short" }).format(prox[0]).replace(".", "")} ${hhmm(prox[0])}`;
+    }
+    const barras = hojeSessoes.map(([ini, fin]) => `<i class="sessao" style="left:${pct(ini)}%;width:${pct(fin) - pct(ini)}%"></i>`).join("");
+    return `<div class="faixa-linha ${atual ? "aberta" : ""}"><span class="praca">${praca.nome}</span><div class="trilho">${barras}</div><span class="estado">${estado}</span></div>`;
   }).join("");
+
+  const marcas = [0, 6, 12, 18, 24].map((h) => `<span style="left:${(h / 24) * 100}%">${h}h</span>`).join("");
+  const fds = hoje.sem === "Sat" || hoje.sem === "Sun";
+  const el = $("#faixa-dia");
+  el.classList.toggle("fim-de-semana", fds);
+  el.innerHTML = `${linhas}
+    <div class="faixa-eixo"><span></span><div class="marcas">${marcas}</div><span></span></div>
+    <div class="faixa-sobreposta" aria-hidden="true"><span></span><div><i class="agora" style="left:${pct(t)}%"></i></div><span></span></div>`;
 }
 
 // ---------- resumo ----------
@@ -238,12 +303,15 @@ function linhaCotacao(a) {
   const valor = juros ? `${num(a.ultimo, 2)}%` : num(a.ultimo, a.ultimo < 20 ? 3 : 2);
   const v = juros ? a.variacao_bps : a.variacao_pct;
   const txt = juros ? `${sinal(v)}${num(v, 1)} bps` : `${sinal(v)}${num(v, 2)}%`;
-  return `<tr><td>${esc(a.nome)}</td><td class="n">${valor}</td><td class="n ${classe(v)}">${txt}</td></tr>`;
+  // "ES · S&P 500 futuro (dez/26)" vira o código do contrato em destaque + o nome.
+  const [cod, nome] = a.nome.includes(" · ") ? a.nome.split(" · ") : [null, a.nome];
+  const rotulo = cod ? `<span class="cod">${esc(cod)}</span> ${esc(nome)}` : esc(nome);
+  return `<tr><td>${rotulo}</td><td class="n">${valor}</td><td class="n ${classe(v)}">${txt}</td></tr>`;
 }
 
 function renderPlacar(c) {
   if (!c) { $("#placar-corpo").innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
-  $("#placar-hora").textContent = `${quando(c.atualizado)} · CNBC`;
+  $("#placar-hora").textContent = `CNBC, atualizado ${quando(c.atualizado)}`;
   const mapa = Object.fromEntries(c.ativos.map((a) => [a.simbolo, a]));
   $("#placar-corpo").innerHTML = PLACAR.map(([titulo, simbolos]) => {
     const linhas = simbolos.map((s) => mapa[s]).filter(Boolean).map(linhaCotacao).join("");
@@ -265,7 +333,7 @@ function montarAbas() {
   corpo.innerHTML = ABAS.map((a, i) => `
     <div class="aba-painel" id="painel-${a.id}" role="tabpanel" aria-labelledby="aba-${a.id}" ${i === 0 ? "" : "hidden"}>
       <div class="widget"></div>
-      ${a.extras ? `<div class="extras" data-extras="${a.extras.simbolos.join(",")}"><h3>${a.extras.titulo} <span class="carimbo">· CNBC</span></h3><table class="tabela"></table></div>` : ""}
+      ${a.extras ? `<div class="extras" data-extras="${a.extras.simbolos.join(",")}"><h3>${a.extras.titulo} <span class="carimbo">CNBC</span></h3><table class="tabela"></table></div>` : ""}
     </div>`).join("");
 
   const criados = new Set();
@@ -363,7 +431,7 @@ function renderAgenda(agenda, resumo) {
   el.innerHTML = `<ul class="agenda-lista">${agenda.hoje.map((e) => `
     <li class="${e.importancia} ${e.hora < agoraHM ? "passou" : ""}"><time>${esc(e.hora)}</time>
       <div><strong>${esc(e.evento)}</strong><span class="pais">${esc(e.pais)}</span>
-      <span class="nums">${[e.atual && `atual ${esc(e.atual)}`, e.previsao && `proj. ${esc(e.previsao)}`, e.anterior && `ant. ${esc(e.anterior)}`].filter(Boolean).join(" · ")}</span></div>
+      <span class="nums">${[e.atual && `atual ${esc(e.atual)}`, e.previsao && `proj. ${esc(e.previsao)}`, e.anterior && `ant. ${esc(e.anterior)}`].filter(Boolean).join(", ")}</span></div>
       <span class="tag ${e.importancia}">${e.importancia === "alta" ? "alta" : "média"}</span></li>`).join("")}</ul>${notaBrasil}`;
 }
 
