@@ -7,7 +7,8 @@
 <meta name="description" content="Panorama econômico matinal: bolsas, câmbio, juros, commodities, notícias e agenda do dia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@14.0.0/dist/gridstack.min.css">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23101318'/%3E%3Cpath d='M6 22l6-7 5 4 9-11' stroke='%23e8b04b' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
@@ -20,92 +21,114 @@
       <h1>Panorama Econômico</h1>
       <p id="data-hoje">&nbsp;</p>
     </div>
+    <button class="botao-resumo" id="botao-resumo" aria-expanded="false" aria-controls="gaveta-resumo">
+      Resumo do dia <span class="ponto-novo" id="resumo-novo" hidden></span>
+      <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" /></svg>
+    </button>
+  </div>
+  <div class="relogio-principal" id="relogio-principal" title="Sincronizando com o servidor…">
+    <b id="hora-agora">--:--:--</b>
+    <span>Brasília</span>
   </div>
   <div class="relogios" id="relogios" aria-label="Horário das bolsas"></div>
-</header>
+  <button class="botao-icone" id="restaurar-layout" title="Restaurar a posição e o tamanho das caixas">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4M2.5 2.5V5.5h3" /></svg>
+    <span>Layout padrão</span>
+  </button>
 
-<div class="fita"><div class="tradingview-widget-container" id="fita"></div></div>
-
-<main class="grade">
-
-  <section class="painel resumo" id="resumo" aria-labelledby="t-resumo">
-    <div class="painel-topo">
-      <h2 id="t-resumo">Resumo do dia</h2>
+  <section class="gaveta-resumo" id="gaveta-resumo" hidden aria-label="Resumo do dia">
+    <div class="painel-topo estatico">
+      <h2>Resumo do dia</h2>
       <span class="carimbo" id="resumo-hora"></span>
     </div>
     <div id="resumo-corpo"><p class="vazio">Carregando…</p></div>
   </section>
+</header>
 
-  <section class="painel placar" aria-labelledby="t-placar">
-    <div class="painel-topo">
-      <h2 id="t-placar">Como estão os mercados</h2>
-      <span class="carimbo" id="placar-hora"></span>
-    </div>
-    <div id="placar-corpo"><p class="vazio">Carregando…</p></div>
-  </section>
+<div class="fita" id="fita"></div>
 
-  <section class="painel mercados" aria-labelledby="t-mercados">
-    <div class="painel-topo">
-      <h2 id="t-mercados">Ativos</h2>
-      <span class="carimbo">cotações com até 15 min de atraso</span>
-    </div>
-    <nav class="abas" id="abas" role="tablist" aria-label="Classes de ativos"></nav>
-    <div id="abas-corpo"></div>
-  </section>
+<main class="grid-stack" id="grade">
 
-  <section class="painel mapas" aria-labelledby="t-mapas">
-    <div class="painel-topo">
-      <h2 id="t-mapas">Mapa de ações</h2>
-      <nav class="abas compacta" id="mapas-abas" role="tablist">
-        <button role="tab" data-mapa="SPX500" aria-selected="true">S&amp;P 500</button>
-        <button role="tab" data-mapa="IBOV" aria-selected="false">Ibovespa</button>
-      </nav>
-    </div>
-    <div class="mapa" id="mapa"></div>
-  </section>
-
-  <section class="painel noticias" aria-labelledby="t-noticias">
-    <div class="painel-topo">
-      <h2 id="t-noticias">Notícias ao vivo</h2>
-      <span class="carimbo" id="noticias-hora"></span>
-    </div>
-    <div class="filtros">
-      <div class="chips" id="noticias-filtro" role="tablist">
-        <button data-f="todas" aria-selected="true">Todas</button>
-        <button data-f="br" aria-selected="false">Brasil</button>
-        <button data-f="intl" aria-selected="false">Internacional</button>
+  <div class="grid-stack-item" gs-id="noticias" gs-x="0" gs-y="0" gs-w="7" gs-h="16" gs-min-w="3" gs-min-h="6">
+    <section class="grid-stack-item-content painel" aria-labelledby="t-noticias">
+      <div class="painel-topo">
+        <h2 id="t-noticias">Notícias ao vivo</h2>
+        <span class="carimbo" id="noticias-hora"></span>
       </div>
-      <input type="search" id="noticias-busca" placeholder="Filtrar: petróleo, Fed, Vale…" aria-label="Filtrar notícias">
-    </div>
-    <ol class="lista-noticias" id="noticias-lista"></ol>
-  </section>
+      <div class="filtros">
+        <div class="chips" id="noticias-filtro" role="tablist">
+          <button data-f="todas" aria-selected="true">Todas</button>
+          <button data-f="br" aria-selected="false">Brasil</button>
+          <button data-f="intl" aria-selected="false">Internacional</button>
+        </div>
+        <input type="search" id="noticias-busca" placeholder="Filtrar: petróleo, Fed, Vale…" aria-label="Filtrar notícias">
+      </div>
+      <ol class="lista-noticias painel-corpo" id="noticias-lista"></ol>
+    </section>
+  </div>
 
-  <section class="painel agenda" aria-labelledby="t-agenda">
-    <div class="painel-topo">
-      <h2 id="t-agenda">Agenda de hoje</h2>
-      <span class="carimbo">horário de Brasília</span>
-    </div>
-    <div id="agenda-destaques"></div>
-    <details class="investing" open>
-      <summary>Calendário completo (Investing.com)</summary>
-      <iframe loading="lazy" title="Calendário econômico de hoje" src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&amp;features=timezone&amp;countries=32,5,72,4,37,35,17,6,25&amp;calType=day&amp;importance=2,3&amp;timeZone=12&amp;lang=12"></iframe>
-    </details>
-  </section>
+  <div class="grid-stack-item" gs-id="ativos" gs-x="7" gs-y="0" gs-w="5" gs-h="16" gs-min-w="3" gs-min-h="6">
+    <section class="grid-stack-item-content painel" aria-labelledby="t-mercados">
+      <div class="painel-topo">
+        <h2 id="t-mercados">Ativos</h2>
+        <span class="carimbo">até 15 min de atraso</span>
+      </div>
+      <nav class="abas" id="abas" role="tablist" aria-label="Classes de ativos"></nav>
+      <div class="painel-corpo" id="abas-corpo"></div>
+    </section>
+  </div>
 
-  <section class="painel semana" aria-labelledby="t-semana">
-    <div class="painel-topo">
-      <h2 id="t-semana">Principais eventos da semana <span class="estrelas" aria-label="três estrelas">★★★</span></h2>
-      <span class="carimbo">fonte: Investing.com</span>
-    </div>
-    <iframe loading="lazy" title="Eventos de alta importância da semana" src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&amp;features=datepicker,timezone&amp;countries=32,5,72,4,37,35,17,6,25&amp;calType=week&amp;importance=3&amp;timeZone=12&amp;lang=12"></iframe>
-  </section>
+  <div class="grid-stack-item" gs-id="mapas" gs-x="0" gs-y="16" gs-w="7" gs-h="15" gs-min-w="3" gs-min-h="6">
+    <section class="grid-stack-item-content painel" aria-labelledby="t-mapas">
+      <div class="painel-topo">
+        <h2 id="t-mapas">Mapa de ações</h2>
+        <nav class="abas compacta" id="mapas-abas" role="tablist">
+          <button role="tab" data-mapa="SPX500" aria-selected="true">S&amp;P 500</button>
+          <button role="tab" data-mapa="IBOV" aria-selected="false">Ibovespa</button>
+        </nav>
+      </div>
+      <div class="painel-corpo" id="mapa"></div>
+    </section>
+  </div>
+
+  <div class="grid-stack-item" gs-id="placar" gs-x="7" gs-y="16" gs-w="5" gs-h="15" gs-min-w="3" gs-min-h="5">
+    <section class="grid-stack-item-content painel" aria-labelledby="t-placar">
+      <div class="painel-topo">
+        <h2 id="t-placar">Como estão os mercados</h2>
+        <span class="carimbo" id="placar-hora"></span>
+      </div>
+      <div class="painel-corpo rolavel" id="placar-corpo"><p class="vazio">Carregando…</p></div>
+    </section>
+  </div>
+
+  <div class="grid-stack-item" gs-id="agenda" gs-x="0" gs-y="31" gs-w="12" gs-h="16" gs-min-w="3" gs-min-h="6">
+    <section class="grid-stack-item-content painel" aria-labelledby="t-agenda">
+      <div class="painel-topo">
+        <h2 id="t-agenda">Calendário econômico</h2>
+        <span class="carimbo">horário de Brasília</span>
+      </div>
+      <nav class="abas" id="agenda-abas" role="tablist" aria-label="Calendário">
+        <button role="tab" data-agenda="destaques" aria-selected="true">Destaques de hoje</button>
+        <button role="tab" data-agenda="hoje" aria-selected="false">Hoje completo</button>
+        <button role="tab" data-agenda="semana" aria-selected="false">Semana <span class="estrelas">★★★</span></button>
+      </nav>
+      <div class="painel-corpo">
+        <div class="agenda-painel rolavel" data-agenda="destaques" id="agenda-destaques"></div>
+        <div class="agenda-painel" data-agenda="hoje" hidden
+             data-src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&amp;features=timezone&amp;countries=32,5,72,4,37,35,17,6,25&amp;calType=day&amp;importance=2,3&amp;timeZone=12&amp;lang=12"></div>
+        <div class="agenda-painel" data-agenda="semana" hidden
+             data-src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&amp;features=datepicker,timezone&amp;countries=32,5,72,4,37,35,17,6,25&amp;calType=week&amp;importance=3&amp;timeZone=12&amp;lang=12"></div>
+      </div>
+    </section>
+  </div>
 
 </main>
 
 <footer class="rodape">
-  <p>Cotações: TradingView e CNBC, com atraso. Agenda: Investing.com e Forex Factory. Notícias: principais portais do Brasil e do exterior. Conteúdo informativo, não é recomendação de investimento.</p>
+  <p>Arraste as caixas pelo título e redimensione pelo canto inferior direito; o layout fica salvo neste navegador. Cotações: TradingView e CNBC, com atraso. Agenda: Investing.com e Forex Factory. Notícias: principais portais do Brasil e do exterior. Conteúdo informativo, não é recomendação de investimento.</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/gridstack@14.0.0/dist/gridstack-all.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

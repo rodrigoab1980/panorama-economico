@@ -25,70 +25,107 @@ body {
 }
 a { color: inherit; }
 button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* Sem isto, o navegador pinta de branco o fundo dos widgets transparentes (esquema de cor diferente). */
+.tradingview-widget-container iframe { color-scheme: normal; }
 
 /* ---------- topo ---------- */
 .topo {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  padding: 14px 20px; border-bottom: 1px solid var(--borda);
+  position: relative; z-index: 20;
+  display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap;
+  padding: 12px 20px; border-bottom: 1px solid var(--borda); background: var(--fundo);
 }
-.marca { display: flex; align-items: center; gap: 12px; }
-.marca svg { width: 34px; height: 34px; background: var(--painel-2); border-radius: 8px; padding: 5px; }
+.marca { display: flex; align-items: center; gap: 12px; margin-right: auto; flex-wrap: wrap; }
+.marca > svg { width: 34px; height: 34px; background: var(--painel-2); border-radius: 8px; padding: 5px; }
 .marca path { stroke: var(--destaque); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .marca h1 { font-size: 19px; margin: 0; letter-spacing: -.01em; }
 .marca p { margin: 0; color: var(--texto-2); font-size: 13px; }
 
+.botao-resumo {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  background: var(--painel-2); border: 1px solid var(--borda); border-radius: 8px;
+  padding: 7px 12px; font-size: 13.5px; font-weight: 600; color: var(--destaque);
+}
+.botao-resumo:hover { border-color: var(--destaque); }
+.botao-resumo svg { width: 12px; height: 12px; transition: transform .15s; }
+.botao-resumo path { stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.botao-resumo[aria-expanded="true"] { background: var(--destaque); border-color: var(--destaque); color: #1a1405; }
+.botao-resumo[aria-expanded="true"] svg { transform: rotate(180deg); }
+.ponto-novo { width: 7px; height: 7px; border-radius: 50%; background: var(--alta); box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
+
+.relogio-principal { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+.relogio-principal b { font: 600 24px var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.relogio-principal span { font-size: 11.5px; color: var(--texto-3); }
+
 .relogios { display: flex; gap: 6px; flex-wrap: wrap; }
 .relogio {
-  display: flex; flex-direction: column; min-width: 86px;
-  padding: 5px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--painel);
-  font-size: 12px; color: var(--texto-2);
+  display: flex; flex-direction: column; min-width: 82px;
+  padding: 4px 9px; border: 1px solid var(--borda); border-radius: 8px; background: var(--painel);
+  font-size: 12px; color: var(--texto-2); line-height: 1.35;
 }
 .relogio b { color: var(--texto); font: 500 13px var(--mono); }
 .relogio .st::before { content: "●"; margin-right: 4px; }
 .relogio .aberto { color: var(--alta); }
 .relogio .fechado { color: var(--texto-3); }
 
-/* Sem isto, o navegador pinta de branco o fundo dos widgets transparentes (esquema de cor diferente). */
-.tradingview-widget-container iframe { color-scheme: normal; }
+.botao-icone {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: none; border: 1px solid var(--borda); border-radius: 8px; padding: 6px 10px;
+  font-size: 12.5px; color: var(--texto-2);
+}
+.botao-icone:hover { color: var(--texto); border-color: #343b46; }
+.botao-icone svg { width: 14px; height: 14px; }
+.botao-icone path { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Gaveta do resumo: abre por cima do conteúdo, logo abaixo do cabeçalho. */
+.gaveta-resumo {
+  position: absolute; top: calc(100% + 6px); left: 20px;
+  width: min(920px, calc(100vw - 32px)); max-height: 78vh; overflow-y: auto;
+  background: var(--painel); border: 1px solid #343b46; border-radius: var(--raio);
+  padding: 16px 18px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+}
 
 .fita { border-bottom: 1px solid var(--borda); min-height: 46px; }
 
-/* ---------- grade ---------- */
-.grade {
-  display: grid; gap: 14px; padding: 14px 20px 24px;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-}
+/* ---------- grade (GridStack) ---------- */
+.grid-stack { margin: 8px 14px 0; }
 .painel {
   background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
-  padding: 14px 16px; min-width: 0;
+  padding: 12px 14px; display: flex; flex-direction: column; overflow: hidden !important;
 }
-.resumo { grid-column: span 8; }
-.placar { grid-column: span 4; }
-.mercados { grid-column: span 6; }
-.mapas { grid-column: span 6; }
-.noticias { grid-column: span 7; }
-.agenda { grid-column: span 5; }
-.semana { grid-column: span 12; }
+.painel-corpo { flex: 1; min-height: 0; position: relative; }
+.rolavel { overflow-y: auto; }
 
-@media (max-width: 1200px) {
-  .resumo, .placar, .mercados, .mapas, .noticias, .agenda { grid-column: span 12; }
+.painel-topo {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 10px; cursor: grab; user-select: none;
 }
-@media (max-width: 640px) {
-  .grade { padding: 12px 16px 20px; gap: 12px; }
-  .topo { padding: 12px 16px; }
-  .painel { padding: 12px; }
+.painel-topo.estatico { cursor: default; }
+.grid-stack-item.ui-draggable-dragging .painel-topo { cursor: grabbing; }
+.painel h2, .gaveta-resumo h2 {
+  margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--destaque);
 }
-
-.painel-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.painel h2 { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--destaque); }
+.grid-stack .painel h2::before { content: "⠿"; color: var(--texto-3); margin-right: 7px; letter-spacing: 0; }
 .carimbo { font-size: 12px; color: var(--texto-3); }
 .vazio { color: var(--texto-3); margin: 8px 0; }
 .estrelas { color: var(--destaque); letter-spacing: 1px; }
 
+/* Caixa sendo movida: destaque e iframes sem capturar o mouse. */
+body.movendo iframe { pointer-events: none; }
+body.movendo { user-select: none; }
+.grid-stack-item.ui-draggable-dragging > .painel,
+.grid-stack-item.ui-resizable-resizing > .painel { border-color: var(--destaque); box-shadow: 0 12px 40px rgba(0, 0, 0, .5); }
+.grid-stack > .grid-stack-placeholder > .placeholder-content {
+  background: rgba(232, 176, 75, .08); border: 1px dashed var(--destaque); border-radius: var(--raio);
+}
+.grid-stack-item > .ui-resizable-se { opacity: .35; filter: invert(1); }
+.grid-stack-item:hover > .ui-resizable-se { opacity: .8; }
+
 /* ---------- resumo ---------- */
-.manchete { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 2px 0 12px; letter-spacing: -.01em; text-wrap: balance; }
+.manchete { font-size: 21px; line-height: 1.3; font-weight: 600; margin: 2px 0 12px; letter-spacing: -.01em; text-wrap: balance; }
 .resumo-texto p { margin: 0 0 10px; color: #d3d7dc; max-width: 80ch; }
-.regioes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 14px 0; }
+.regioes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin: 14px 0; }
 .regiao { background: var(--painel-2); border: 1px solid var(--borda); border-radius: 8px; padding: 9px 11px; }
 .regiao h3 { margin: 0 0 3px; font-size: 12px; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
 .regiao p { margin: 0; font-size: 14px; }
@@ -108,7 +145,7 @@ button { font: inherit; color: inherit; }
 
 /* ---------- placar ---------- */
 .placar-grupo + .placar-grupo { margin-top: 10px; }
-.placar-grupo h3 { margin: 0 0 4px; font-size: 12px; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
+.placar-grupo h3, .extras h3 { margin: 0 0 4px; font-size: 12px; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tabela td { padding: 4px 0; border-bottom: 1px solid var(--borda); }
 .tabela tr:last-child td { border-bottom: 0; }
@@ -127,23 +164,24 @@ button { font: inherit; color: inherit; }
 .abas button[aria-selected="true"], .chips button[aria-selected="true"] {
   background: var(--destaque); border-color: var(--destaque); color: #1a1405; font-weight: 600;
 }
+.abas button[aria-selected="true"] .estrelas { color: inherit; }
 .abas.compacta { margin: 0; }
-.aba-painel[hidden] { display: none; }
-.extras { margin-top: 8px; }
-.extras h3 { margin: 0 0 4px; font-size: 12px; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
 
-.mapa { height: 560px; }
-@media (max-width: 640px) { .mapa { height: 440px; } }
+/* Painéis que preenchem a caixa inteira (widgets acompanham o redimensionamento). */
+.aba-painel { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.aba-painel .widget { flex: 1; min-height: 120px; }
+.extras { margin-top: 8px; max-height: 45%; overflow-y: auto; }
+.widget .tradingview-widget-container, #mapa .tradingview-widget-container { height: 100%; }
 
 /* ---------- notícias ---------- */
 .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
 .chips { display: flex; gap: 4px; }
 .filtros input {
-  flex: 1; min-width: 160px; background: var(--painel-2); border: 1px solid var(--borda); border-radius: 6px;
+  flex: 1; min-width: 150px; background: var(--painel-2); border: 1px solid var(--borda); border-radius: 6px;
   padding: 6px 10px; color: var(--texto); font: inherit; font-size: 13px;
 }
 .filtros input:focus { outline: 2px solid var(--destaque); outline-offset: -1px; }
-.lista-noticias { list-style: none; margin: 0; padding: 0; max-height: 640px; overflow-y: auto; }
+.lista-noticias { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
 .lista-noticias li { display: grid; grid-template-columns: 46px 1fr; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--borda); }
 .lista-noticias time { font: 12px var(--mono); color: var(--texto-3); padding-top: 2px; }
 .lista-noticias a { text-decoration: none; }
@@ -153,7 +191,8 @@ button { font: inherit; color: inherit; }
 .lista-noticias li.nova a::before { content: "novo"; font: 600 10px var(--mono); text-transform: uppercase; color: #1a1405; background: var(--destaque); border-radius: 3px; padding: 1px 4px; margin-right: 6px; vertical-align: 2px; }
 
 /* ---------- agenda ---------- */
-.agenda-lista { list-style: none; margin: 0 0 12px; padding: 0; }
+.agenda-painel { position: absolute; inset: 0; }
+.agenda-lista { list-style: none; margin: 0; padding: 0; }
 .agenda-lista li { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--borda); align-items: start; }
 .agenda-lista time { font: 500 13px var(--mono); color: var(--texto); }
 .agenda-lista .pais { font-size: 12px; color: var(--texto-3); display: block; }
@@ -162,15 +201,22 @@ button { font: inherit; color: inherit; }
 .agenda-lista li.alta { border-left: 3px solid var(--baixa); padding-left: 8px; }
 .agenda-lista li.media { border-left: 3px solid var(--destaque); padding-left: 8px; }
 .agenda-lista li.passou { opacity: .55; }
+.nota { font-size: 12.5px; color: var(--texto-3); margin: 10px 0 0; }
 
 /* Widgets do Investing são claros; invertemos as cores para combinar com o tema escuro. */
-.investing summary { cursor: pointer; font-size: 13px; color: var(--texto-2); margin-bottom: 8px; }
-.agenda iframe, .semana iframe {
-  width: 100%; border: 0; border-radius: 8px; background: #fff;
+.agenda-painel iframe {
+  width: 100%; height: 100%; border: 0; border-radius: 8px; background: #fff;
   filter: invert(.9) hue-rotate(180deg) contrast(.95);
 }
-.agenda iframe { height: 520px; }
-.semana iframe { height: 620px; }
 
 .rodape { padding: 8px 20px 28px; color: var(--texto-3); font-size: 12px; }
-.rodape p { margin: 0; max-width: 110ch; }
+.rodape p { margin: 0; max-width: 120ch; }
+
+@media (max-width: 767px) {
+  .topo { padding: 12px 16px; }
+  .relogio-principal { align-items: flex-start; }
+  .grid-stack { margin: 8px 10px 0; }
+  .painel { padding: 12px; }
+  .botao-icone span { display: none; }
+  .gaveta-resumo { left: 16px; }
+}

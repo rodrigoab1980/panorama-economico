@@ -119,8 +119,45 @@ function widgetTV(container, arquivo, config) {
 
 // ---------- topo ----------
 
+// Relógio sincronizado com o servidor do site. O cabeçalho Date só tem precisão de segundos,
+// então fazemos várias medições e cruzamos os intervalos possíveis; o erro fica perto de ±0,1 s.
+let desvioRelogio = 0;
+const agoraCerto = () => new Date(Date.now() + desvioRelogio);
+
+async function sincronizarRelogio() {
+  let min = -Infinity, max = Infinity;
+  for (let i = 0; i < 8; i++) {
+    try {
+      const t0 = Date.now();
+      const r = await fetch(`./?sync=${t0}`, { method: "HEAD", cache: "no-store" });
+      const t1 = Date.now();
+      const servidor = Date.parse(r.headers.get("date"));
+      if (Number.isNaN(servidor)) break;
+      // No instante da resposta (entre t0 e t1) o servidor estava entre servidor e servidor + 999 ms.
+      min = Math.max(min, servidor - t1);
+      max = Math.min(max, servidor + 999 - t0);
+    } catch { break; }
+    await new Promise((ok) => setTimeout(ok, 137)); // espaçamento "quebrado" para cair em frações diferentes
+  }
+  if (Number.isFinite(min) && Number.isFinite(max) && min <= max) {
+    desvioRelogio = Math.round((min + max) / 2);
+    const s = (desvioRelogio / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1, signDisplay: "always" });
+    $("#relogio-principal").title = `Sincronizado com o servidor (±${Math.round((max - min) / 2)} ms). Seu relógio está ${s} s em relação a ele.`;
+  } else {
+    $("#relogio-principal").title = "Usando o relógio deste computador (não foi possível sincronizar).";
+  }
+}
+
+function tiqueRelogio() {
+  const agora = agoraCerto();
+  $("#hora-agora").textContent = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(agora);
+  if (agora.getSeconds() === 0) atualizarTopo();
+  // Agenda o próximo tique para a virada exata do segundo.
+  setTimeout(tiqueRelogio, 1000 - (agora.getTime() % 1000) + 5);
+}
+
 function atualizarTopo() {
-  const agora = new Date();
+  const agora = agoraCerto();
   const data = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(agora);
   $("#data-hoje").textContent = data.charAt(0).toUpperCase() + data.slice(1);
   $("#relogios").innerHTML = PRACAS.map((p) => {
@@ -135,14 +172,35 @@ function atualizarTopo() {
 
 // ---------- resumo ----------
 
+function montarResumo() {
+  const botao = $("#botao-resumo");
+  const gaveta = $("#gaveta-resumo");
+  const alternar = (abrir) => {
+    gaveta.hidden = !abrir;
+    botao.setAttribute("aria-expanded", abrir);
+    if (abrir) {
+      $("#resumo-novo").hidden = true;
+      try { localStorage.setItem("resumo-visto", gaveta.dataset.gerado || ""); } catch {}
+    }
+  };
+  botao.addEventListener("click", () => alternar(gaveta.hidden));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !gaveta.hidden) { alternar(false); botao.focus(); } });
+}
+
 function renderResumo(r) {
   const corpo = $("#resumo-corpo");
   if (!r || !r.gerado_em) {
-    corpo.innerHTML = `<div class="aviso">O resumo escrito pela IA ainda não está ativo. Ele é gerado pelo Claude quando o segredo <code>ANTHROPIC_API_KEY</code> está configurado no repositório. Enquanto isso, o placar ao lado, as notícias e a agenda seguem atualizando normalmente.</div>`;
+    corpo.innerHTML = `<div class="aviso">O resumo escrito pela IA ainda não está ativo. Ele é gerado pelo Claude quando o segredo <code>ANTHROPIC_API_KEY</code> está configurado no repositório. As demais caixas seguem atualizando normalmente.</div>`;
     $("#resumo-hora").textContent = "";
     return;
   }
   $("#resumo-hora").textContent = `atualizado ${quando(r.gerado_em)}`;
+  // Ponto verde no botão quando há um resumo que ainda não foi aberto.
+  const gaveta = $("#gaveta-resumo");
+  gaveta.dataset.gerado = r.gerado_em;
+  let visto = "";
+  try { visto = localStorage.getItem("resumo-visto") || ""; } catch {}
+  $("#resumo-novo").hidden = !gaveta.hidden || visto === r.gerado_em;
   const reg = r.regioes || {};
   const regioes = [["Ásia", reg.asia], ["Europa", reg.europa], ["EUA", reg.eua], ["Brasil", reg.brasil], ["Emergentes", reg.emergentes]]
     .filter(([, t]) => t).map(([n, t]) => `<div class="regiao"><h3>${n}</h3><p>${esc(t)}</p></div>`).join("");
@@ -204,7 +262,7 @@ function montarAbas() {
     criados.add(id);
     const aba = ABAS.find((a) => a.id === id);
     widgetTV($(`#painel-${id} .widget`), "embed-widget-market-quotes.js", {
-      width: "100%", height: 64 + aba.simbolos.length * 34, showSymbolLogo: true,
+      width: "100%", height: "100%", showSymbolLogo: true,
       symbolsGroups: [{ name: aba.nome, symbols: aba.simbolos.map(([name, displayName]) => ({ name, displayName })) }],
     });
     try { localStorage.setItem("aba", id); } catch {}
@@ -221,7 +279,7 @@ function montarMapas() {
     widgetTV($("#mapa"), "embed-widget-stock-heatmap.js", {
       dataSource: fonte, exchanges: [], grouping: "sector", blockSize: "market_cap_basic", blockColor: "change",
       hasTopBar: false, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false,
-      width: "100%", height: $("#mapa").clientHeight,
+      width: "100%", height: "100%",
     });
   };
   $("#mapas-abas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) abrir(b.dataset.mapa); });
@@ -280,18 +338,75 @@ function renderAgenda(agenda, resumo) {
   const el = $("#agenda-destaques");
   const agoraHM = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
   const destaquesIA = resumo?.gerado_em && resumo.agenda_destaques?.length ? resumo.agenda_destaques : null;
+  const notaBrasil = '<p class="nota">Eventos do Brasil aparecem na aba "Hoje completo".</p>';
   if (destaquesIA) {
-    el.innerHTML = `<h3 class="bloco-titulo" style="margin-top:0">Em destaque hoje</h3><ul class="agenda-lista">${destaquesIA.map((e) => `
+    el.innerHTML = `<ul class="agenda-lista">${destaquesIA.map((e) => `
       <li class="alta ${e.hora < agoraHM ? "passou" : ""}"><time>${esc(e.hora)}</time>
-        <div><strong>${esc(e.evento)}</strong><span class="pais">${esc(e.pais)}</span><span class="porque">${esc(e.por_que_importa)}</span></div><span></span></li>`).join("")}</ul>`;
+        <div><strong>${esc(e.evento)}</strong><span class="pais">${esc(e.pais)}</span><span class="porque">${esc(e.por_que_importa)}</span></div><span></span></li>`).join("")}</ul>${notaBrasil}`;
     return;
   }
-  if (!agenda?.hoje?.length) { el.innerHTML = '<p class="vazio">Sem eventos de destaque no calendário internacional hoje.</p>'; return; }
-  el.innerHTML = `<h3 class="bloco-titulo" style="margin-top:0">Em destaque hoje · internacional</h3><ul class="agenda-lista">${agenda.hoje.map((e) => `
+  if (!agenda?.hoje?.length) { el.innerHTML = `<p class="vazio">Sem eventos de destaque no calendário internacional hoje.</p>${notaBrasil}`; return; }
+  el.innerHTML = `<ul class="agenda-lista">${agenda.hoje.map((e) => `
     <li class="${e.importancia} ${e.hora < agoraHM ? "passou" : ""}"><time>${esc(e.hora)}</time>
       <div><strong>${esc(e.evento)}</strong><span class="pais">${esc(e.pais)}</span>
       <span class="nums">${[e.atual && `atual ${esc(e.atual)}`, e.previsao && `proj. ${esc(e.previsao)}`, e.anterior && `ant. ${esc(e.anterior)}`].filter(Boolean).join(" · ")}</span></div>
-      <span class="tag ${e.importancia}">${e.importancia === "alta" ? "alta" : "média"}</span></li>`).join("")}</ul>`;
+      <span class="tag ${e.importancia}">${e.importancia === "alta" ? "alta" : "média"}</span></li>`).join("")}</ul>${notaBrasil}`;
+}
+
+function montarAgendaAbas() {
+  const abrir = (id) => {
+    document.querySelectorAll("#agenda-abas button").forEach((b) => b.setAttribute("aria-selected", b.dataset.agenda === id));
+    document.querySelectorAll(".agenda-painel").forEach((p) => {
+      p.hidden = p.dataset.agenda !== id;
+      // Os calendários do Investing só carregam quando a aba é aberta pela primeira vez.
+      if (!p.hidden && p.dataset.src && !p.querySelector("iframe")) {
+        p.innerHTML = `<iframe title="Calendário econômico" src="${p.dataset.src}"></iframe>`;
+      }
+    });
+  };
+  $("#agenda-abas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) abrir(b.dataset.agenda); });
+}
+
+// ---------- caixas móveis ----------
+
+const LAYOUT_CHAVE = "layout-v1";
+
+function montarGrade() {
+  const itens = [...document.querySelectorAll("#grade > .grid-stack-item")];
+  const padrao = itens.map((el) => ({ id: el.getAttribute("gs-id"), x: +el.getAttribute("gs-x"), y: +el.getAttribute("gs-y"), w: +el.getAttribute("gs-w"), h: +el.getAttribute("gs-h") }));
+  // Aplica o layout salvo antes de iniciar a grade, para não haver "pulo" na tela.
+  try {
+    const salvo = JSON.parse(localStorage.getItem(LAYOUT_CHAVE) || "null");
+    if (Array.isArray(salvo)) {
+      for (const s of salvo) {
+        const el = itens.find((i) => i.getAttribute("gs-id") === s.id);
+        if (el) ["x", "y", "w", "h"].forEach((k) => s[k] != null && el.setAttribute(`gs-${k}`, s[k]));
+      }
+    }
+  } catch {}
+
+  const grade = GridStack.init({
+    column: 12, cellHeight: 40, margin: 6, float: false, animate: true,
+    handle: ".painel-topo",
+    columnOpts: { breakpoints: [{ w: 768, c: 1 }] },
+    resizable: { handles: "se" },
+  }, "#grade");
+
+  const salvar = () => {
+    if (grade.getColumn() !== 12) return; // não grava o layout empilhado do celular
+    const dados = grade.save(false).map(({ id, x, y, w, h }) => ({ id, x, y, w, h }));
+    try { localStorage.setItem(LAYOUT_CHAVE, JSON.stringify(dados)); } catch {}
+  };
+  grade.on("change", salvar);
+  grade.on("dragstart resizestart", () => document.body.classList.add("movendo"));
+  grade.on("dragstop resizestop", () => document.body.classList.remove("movendo"));
+
+  $("#restaurar-layout").addEventListener("click", () => {
+    try { localStorage.removeItem(LAYOUT_CHAVE); } catch {}
+    grade.batchUpdate();
+    for (const p of padrao) grade.update(itens.find((i) => i.getAttribute("gs-id") === p.id), { x: p.x, y: p.y, w: p.w, h: p.h });
+    grade.batchUpdate(false);
+  });
 }
 
 // ---------- ciclo ----------
@@ -305,11 +420,15 @@ async function atualizarDados() {
 }
 
 atualizarTopo();
+tiqueRelogio();
+sincronizarRelogio();
+montarGrade();
+montarResumo();
 montarFita();
 montarAbas();
 montarMapas();
 montarNoticias();
+montarAgendaAbas();
 atualizarDados();
-setInterval(atualizarTopo, 30 * 1000);
 setInterval(atualizarDados, REFRESH_MS);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) atualizarDados(); });
