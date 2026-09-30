@@ -1,0 +1,18 @@
+{
+  "name": "panorama-economico",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Panorama econômico matinal: mercados, notícias, agenda e resumo do dia.",
+  "scripts": {
+    "update": "node scripts/update.mjs",
+    "serve": "python -m http.server 8080 --directory site"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
+    "fast-xml-parser": "^4.5.0"
+  }
+}

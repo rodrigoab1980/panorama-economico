@@ -1,0 +1,65 @@
+name: Atualizar panorama
+
+on:
+  schedule:
+    # A cada 15 min, de segunda a sexta, das 06:00 às 20:45 de Brasília (09–23 UTC).
+    - cron: "*/15 9-23 * * 1-5"
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      forcar_resumo:
+        description: "Gerar um novo resumo da IA agora"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: panorama
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Coletar dados e gerar resumo
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          SUMMARY_INTERVAL_MIN: ${{ vars.SUMMARY_INTERVAL_MIN || '60' }}
+          FORCAR_RESUMO: ${{ inputs.forcar_resumo && '1' || '' }}
+        run: node scripts/update.mjs
+
+      # Guarda o resumo do fim do dia no repositório (histórico e mantém o agendamento ativo).
+      - name: Arquivar resumo do dia
+        run: |
+          if [ -n "$(git status --porcelain arquivo)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add arquivo
+            git commit -m "Arquivo do resumo de $(TZ=America/Sao_Paulo date +%F)"
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
