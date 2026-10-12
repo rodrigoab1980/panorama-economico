@@ -18,9 +18,10 @@ permissions:
   pages: write
   id-token: write
 
+# Uma execução por vez; a nova cancela a anterior se ela ficar presa (ex.: aguardando o ambiente do Pages).
 concurrency:
   group: panorama
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   atualizar:
