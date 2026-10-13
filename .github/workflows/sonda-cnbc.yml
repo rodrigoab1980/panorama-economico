@@ -6,6 +6,16 @@ jobs:
   sonda:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: node scripts/update.mjs
       - run: |
-          U='https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&symbols='
-          curl -sS -A 'Mozilla/5.0' "${U}NVDA|PETR4-BR|VALE3-BR|ITUB4-BR|BRK.B" | python3 -m json.tool
+          python3 - <<'PY'
+          import json
+          d = json.load(open("site/data/mapa.json"))
+          for k, l in d["mapas"].items():
+              print(k, len(l), "ações; sem valor de mercado:", [a["ticker"] for a in l if not a["valor_mercado"]])
+          print("MAPA_JSON_INICIO"); print(json.dumps(d, separators=(",", ":"))); print("MAPA_JSON_FIM")
+          PY
