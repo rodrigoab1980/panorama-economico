@@ -428,8 +428,9 @@ function renderMapa() {
     const rotulo = sb.h > 46 && sb.w > 70;
     const topo = rotulo ? 17 : 0;
     const acoes = squarify(sb.acoes, 0, topo, sb.w, sb.h - topo).map((a) => {
-      const fonte = Math.max(10, Math.min(22, a.w / 4.6, a.h / 2.8));
-      const texto = a.w > 30 && a.h > 18;
+      // A letra acompanha o bloco; abaixo de ~8 px o texto some (o nome segue no tooltip).
+      const fonte = Math.min(22, a.h / 2.6, (a.w - 6) / (a.ticker.length * 0.68));
+      const texto = fonte >= 8;
       const pct = `${sinal(a.variacao_pct)}${num(a.variacao_pct, 2)}%`;
       const dica = `${a.nome} (${a.ticker}) · ${moeda[a.moeda] || a.moeda} ${num(a.ultimo, 2)} · ${pct}`;
       const link = `https://br.tradingview.com/symbols/${a.bolsa ? `${a.bolsa}-` : ""}${a.ticker}/`;
