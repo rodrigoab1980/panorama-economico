@@ -100,7 +100,7 @@ const MAPAS = {
     "Financeiro": ["ITUB4", "BBDC4", "BBAS3", "BPAC11", "ITSA4", "B3SA3", "SANB11", "BBSE3"],
     "Petróleo e gás": ["PETR4", "PETR3", "PRIO3", "VBBR3", "UGPA3"],
     "Mineração e siderurgia": ["VALE3", "GGBR4", "CSNA3"],
-    "Energia e saneamento": ["ELET3", "EQTL3", "SBSP3", "CMIG4", "ENGI11", "CPFE3"],
+    "Energia e saneamento": ["AXIA3", "EQTL3", "SBSP3", "CMIG4", "ENGI11", "CPFE3"],
     "Consumo": ["ABEV3", "RADL3", "LREN3", "ASAI3"],
     "Indústria e transporte": ["WEGE3", "EMBJ3", "RENT3", "RAIL3"],
     "Papel e celulose": ["SUZB3", "KLBN11"],
@@ -109,6 +109,14 @@ const MAPAS = {
   },
 };
 const SUFIXO_MAPA = { SPX500: "", IBOV: "-BR" };
+// No Ibovespa o valor de mercado da CNBC não serve (units e duas classes da mesma empresa saem distorcidos),
+// então o tamanho do bloco é o peso aproximado de cada ação na carteira do índice, em %. Revisar de vez em quando.
+const PESO_IBOV = {
+  VALE3: 11, ITUB4: 8.5, PETR4: 7, PETR3: 4.5, BBDC4: 3.5, AXIA3: 3.5, SBSP3: 3, B3SA3: 3, BBAS3: 3, BPAC11: 2.8,
+  ITSA4: 2.5, WEGE3: 2.5, ABEV3: 2.5, EQTL3: 2, EMBJ3: 2, RDOR3: 1.8, SUZB3: 1.5, PRIO3: 1.5, RENT3: 1.5, VBBR3: 1.2,
+  RADL3: 1.2, UGPA3: 1, BBSE3: 1, CMIG4: 1, GGBR4: 1, VIVT3: 1, TIMS3: 0.8, RAIL3: 0.8, LREN3: 0.8, ENGI11: 0.7,
+  KLBN11: 0.6, CPFE3: 0.5, HAPV3: 0.5, SANB11: 0.4, ASAI3: 0.4, CSNA3: 0.3,
+};
 
 const FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
 const PAIS_FF = { USD: "EUA", EUR: "Zona do Euro", GBP: "Reino Unido", JPY: "Japão", CNY: "China", CAD: "Canadá", AUD: "Austrália", NZD: "Nova Zelândia", CHF: "Suíça" };
@@ -247,7 +255,8 @@ async function coletarMapa() {
       const ultimo = num(q.last);
       const variacao_pct = q.change === "UNCH" ? 0 : num(q.change_pct);
       if (ultimo == null || variacao_pct == null) return null;
-      return { ticker: t, nome: q.altName || q.name || t, setor, ultimo, moeda: q.currencyCode || "", variacao_pct, valor_mercado: bilhoes(q.mktcapView), bolsa: bolsa(q.exchange) };
+      return { ticker: t, nome: q.altName || q.name || t, setor, ultimo, moeda: q.currencyCode || "", variacao_pct, valor_mercado: bilhoes(q.mktcapView), bolsa: bolsa(q.exchange),
+        tamanho: id === "IBOV" ? PESO_IBOV[t] ?? null : bilhoes(q.mktcapView) };
     }).filter(Boolean));
   }
   const total = Object.values(mapas).reduce((s, l) => s + l.length, 0);

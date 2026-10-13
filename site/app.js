@@ -418,10 +418,10 @@ function renderMapa() {
   if (!lista?.length) { el.innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
   const { width: W, height: H } = el.getBoundingClientRect();
   if (W < 20 || H < 20) return;
-  // Sem valor de mercado, a ação entra com o menor tamanho do mapa.
-  const menor = Math.min(...lista.map((a) => a.valor_mercado).filter((v) => v > 0)) || 1;
+  // "tamanho" = valor de mercado (EUA) ou peso no índice (Ibovespa); sem ele, a ação entra com o menor tamanho do mapa.
+  const menor = Math.min(...lista.map((a) => a.tamanho).filter((v) => v > 0)) || 1;
   const setores = {};
-  for (const a of lista) (setores[a.setor] ||= []).push({ ...a, valor: a.valor_mercado > 0 ? a.valor_mercado : menor });
+  for (const a of lista) (setores[a.setor] ||= []).push({ ...a, valor: a.tamanho > 0 ? a.tamanho : menor });
   const blocosSetor = squarify(Object.entries(setores).map(([nome, acoes]) => ({ nome, acoes, valor: acoes.reduce((s, a) => s + a.valor, 0) })), 0, 0, W, H);
   const moeda = { USD: "US$", BRL: "R$" };
   const html = blocosSetor.map((sb) => {
