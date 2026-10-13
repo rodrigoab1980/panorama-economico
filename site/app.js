@@ -3,6 +3,7 @@
 
 const TZ = "America/Sao_Paulo";
 const REFRESH_MS = 5 * 60 * 1000;
+const MAPA_REFRESH_MS = 60 * 1000;
 
 // Abas de ativos: [símbolo TradingView, nome exibido]. "extras" vem de data/cotacoes.json (CNBC)
 // para o que os widgets gratuitos não mostram (Kospi, juros globais, minério de ferro).
@@ -366,6 +367,17 @@ function montarMapas() {
   };
   $("#mapas-abas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) abrir(b.dataset.mapa); });
   abrir("SPX500");
+
+  // O widget do mapa só busca os dados ao carregar; recarrega a cada minuto para não ficar defasado.
+  // Pula a recarga com a aba do navegador oculta ou com o mouse sobre o mapa (zoom/tooltip em uso).
+  let mouseNoMapa = false;
+  $("#mapa").addEventListener("mouseenter", () => { mouseNoMapa = true; });
+  $("#mapa").addEventListener("mouseleave", () => { mouseNoMapa = false; });
+  setInterval(() => {
+    if (document.hidden || mouseNoMapa) return;
+    const atual = document.querySelector('#mapas-abas button[aria-selected="true"]');
+    abrir(atual ? atual.dataset.mapa : "SPX500");
+  }, MAPA_REFRESH_MS);
 }
 
 function montarFita() {
