@@ -5,7 +5,7 @@ Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos di
 - **Resumo do dia** escrito pelo Claude: tom do mercado, Ásia, Europa, EUA, Brasil e emergentes, commodities e juros, pontos-chave e as notícias que podem mexer com os preços. É refeito a cada hora, das 6h às 20h.
 - **Como estão os mercados**: placar com bolsas, câmbio, commodities e juros de 10 anos (CNBC).
 - **Ativos em abas** (widgets TradingView, atraso de até 15 min): Futuros EUA, Europa, Ásia/Pacífico, Dólar DXY, Emergentes, Títulos Brasil (curva DI), Títulos EUA, Metais, Agrícolas, B3, Energia e Futuros.
-- **Mapa de ações** do S&P 500 e do Ibovespa.
+- **Mapa de ações** do S&P 500 e do Ibovespa, desenhado pelo próprio site com cotações da CNBC (atualiza a cada 15 minutos). Cor = variação do dia; tamanho = valor de mercado (EUA) ou peso aproximado no índice (Ibovespa). As listas ficam em `MAPAS` e `PESO_IBOV`, no início de `scripts/update.mjs`.
 - **Notícias ao vivo**: InfoMoney, Valor, Money Times, Investing, CNBC, MarketWatch, Yahoo Finance e Google News. Atualizadas a cada 15 minutos.
 - **Agenda**: destaques do dia e calendário do Investing.com, mais os eventos de 3 estrelas da semana.
 

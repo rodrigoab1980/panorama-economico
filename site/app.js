@@ -3,7 +3,6 @@
 
 const TZ = "America/Sao_Paulo";
 const REFRESH_MS = 5 * 60 * 1000;
-const MAPA_REFRESH_MS = 60 * 1000;
 
 // Abas de ativos: [símbolo TradingView, nome exibido]. "extras" vem de data/cotacoes.json (CNBC)
 // para o que os widgets gratuitos não mostram (Kospi, juros globais, minério de ferro).
@@ -356,28 +355,93 @@ function montarAbas() {
   abrir(inicial);
 }
 
-function montarMapas() {
-  const abrir = (fonte) => {
-    document.querySelectorAll("#mapas-abas button").forEach((b) => b.setAttribute("aria-selected", b.dataset.mapa === fonte));
-    widgetTV($("#mapa"), "embed-widget-stock-heatmap.js", {
-      dataSource: fonte, exchanges: [], grouping: "sector", blockSize: "market_cap_basic", blockColor: "change",
-      hasTopBar: false, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false,
-      width: "100%", height: "100%",
-    });
-  };
-  $("#mapas-abas").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) abrir(b.dataset.mapa); });
-  abrir("SPX500");
+// Mapa de ações desenhado aqui (treemap), com as cotações da CNBC em data/mapa.json:
+// área = valor de mercado, cor = variação do dia, blocos agrupados por setor.
+let dadosMapa = null;
+let mapaAtual = "SPX500";
 
-  // O widget do mapa só busca os dados ao carregar; recarrega a cada minuto para não ficar defasado.
-  // Pula a recarga com a aba do navegador oculta ou com o mouse sobre o mapa (zoom/tooltip em uso).
-  let mouseNoMapa = false;
-  $("#mapa").addEventListener("mouseenter", () => { mouseNoMapa = true; });
-  $("#mapa").addEventListener("mouseleave", () => { mouseNoMapa = false; });
-  setInterval(() => {
-    if (document.hidden || mouseNoMapa) return;
-    const atual = document.querySelector('#mapas-abas button[aria-selected="true"]');
-    abrir(atual ? atual.dataset.mapa : "SPX500");
-  }, MAPA_REFRESH_MS);
+function montarMapas() {
+  $("#mapas-abas").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    mapaAtual = b.dataset.mapa;
+    document.querySelectorAll("#mapas-abas button").forEach((x) => x.setAttribute("aria-selected", x === b));
+    renderMapa();
+  });
+  // Redesenha quando a caixa muda de tamanho (GridStack, janela, celular).
+  let pendente = false;
+  new ResizeObserver(() => {
+    if (pendente) return;
+    pendente = true;
+    requestAnimationFrame(() => { pendente = false; renderMapa(); });
+  }).observe($("#mapa"));
+}
+
+// Algoritmo "squarified": divide o retângulo em blocos proporcionais ao valor, o mais quadrados possível.
+function squarify(itens, x, y, w, h) {
+  const total = itens.reduce((s, i) => s + i.valor, 0);
+  if (!total || w <= 0 || h <= 0) return [];
+  const fila = itens.map((i) => ({ ...i, area: (i.valor / total) * w * h })).sort((a, b) => b.area - a.area);
+  const pior = (linha, lado) => {
+    const soma = linha.reduce((s, i) => s + i.area, 0);
+    const max = linha[0].area, min = linha[linha.length - 1].area;
+    return Math.max((lado * lado * max) / (soma * soma), (soma * soma) / (lado * lado * min));
+  };
+  const saida = [];
+  while (fila.length) {
+    const lado = Math.min(w, h);
+    const linha = [fila.shift()];
+    while (fila.length && pior([...linha, fila[0]], lado) <= pior(linha, lado)) linha.push(fila.shift());
+    const espessura = linha.reduce((s, i) => s + i.area, 0) / lado;
+    let pos = 0;
+    for (const i of linha) {
+      const comp = i.area / espessura;
+      saida.push(w >= h ? { ...i, x, y: y + pos, w: espessura, h: comp } : { ...i, x: x + pos, y, w: comp, h: espessura });
+      pos += comp;
+    }
+    if (w >= h) { x += espessura; w -= espessura; } else { y += espessura; h -= espessura; }
+  }
+  return saida;
+}
+
+// Cinza neutro perto de 0%; verde ou vermelho cada vez mais forte até ±3%.
+function corVariacao(v) {
+  const t = Math.min(Math.abs(v) / 3, 1);
+  const [a, b] = [[52, 60, 76], v >= 0 ? [34, 150, 88] : [204, 62, 68]];
+  return `rgb(${a.map((c, i) => Math.round(c + (b[i] - c) * t)).join(",")})`;
+}
+
+function renderMapa() {
+  const el = $("#mapa");
+  const lista = dadosMapa?.mapas?.[mapaAtual];
+  $("#mapa-hora").textContent = dadosMapa?.atualizado ? `CNBC, atualizado ${quando(dadosMapa.atualizado)}` : "";
+  if (!lista?.length) { el.innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
+  const { width: W, height: H } = el.getBoundingClientRect();
+  if (W < 20 || H < 20) return;
+  // "tamanho" = valor de mercado (EUA) ou peso no índice (Ibovespa); sem ele, a ação entra com o menor tamanho do mapa.
+  const menor = Math.min(...lista.map((a) => a.tamanho).filter((v) => v > 0)) || 1;
+  const setores = {};
+  for (const a of lista) (setores[a.setor] ||= []).push({ ...a, valor: a.tamanho > 0 ? a.tamanho : menor });
+  const blocosSetor = squarify(Object.entries(setores).map(([nome, acoes]) => ({ nome, acoes, valor: acoes.reduce((s, a) => s + a.valor, 0) })), 0, 0, W, H);
+  const moeda = { USD: "US$", BRL: "R$" };
+  const html = blocosSetor.map((sb) => {
+    const rotulo = sb.h > 46 && sb.w > 70;
+    const topo = rotulo ? 17 : 0;
+    const acoes = squarify(sb.acoes, 0, topo, sb.w, sb.h - topo).map((a) => {
+      // A letra acompanha o bloco; abaixo de ~8 px o texto some (o nome segue no tooltip).
+      const fonte = Math.min(22, a.h / 2.6, (a.w - 6) / (a.ticker.length * 0.68));
+      const texto = fonte >= 8;
+      const pct = `${sinal(a.variacao_pct)}${num(a.variacao_pct, 2)}%`;
+      const dica = `${a.nome} (${a.ticker}) · ${moeda[a.moeda] || a.moeda} ${num(a.ultimo, 2)} · ${pct}`;
+      const link = `https://br.tradingview.com/symbols/${a.bolsa ? `${a.bolsa}-` : ""}${a.ticker}/`;
+      return `<a class="mapa-acao" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(dica)}"
+        style="left:${a.x}px;top:${a.y}px;width:${a.w}px;height:${a.h}px;background:${corVariacao(a.variacao_pct)};font-size:${fonte.toFixed(1)}px">
+        ${texto ? `<b>${esc(a.ticker)}</b>${a.h > fonte * 2.6 ? `<span>${pct}</span>` : ""}` : ""}</a>`;
+    }).join("");
+    return `<div class="mapa-setor" style="left:${sb.x}px;top:${sb.y}px;width:${sb.w}px;height:${sb.h}px">
+      ${rotulo ? `<div class="mapa-setor-nome">${esc(sb.nome)}</div>` : ""}${acoes}</div>`;
+  }).join("");
+  el.innerHTML = `<div class="mapa-treemap">${html}</div>`;
 }
 
 function montarFita() {
@@ -506,7 +570,9 @@ function montarGrade() {
 // ---------- ciclo ----------
 
 async function atualizarDados() {
-  const [resumo, cotacoes, noticias, agenda] = await Promise.all(["resumo.json", "cotacoes.json", "noticias.json", "agenda.json"].map(carregar));
+  const [resumo, cotacoes, noticias, agenda, mapa] = await Promise.all(["resumo.json", "cotacoes.json", "noticias.json", "agenda.json", "mapa.json"].map(carregar));
+  dadosMapa = mapa;
+  renderMapa();
   renderResumo(resumo);
   renderPlacar(cotacoes);
   atualizarNoticias(noticias);

@@ -83,6 +83,41 @@ const QUOTES = [
   { grupo: "Juros", s: "MX10Y-MX", nome: "México 10 anos" },
 ];
 
+// Ações do mapa (CNBC), agrupadas por setor. O tamanho de cada bloco vem do valor de mercado
+// informado pela própria CNBC; símbolos que a CNBC não reconhecer são ignorados.
+const MAPAS = {
+  SPX500: {
+    "Tecnologia": ["NVDA", "AAPL", "MSFT", "AVGO", "ORCL", "PLTR", "AMD", "CSCO", "IBM", "CRM", "MU", "QCOM", "TXN", "ADBE", "NOW", "INTU", "AMAT"],
+    "Comunicação": ["GOOGL", "META", "NFLX", "TMUS", "DIS", "T", "VZ"],
+    "Consumo": ["AMZN", "TSLA", "WMT", "COST", "HD", "PG", "KO", "PEP", "MCD"],
+    "Financeiro": ["BRK.B", "JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "AXP", "C", "BLK"],
+    "Saúde": ["LLY", "UNH", "JNJ", "ABBV", "MRK", "ABT", "TMO", "ISRG", "AMGN", "PFE"],
+    "Energia": ["XOM", "CVX", "COP"],
+    "Indústria": ["GE", "CAT", "RTX", "HON", "UNP", "BA", "LMT"],
+    "Materiais e utilidades": ["LIN", "NEE"],
+  },
+  IBOV: {
+    "Financeiro": ["ITUB4", "BBDC4", "BBAS3", "BPAC11", "ITSA4", "B3SA3", "SANB11", "BBSE3"],
+    "Petróleo e gás": ["PETR4", "PETR3", "PRIO3", "VBBR3", "UGPA3"],
+    "Mineração e siderurgia": ["VALE3", "GGBR4", "CSNA3"],
+    "Energia e saneamento": ["AXIA3", "EQTL3", "SBSP3", "CMIG4", "ENGI11", "CPFE3"],
+    "Consumo": ["RADL3", "LREN3", "ASAI3"],
+    "Indústria e transporte": ["WEGE3", "EMBJ3", "RENT3", "RAIL3"],
+    "Papel e celulose": ["SUZB3", "KLBN11"],
+    "Saúde": ["RDOR3", "HAPV3"],
+    "Telecom": ["VIVT3", "TIMS3"],
+  },
+};
+const SUFIXO_MAPA = { SPX500: "", IBOV: "-BR" };
+// No Ibovespa o valor de mercado da CNBC não serve (units e duas classes da mesma empresa saem distorcidos),
+// então o tamanho do bloco é o peso aproximado de cada ação na carteira do índice, em %. Revisar de vez em quando.
+const PESO_IBOV = {
+  VALE3: 11, ITUB4: 8.5, PETR4: 7, PETR3: 4.5, BBDC4: 3.5, AXIA3: 3.5, SBSP3: 3, B3SA3: 3, BBAS3: 3, BPAC11: 2.8,
+  ITSA4: 2.5, WEGE3: 2.5, EQTL3: 2, EMBJ3: 2, RDOR3: 1.8, SUZB3: 1.5, PRIO3: 1.5, RENT3: 1.5, VBBR3: 1.2,
+  RADL3: 1.2, UGPA3: 1, BBSE3: 1, CMIG4: 1, GGBR4: 1, VIVT3: 1, TIMS3: 0.8, RAIL3: 0.8, LREN3: 0.8, ENGI11: 0.7,
+  KLBN11: 0.6, CPFE3: 0.5, HAPV3: 0.5, SANB11: 0.4, ASAI3: 0.4, CSNA3: 0.3,
+};
+
 const FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
 const PAIS_FF = { USD: "EUA", EUR: "Zona do Euro", GBP: "Reino Unido", JPY: "Japão", CNY: "China", CAD: "Canadá", AUD: "Austrália", NZD: "Nova Zelândia", CHF: "Suíça" };
 
@@ -190,6 +225,43 @@ async function coletarCotacoes() {
     };
   }).filter(Boolean);
   return { atualizado: agora.toISOString(), fonte: "CNBC (atraso de até 15 min)", ativos };
+}
+
+// ---------- mapa de ações ----------
+
+async function cotarCNBC(simbolos) {
+  const porSimbolo = {};
+  for (let i = 0; i < simbolos.length; i += 40) {
+    const lote = simbolos.slice(i, i + 40);
+    const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(lote.join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
+    const j = await get(url, { json: true });
+    for (const q of j?.FormattedQuoteResult?.FormattedQuote || []) porSimbolo[q.symbol] = q;
+  }
+  return porSimbolo;
+}
+
+async function coletarMapa() {
+  const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[,%+]/g, "")); return Number.isFinite(n) ? n : null; };
+  // "5.487T" -> 5487 (em bilhões)
+  const bilhoes = (v) => { const m = /^([\d.]+)([TBM])$/.exec(String(v ?? "")); return m ? +m[1] * { T: 1000, B: 1, M: 0.001 }[m[2]] : null; };
+  const bolsa = (ex = "") => (/sao paulo/i.test(ex) ? "BMFBOVESPA" : /nasdaq/i.test(ex) ? "NASDAQ" : /nyse/i.test(ex) ? "NYSE" : "");
+  const todos = Object.entries(MAPAS).flatMap(([id, setores]) => Object.values(setores).flat().map((t) => t + SUFIXO_MAPA[id]));
+  const cot = await cotarCNBC(todos);
+  const mapas = {};
+  for (const [id, setores] of Object.entries(MAPAS)) {
+    mapas[id] = Object.entries(setores).flatMap(([setor, tickers]) => tickers.map((t) => {
+      const q = cot[t + SUFIXO_MAPA[id]];
+      if (!q || q.last == null || q.code !== 0) return null;
+      const ultimo = num(q.last);
+      const variacao_pct = q.change === "UNCH" ? 0 : num(q.change_pct);
+      if (ultimo == null || variacao_pct == null) return null;
+      return { ticker: t, nome: q.altName || q.name || t, setor, ultimo, moeda: q.currencyCode || "", variacao_pct, valor_mercado: bilhoes(q.mktcapView), bolsa: bolsa(q.exchange),
+        tamanho: id === "IBOV" ? PESO_IBOV[t] ?? null : bilhoes(q.mktcapView) };
+    }).filter(Boolean));
+  }
+  const total = Object.values(mapas).reduce((s, l) => s + l.length, 0);
+  if (!total) throw new Error("nenhuma ação retornada");
+  return { atualizado: agora.toISOString(), fonte: "CNBC", mapas };
 }
 
 // ---------- agenda ----------
@@ -334,6 +406,7 @@ const [noticias, cotacoes, agenda] = await Promise.all([
   tentar("notícias", coletarNoticias, "noticias.json"),
   tentar("cotações", coletarCotacoes, "cotacoes.json"),
   tentar("agenda", coletarAgenda, "agenda.json"),
+  tentar("mapa", coletarMapa, "mapa.json"),
 ]);
 
 const resumoAnterior = await lerAnterior("resumo.json");
