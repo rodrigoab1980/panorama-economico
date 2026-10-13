@@ -1,0 +1,11 @@
+name: Sonda CNBC (temporário)
+on:
+  push:
+    branches: [ccr-8662241c-c4ftxr]
+jobs:
+  sonda:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          U='https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&symbols='
+          curl -sS -A 'Mozilla/5.0' "${U}NVDA|PETR4-BR|VALE3-BR|ITUB4-BR|BRK.B" | python3 -m json.tool
