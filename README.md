@@ -12,7 +12,7 @@ Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos di
 ## Como funciona
 
 ```
-GitHub Actions (a cada 15 min, seg–sex, 6h–20h45)
+GitHub Actions (a cada 15 min, seg–sex, 6h07–20h52)
   └─ scripts/update.mjs → site/data/*.json  (notícias, cotações, agenda, resumo)
   └─ publica a pasta site/ no GitHub Pages
 Navegador
