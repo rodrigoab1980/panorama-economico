@@ -2,8 +2,9 @@ name: Atualizar panorama
 
 on:
   schedule:
-    # A cada 15 min, de segunda a sexta, das 06:00 às 20:45 de Brasília (09–23 UTC).
-    - cron: "*/15 9-23 * * 1-5"
+    # A cada 15 min, de segunda a sexta, das 06:07 às 20:52 de Brasília (09–23 UTC).
+    # Minutos "quebrados" para fugir dos horários cheios (:00, :15...), em que o GitHub mais descarta execuções agendadas.
+    - cron: "7,22,37,52 9-23 * * 1-5"
   push:
     branches: [main]
   workflow_dispatch:
