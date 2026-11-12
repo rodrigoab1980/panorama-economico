@@ -6,6 +6,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [1.0.0] - 2026-11-12
+
+Primeira versão estável: testes e CI, lógica própria (histórico diário, variação semanal e mensal, alertas), atualização confiável com gatilho externo e documentação das decisões de arquitetura.
+
 ### Adicionado
 - Testes automatizados com `node:test` (`npm test`), sem dependências novas.
 - Licença MIT.
@@ -16,9 +20,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Atualização confiável com gatilho externo (#15): o cron-job.org dispara o workflow pela API do GitHub (`workflow_dispatch`) a cada 15 min, com um token fine-grained restrito a este repositório (só *Actions: Read and write*, com validade) configurado à mão no cron-job.org, nunca no repositório. O `schedule` do GitHub fica de reserva, e uma guarda (`scripts/guarda.mjs`, com testes) faz a execução agendada pular quando a externa já rodou nos últimos 15 min. A `concurrency` passou para o job de atualização. Passo a passo no README.
 - Workflow de CI (`.github/workflows/ci.yml`) que roda `npm test` em todo PR e na `main` (Node 24 e 26), com badge no README.
 
+- Documentação final (#27): seções de estrutura do repositório, decisões de arquitetura (com as alternativas consideradas) e como contribuir no README.
+
 ### Alterado
 - A lógica pura de `scripts/update.mjs` (leitura de RSS, filtro e deduplicação de notícias, cotações, mapa de ações, agenda e decisão de gerar o resumo) foi para `scripts/logica.mjs`, sem rede nem disco. O comportamento e os JSON gerados não mudaram.
-
 - O resumo do fim do dia passa a ser arquivado em `arquivo/AAAA-MM-DD.json` na branch `dados`, e não mais na `main`. Assim o robô não faz mais push na `main`, que pode ser protegida com o CI obrigatório. Falhas ao gravar na `dados` não impedem o deploy (#13).
 
 ### Corrigido
@@ -34,3 +39,6 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Mapa de ações próprio com cotações da CNBC (#2, #3).
 - Agendamento em minutos quebrados para reduzir execuções descartadas pelo GitHub (#4).
 - Instruções do projeto (`CLAUDE.md`) e comando `/proxima-issue` (#5).
+
+[Não lançado]: https://github.com/rodrigoab1980/panorama-economico/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/rodrigoab1980/panorama-economico/releases/tag/v1.0.0
