@@ -12,6 +12,7 @@
   --primeira-luz: #F2C14E; /* só para "agora" */
   --alta: #3CCB7F;
   --baixa: #F2555A;
+  --aviso: #F2994A;  /* dado desatualizado */
   --raio: 6px;
   --largo: 118%;     /* relógio */
   --estreito: 88%;   /* listas densas */
@@ -139,6 +140,11 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 }
 .grid-stack .painel:hover h2::before { opacity: 1; }
 .carimbo { font-size: 14px; color: var(--papel-3); }
+/* Dado sem atualização há mais do que o limite (ver site/atraso.js). */
+.carimbo.atrasado {
+  color: var(--aviso); background: rgba(242, 153, 74, .12); border: 1px solid rgba(242, 153, 74, .45);
+  border-radius: 999px; padding: 1px 9px; cursor: help;
+}
 .vazio { color: var(--papel-3); margin: 8px 0; }
 .estrelas { color: var(--primeira-luz); letter-spacing: 1px; }
 

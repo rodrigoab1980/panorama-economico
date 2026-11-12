@@ -1,8 +1,12 @@
 // Panorama Econômico — página estática. Widgets da TradingView para cotações ao vivo,
 // e arquivos em data/*.json gerados pelo GitHub Actions a cada 15 minutos.
+import { estaAtrasado, textoAtualizacao } from "./atraso.js";
 
 const TZ = "America/Sao_Paulo";
 const REFRESH_MS = 5 * 60 * 1000;
+// Minutos de horário de execução (seg–sex, 6h–21h) sem atualização até o bloco ser marcado como desatualizado.
+// O resumo da IA é refeito de hora em hora, então tem folga maior.
+const LIMITE_ATRASO_MIN = { padrao: 60, resumo: 120 };
 
 // Abas de ativos: [símbolo TradingView, nome exibido]. "extras" vem de data/cotacoes.json (CNBC)
 // para o que os widgets gratuitos não mostram (Kospi, juros globais, minério de ferro).
@@ -99,13 +103,6 @@ const PLACAR = [
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const hhmm = (iso, tz = TZ) => new Intl.DateTimeFormat("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
-const quando = (iso) => {
-  if (!iso) return "";
-  const min = Math.round((Date.now() - new Date(iso)) / 60000);
-  if (min < 1) return "agora há pouco";
-  if (min < 60) return `há ${min} min`;
-  return `às ${hhmm(iso)}`;
-};
 const num = (v, casas = 2) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 const classe = (v) => (v > 0 ? "sobe" : v < 0 ? "desce" : "igual");
 const sinal = (v) => (v > 0 ? "+" : "");
@@ -159,6 +156,17 @@ async function sincronizarRelogio() {
   } else {
     $("#relogio-principal").title = "Usando o relógio deste computador (não foi possível sincronizar).";
   }
+}
+
+// Carimbo "atualizado há X · dd/mm hh:mm" de cada bloco; destaca quando o dado está desatualizado.
+function carimbar(el, iso, { fonte = "", limiteMin = LIMITE_ATRASO_MIN.padrao } = {}) {
+  const agora = agoraCerto();
+  const atrasado = estaAtrasado(iso, agora, limiteMin);
+  el.classList.toggle("atrasado", atrasado);
+  el.textContent = iso ? `${atrasado ? "⚠ desatualizado · " : ""}${fonte}atualizado ${textoAtualizacao(iso, agora)}` : "";
+  el.title = atrasado
+    ? `Sem atualização há mais de ${limiteMin / 60 === 1 ? "1 hora" : `${limiteMin / 60} horas`} em horário de coleta (seg–sex, 6h–21h). A coleta pode ter falhado; este bloco mostra o último dado disponível.`
+    : "";
 }
 
 function tiqueRelogio() {
@@ -273,7 +281,7 @@ function renderResumo(r) {
     $("#resumo-hora").textContent = "";
     return;
   }
-  $("#resumo-hora").textContent = `atualizado ${quando(r.gerado_em)}`;
+  carimbar($("#resumo-hora"), r.gerado_em, { limiteMin: LIMITE_ATRASO_MIN.resumo });
   // Ponto verde no botão quando há um resumo que ainda não foi aberto.
   const gaveta = $("#gaveta-resumo");
   gaveta.dataset.gerado = r.gerado_em;
@@ -311,7 +319,7 @@ function linhaCotacao(a) {
 
 function renderPlacar(c) {
   if (!c) { $("#placar-corpo").innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
-  $("#placar-hora").textContent = `CNBC, atualizado ${quando(c.atualizado)}`;
+  carimbar($("#placar-hora"), c.atualizado, { fonte: "CNBC, " });
   const mapa = Object.fromEntries(c.ativos.map((a) => [a.simbolo, a]));
   $("#placar-corpo").innerHTML = PLACAR.map(([titulo, simbolos]) => {
     const linhas = simbolos.map((s) => mapa[s]).filter(Boolean).map(linhaCotacao).join("");
@@ -414,7 +422,7 @@ function corVariacao(v) {
 function renderMapa() {
   const el = $("#mapa");
   const lista = dadosMapa?.mapas?.[mapaAtual];
-  $("#mapa-hora").textContent = dadosMapa?.atualizado ? `CNBC, atualizado ${quando(dadosMapa.atualizado)}` : "";
+  carimbar($("#mapa-hora"), dadosMapa?.atualizado, { fonte: "CNBC, " });
   if (!lista?.length) { el.innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
   const { width: W, height: H } = el.getBoundingClientRect();
   if (W < 20 || H < 20) return;
@@ -480,7 +488,7 @@ function montarNoticias() {
 function atualizarNoticias(dados) {
   if (!dados) return;
   estadoNoticias.itens = dados.itens;
-  $("#noticias-hora").textContent = `atualizado ${quando(dados.atualizado)}`;
+  carimbar($("#noticias-hora"), dados.atualizado);
   renderNoticias();
   // Marca como "visto" depois de exibir, para destacar só o que chegar na próxima atualização.
   const maisRecente = dados.itens[0]?.publicado;
