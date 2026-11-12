@@ -1,0 +1,1 @@
+Pegue a próxima issue aberta do roteiro (use gh issue list). Se não existir, crie-a a partir do roteiro do CLAUDE.md. Crie a branch, implemente com testes, rode os testes, faça commits no padrão e abra o PR com gh pr create. Mostre o diff e a descrição do PR e pare para eu aprovar. Argumento opcional: $ARGUMENTS (número da issue).
