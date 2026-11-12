@@ -10,6 +10,7 @@ Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos di
 - **Mapa de ações** do S&P 500 e do Ibovespa, desenhado pelo próprio site com cotações da CNBC (atualiza a cada 15 minutos). Cor = variação do dia; tamanho = valor de mercado (EUA) ou peso aproximado no índice (Ibovespa). As listas ficam em `MAPAS` e `PESO_IBOV`, no início de `scripts/update.mjs`.
 - **Notícias ao vivo**: InfoMoney, Valor, Money Times, Investing, CNBC, MarketWatch, Yahoo Finance (manchetes de S&P 500, Dow Jones e Nasdaq) e Google News. Atualizadas a cada 15 minutos. Se uma fonte falhar, as demais seguem normalmente e as notícias já coletadas continuam na página.
 - **Agenda**: destaques do dia e calendário do Investing.com, mais os eventos de 3 estrelas da semana.
+- **Aviso de dado desatualizado**: cada bloco mostra quando foi atualizado ("há 5 min · 12/11 14:07"). Se uma coleta falhar, a página continua com o último dado disponível e o carimbo fica laranja com "⚠ desatualizado" depois de 1 h sem atualizar (2 h para o resumo). Só conta o horário de coleta (seg–sex, 6h–21h de Brasília), então nada fica marcado à noite nem no fim de semana. A regra fica em `site/atraso.js`.
 
 ## Como funciona
 
@@ -46,7 +47,7 @@ Depois abra http://localhost:8080.
 npm test
 ```
 
-Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
+Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a regra de dado desatualizado (`site/atraso.js`) e a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
 
 O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 22 e no 24. Ele não publica nada nem usa segredos.
 
