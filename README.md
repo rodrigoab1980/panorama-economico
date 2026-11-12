@@ -16,7 +16,10 @@ Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos di
 ## Como funciona
 
 ```
-GitHub Actions (a cada 15 min, seg–sex, 6h07–20h52)
+cron-job.org (a cada 15 min, seg–sex, 6h00–20h45) ── chama a API do GitHub ──┐
+GitHub Actions, schedule de reserva (6h07–20h52; pula se o externo já rodou) ─┤
+                                                                              ▼
+GitHub Actions: workflow "Atualizar panorama"
   └─ baixa a branch `dados` (histórico) na pasta dados/
   └─ scripts/update.mjs → site/data/*.json  (notícias, cotações, agenda, resumo)
   └─ a partir das 19h: grava o fechamento do dia e o resumo na branch `dados`
@@ -57,6 +60,58 @@ Um ativo entra na faixa "⚠ Fora do padrão hoje" quando a variação do dia (c
 - Passando o mouse sobre um alerta, aparece a oscilação típica usada na conta. Sobre o título da faixa, aparece a regra.
 
 Os três números são configuráveis (tabela abaixo). A lógica fica em `scripts/logica.mjs` (`avaliarMovimento`, `detectarAlertas`) e os testes em `test/alertas.test.mjs`. Os alertas vão para `cotacoes.json` (`alertas` e `criterio_alerta`).
+
+## Atualização confiável (cron-job.org)
+
+O agendamento do próprio GitHub (`schedule`) atrasa e às vezes descarta execuções. Por isso o gatilho principal é **externo**: o site gratuito [cron-job.org](https://cron-job.org) chama a API do GitHub a cada 15 minutos e manda rodar o workflow (`workflow_dispatch`).
+
+O `schedule` continua no workflow como **reserva**, nos minutos :07, :22, :37 e :52. Antes de atualizar, cada execução agendada passa por uma **guarda** (`scripts/guarda.mjs`): se o cron-job.org disparou o workflow nos últimos 15 minutos e essa execução não falhou, a agendada pula. Se o cron-job.org parar, a reserva assume sozinha. Na dúvida (a API do GitHub não responde), a guarda não pula.
+
+**O token fica só no cron-job.org.** Ele nunca vai para nenhum arquivo deste repositório nem para os Secrets. Ele só permite disparar e cancelar execuções do Actions **deste** repositório, e expira sozinho.
+
+### 1. Criar o token no GitHub
+
+1. No GitHub, clique na sua foto (canto superior direito) → **Settings**.
+2. No menu da esquerda, lá embaixo: **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+3. Preencha:
+   - **Token name:** `panorama-cron-job`
+   - **Expiration:** 90 dias (ou uma data em *Custom*). Anote quando vence.
+   - **Resource owner:** a sua conta.
+   - **Repository access:** *Only select repositories* → `panorama-economico`.
+   - **Permissions** → **Repository permissions** → **Actions:** *Read and write*. Não mexa em mais nada. O *Metadata: Read-only* entra sozinho.
+4. **Generate token** e copie o token (começa com `github_pat_`). Ele só aparece uma vez. Não cole em nenhum outro lugar além do passo 2.
+
+### 2. Criar o job no cron-job.org
+
+1. Entre (ou crie sua conta) em https://cron-job.org → **Cronjobs** → **Create cronjob**.
+2. Aba **Common**:
+   - **Title:** `Panorama econômico`
+   - **URL:** `https://api.github.com/repos/rodrigoab1980/panorama-economico/actions/workflows/atualizar.yml/dispatches`
+   - **Execution schedule:** *Custom*. Dias da semana: segunda a sexta. Horas: 6 a 20. Minutos: 0, 15, 30 e 45.
+   - **Time zone:** `America/Sao_Paulo`.
+   - Ligue **Notify me when… execution fails**, para saber se o token venceu.
+3. Aba **Advanced**:
+   - **Request method:** `POST`
+   - **Headers** (um por linha, em *Add header*):
+
+     | Key | Value |
+     |---|---|
+     | `Accept` | `application/vnd.github+json` |
+     | `Authorization` | `Bearer ` + o token do passo 1 (com o espaço depois de Bearer) |
+     | `X-GitHub-Api-Version` | `2022-11-28` |
+     | `Content-Type` | `application/json` |
+
+   - **Request body:** `{"ref":"main"}`
+4. **Test run**: a resposta deve ser **204** (ou 200). Em **Actions → Atualizar panorama** aparece uma execução nova, marcada como *workflow_dispatch*.
+5. **Create**.
+
+Respostas de erro mais comuns: **401** = token errado ou vencido; **403** = falta a permissão *Actions: Read and write* ou o repositório não foi selecionado; **404** = URL digitada errada; **422** = corpo diferente de `{"ref":"main"}`.
+
+### 3. Renovar antes de vencer
+
+O GitHub manda um e-mail alguns dias antes do vencimento. Em **Developer settings → Fine-grained tokens**, abra `panorama-cron-job` → **Regenerate token**, copie o novo token e troque o valor do header `Authorization` no job do cron-job.org. Se o token vencer, o site continua atualizando pela reserva do GitHub, só que com menos regularidade.
+
+Se o token vazar, apague-o na mesma tela (**Delete**) e gere outro.
 
 ## Configuração
 
