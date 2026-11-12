@@ -29,6 +29,19 @@ export const bolsa = (ex = "") => (/sao paulo/i.test(ex) ? "BMFBOVESPA" : /nasda
 
 // ---------- notícias ----------
 
+// Link vindo do feed (texto ou objeto com href). Devolve o link só se for uma URL absoluta http(s);
+// qualquer outra coisa (javascript:, data:, relativo, vazio, inválido) vira null.
+export function linkSeguro(link) {
+  const bruto = typeof link === "object" && link !== null ? link.href : link;
+  if (typeof bruto !== "string" || !bruto.trim()) return null;
+  try {
+    const { protocol } = new URL(bruto.trim());
+    return protocol === "http:" || protocol === "https:" ? bruto.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 // Converte o RSS já parseado (fast-xml-parser) de um feed em itens de notícia.
 export function itensDoFeed(xml, feed, agora) {
   let itens = xml?.rss?.channel?.item || [];
@@ -42,18 +55,19 @@ export function itensDoFeed(xml, feed, agora) {
       fonte = fonte.split(" - ")[0];
     }
     const data = new Date(it.pubDate || it["dc:date"] || agora.getTime());
-    return { titulo, link: typeof it.link === "object" ? it.link.href : it.link, fonte, regiao: feed.regiao, publicado: isNaN(data) ? agora.toISOString() : data.toISOString(), _filtrar: feed.filtrar };
+    return { titulo, link: linkSeguro(it.link), fonte, regiao: feed.regiao, publicado: isNaN(data) ? agora.toISOString() : data.toISOString(), _filtrar: feed.filtrar };
   });
 }
 
 // Junta notícias novas e anteriores: ordena da mais nova, descarta velhas (>36h) e do futuro (>1h),
+// descarta links que não sejam http(s) (inclusive os que já estavam no JSON anterior),
 // aplica o filtro de mercado nos feeds marcados e remove títulos repetidos.
 export function selecionarNoticias(novos, anterior, { agoraMs, palavrasMercado, maximo = 150 }) {
   const limite = agoraMs - 36 * 3600e3;
   const vistos = new Set();
   const itens = [];
   for (const n of [...novos, ...anterior].sort((a, b) => b.publicado.localeCompare(a.publicado))) {
-    if (!n.titulo || !n.link || new Date(n.publicado) < limite || new Date(n.publicado) > agoraMs + 3600e3) continue;
+    if (!n.titulo || !linkSeguro(n.link) || new Date(n.publicado) < limite || new Date(n.publicado) > agoraMs + 3600e3) continue;
     if (n._filtrar && !palavrasMercado.test(n.titulo)) continue;
     const k = chave(n.titulo);
     if (vistos.has(k)) continue;
