@@ -1,6 +1,8 @@
 name: Atualizar panorama
 
 on:
+  # O gatilho principal é externo: o cron-job.org chama a API do GitHub (workflow_dispatch) a cada 15 min.
+  # Veja "Atualização confiável" no README. O schedule abaixo fica de reserva, para quando o cron-job.org falhar.
   schedule:
     # A cada 15 min, de segunda a sexta, das 06:07 às 20:52 de Brasília (09–23 UTC).
     # Minutos "quebrados" para fugir dos horários cheios (:00, :15...), em que o GitHub mais descarta execuções agendadas.
@@ -18,15 +20,38 @@ permissions:
   contents: write
   pages: write
   id-token: write
-
-# Uma execução por vez; a nova cancela a anterior se ela ficar presa (ex.: aguardando o ambiente do Pages).
-concurrency:
-  group: panorama
-  cancel-in-progress: true
+  actions: read   # a guarda consulta as execuções recentes deste workflow
 
 jobs:
-  atualizar:
+  # Execução agendada (reserva) pula se o cron-job.org já disparou o workflow nos últimos 12 min.
+  # Fica fora da concurrency abaixo: se ficasse dentro, a agendada cancelaria a externa antes de decidir pular.
+  guarda:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    outputs:
+      pular: ${{ steps.guarda.outputs.pular }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - id: guarda
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/guarda.mjs
+
+  atualizar:
+    needs: guarda
+    # Roda sempre, exceto quando a guarda (só nas agendadas) mandou pular. `always()` porque a guarda
+    # é pulada nos outros eventos; se ela falhar, não há "pular=true" e a atualização roda.
+    if: always() && needs.guarda.outputs.pular != 'true'
+    runs-on: ubuntu-latest
+    # Uma atualização por vez; a nova cancela a anterior se ela ficar presa (ex.: aguardando o ambiente do Pages).
+    concurrency:
+      group: panorama
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
