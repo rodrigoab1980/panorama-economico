@@ -9,7 +9,7 @@ const JANELA_MIN = Number(process.env.GUARDA_JANELA_MIN || 12);
 let decisao = { pular: false };
 try {
   const r = await fetch(`https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/atualizar.yml/runs?per_page=20`, {
-    headers: { authorization: `Bearer ${GITHUB_TOKEN}`, accept: "application/vnd.github+json" },
+    headers: { accept: "application/vnd.github+json", ...(GITHUB_TOKEN ? { authorization: `Bearer ${GITHUB_TOKEN}` } : {}) },
     signal: AbortSignal.timeout(20000),
   });
   if (!r.ok) throw new Error(`${r.status} na API do GitHub`);
