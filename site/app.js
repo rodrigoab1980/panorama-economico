@@ -333,11 +333,30 @@ const CABECALHO_PLACAR = '<thead><tr><th></th><th class="n">Último</th><th clas
   + '<th class="n periodo" title="Variação desde o fechamento de 7 dias atrás">Sem.</th>'
   + '<th class="n periodo" title="Variação desde o fechamento de 30 dias atrás">Mês</th></tr></thead>';
 
+// Faixa "Fora do padrão hoje" (alertas calculados no servidor, em cotacoes.json).
+function faixaAlertas(alertas, crit) {
+  if (!alertas?.length) return "";
+  const itens = alertas.map((a) => {
+    const v = a.unidade === "bps" ? `${sinal(a.variacao)}${num(a.variacao, 1)} bps` : `${sinal(a.variacao)}${num(a.variacao, 2)}%`;
+    const det = a.criterio === "desvio"
+      ? `${num(a.vezes, 1)}× o normal`
+      : `acima de ${num(a.limite, 0)}${a.unidade === "bps" ? " bps" : "%"}`;
+    const dica = a.criterio === "desvio"
+      ? `Oscilação diária típica: ${num(a.normal, a.unidade === "bps" ? 1 : 2)}${a.unidade === "bps" ? " bps" : "%"} (últimos ${a.dias} dias)`
+      : "Histórico ainda curto: comparado com um limite fixo";
+    return `<li title="${esc(dica)}"><span class="alerta-nome">${esc(a.nome)}</span> <span class="${classe(a.variacao)}">${v}</span> <span class="alerta-det">${det}</span></li>`;
+  }).join("");
+  const regra = crit
+    ? `Movimento do dia ${num(crit.desvios, 1)}× maior que a oscilação típica do ativo. Com menos de ${crit.min_dias} dias de histórico: ${num(crit.pct, 1)}% ou ${num(crit.bps, 0)} bps.`
+    : "";
+  return `<div class="alertas" role="status"><h3 title="${esc(regra)}">⚠ Fora do padrão hoje</h3><ul>${itens}</ul></div>`;
+}
+
 function renderPlacar(c) {
   if (!c) { $("#placar-corpo").innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
   carimbar($("#placar-hora"), c.atualizado, { fonte: "CNBC, " });
   const mapa = Object.fromEntries(c.ativos.map((a) => [a.simbolo, a]));
-  $("#placar-corpo").innerHTML = PLACAR.map(([titulo, simbolos]) => {
+  $("#placar-corpo").innerHTML = faixaAlertas(c.alertas, c.criterio_alerta) + PLACAR.map(([titulo, simbolos]) => {
     const linhas = simbolos.map((s) => mapa[s]).filter(Boolean).map((a) => linhaCotacao(a, true)).join("");
     return linhas ? `<div class="placar-grupo"><h3>${titulo}</h3><table class="tabela">${CABECALHO_PLACAR}<tbody>${linhas}</tbody></table></div>` : "";
   }).join("");
