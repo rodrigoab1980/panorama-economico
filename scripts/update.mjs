@@ -31,7 +31,9 @@ const FEEDS = [
   { id: "gnews-mundo", regiao: "intl", url: "https://news.google.com/rss/search?q=stocks+OR+%22federal+reserve%22+OR+oil+OR+treasury+OR+tariffs+OR+OPEC+when:1d&hl=en-US&gl=US&ceid=US:en" },
   { id: "cnbc", nome: "CNBC", regiao: "intl", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html" },
   { id: "marketwatch", nome: "MarketWatch", regiao: "intl", url: "https://feeds.content.dowjones.io/public/rss/mw_topstories" },
-  { id: "yahoo", nome: "Yahoo Finance", regiao: "intl", url: "https://finance.yahoo.com/news/rssindex" },
+  // Manchetes ligadas a S&P 500, Dow Jones e Nasdaq. O antigo finance.yahoo.com/news/rssindex responde 404.
+  // Este endpoint recusa user-agents curtos com 429; o UA completo abaixo (constante UA) funciona.
+  { id: "yahoo", nome: "Yahoo Finance", regiao: "intl", url: "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC,%5EDJI,%5EIXIC&region=US&lang=en-US" },
 ];
 
 // Para feeds genéricos (ex.: Valor traz política, cultura...), só mantém o que toca mercado.
