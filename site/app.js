@@ -306,7 +306,17 @@ function renderResumo(r) {
 
 // ---------- placar ----------
 
-function linhaCotacao(a) {
+// Variação na semana / no mês (vem do histórico diário). "—" enquanto o histórico não cobre o período.
+function celulaPeriodo(p, juros, periodo) {
+  if (!p) return `<td class="n periodo" title="Sem histórico suficiente para ${periodo} ainda">—</td>`;
+  const v = juros ? p.variacao_bps : p.variacao_pct;
+  const txt = juros ? `${sinal(v)}${num(v, 0)} bps` : `${sinal(v)}${num(v, 1)}%`;
+  const [, mes, dia] = p.desde.split("-");
+  return `<td class="n periodo ${classe(v)}" title="${periodo}: desde o fechamento de ${dia}/${mes}">${txt}</td>`;
+}
+
+// `periodos`: só o placar mostra semana e mês; as tabelas das abas continuam com 3 colunas.
+function linhaCotacao(a, periodos = false) {
   const juros = a.variacao_bps != null;
   const valor = juros ? `${num(a.ultimo, 2)}%` : num(a.ultimo, a.ultimo < 20 ? 3 : 2);
   const v = juros ? a.variacao_bps : a.variacao_pct;
@@ -314,16 +324,22 @@ function linhaCotacao(a) {
   // "ES · S&P 500 futuro (dez/26)" vira o código do contrato em destaque + o nome.
   const [cod, nome] = a.nome.includes(" · ") ? a.nome.split(" · ") : [null, a.nome];
   const rotulo = cod ? `<span class="cod">${esc(cod)}</span> ${esc(nome)}` : esc(nome);
-  return `<tr><td>${rotulo}</td><td class="n">${valor}</td><td class="n ${classe(v)}">${txt}</td></tr>`;
+  const extra = periodos ? celulaPeriodo(a.semana, juros, "semana") + celulaPeriodo(a.mes, juros, "mês") : "";
+  return `<tr><td>${rotulo}</td><td class="n">${valor}</td><td class="n ${classe(v)}">${txt}</td>${extra}</tr>`;
 }
+
+// Cabeçalho das tabelas do placar (as colunas de semana e mês não se explicam sozinhas).
+const CABECALHO_PLACAR = '<thead><tr><th></th><th class="n">Último</th><th class="n">Dia</th>'
+  + '<th class="n periodo" title="Variação desde o fechamento de 7 dias atrás">Sem.</th>'
+  + '<th class="n periodo" title="Variação desde o fechamento de 30 dias atrás">Mês</th></tr></thead>';
 
 function renderPlacar(c) {
   if (!c) { $("#placar-corpo").innerHTML = '<p class="vazio">Sem dados no momento.</p>'; return; }
   carimbar($("#placar-hora"), c.atualizado, { fonte: "CNBC, " });
   const mapa = Object.fromEntries(c.ativos.map((a) => [a.simbolo, a]));
   $("#placar-corpo").innerHTML = PLACAR.map(([titulo, simbolos]) => {
-    const linhas = simbolos.map((s) => mapa[s]).filter(Boolean).map(linhaCotacao).join("");
-    return linhas ? `<div class="placar-grupo"><h3>${titulo}</h3><table class="tabela">${linhas}</table></div>` : "";
+    const linhas = simbolos.map((s) => mapa[s]).filter(Boolean).map((a) => linhaCotacao(a, true)).join("");
+    return linhas ? `<div class="placar-grupo"><h3>${titulo}</h3><table class="tabela">${CABECALHO_PLACAR}<tbody>${linhas}</tbody></table></div>` : "";
   }).join("");
   // Tabelas "extras" dentro das abas também usam estes dados.
   document.querySelectorAll("[data-extras]").forEach((el) => {
