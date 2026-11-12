@@ -2,7 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
   diaBR, horaMinBR, horaBR, decodificar, limpar, chave, numero, bilhoes, bolsa,
-  itensDoFeed, selecionarNoticias, indexarCNBC, montarCotacoes, simbolosMapa, montarMapas,
+  linkSeguro, itensDoFeed, selecionarNoticias, indexarCNBC, montarCotacoes, simbolosMapa, montarMapas,
   montarAgenda, precisaResumo, fmtAtivo, montarPedido, vincularNoticias,
 } from "../scripts/logica.mjs";
 
@@ -76,6 +76,49 @@ describe("números da CNBC", () => {
   });
 });
 
+describe("linkSeguro", () => {
+  test("aceita http e https, removendo espaços nas pontas", () => {
+    assert.equal(linkSeguro("http://exemplo.com/a"), "http://exemplo.com/a");
+    assert.equal(linkSeguro("https://exemplo.com/a?b=1#c"), "https://exemplo.com/a?b=1#c");
+    assert.equal(linkSeguro("  HTTPS://exemplo.com/x \n"), "HTTPS://exemplo.com/x");
+  });
+
+  test("aceita objeto com href (formato Atom)", () => {
+    assert.equal(linkSeguro({ href: "https://exemplo.com/atom" }), "https://exemplo.com/atom");
+  });
+
+  test("recusa javascript:, inclusive disfarçado com caixa, espaço e quebra de linha", () => {
+    assert.equal(linkSeguro("javascript:alert(1)"), null);
+    assert.equal(linkSeguro("  JavaScript:alert(1)"), null);
+    assert.equal(linkSeguro("java\nscript:alert(1)"), null);
+    assert.equal(linkSeguro("java\tscript:alert(1)"), null);
+  });
+
+  test("recusa data:, vbscript:, file:, mailto: e ftp:", () => {
+    for (const l of ["data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "file:///etc/passwd", "mailto:a@b.com", "ftp://exemplo.com/x"]) {
+      assert.equal(linkSeguro(l), null, l);
+    }
+  });
+
+  test("recusa links relativos e sem esquema", () => {
+    for (const l of ["/noticia/1", "noticia/1", "//exemplo.com/x", "exemplo.com/x", "?a=1"]) {
+      assert.equal(linkSeguro(l), null, l);
+    }
+  });
+
+  test("recusa vazio, só espaços, objeto sem href e tipos que não são texto", () => {
+    for (const l of ["", "   ", {}, { rel: "alternate" }, { href: 123 }, null, undefined, 42, ["https://exemplo.com"]]) {
+      assert.equal(linkSeguro(l), null, JSON.stringify(l));
+    }
+  });
+
+  test("recusa URL inválida", () => {
+    assert.equal(linkSeguro("http://"), null);
+    assert.equal(linkSeguro("https://exa mple.com"), null);
+    assert.equal(linkSeguro("https://[::1"), null);
+  });
+});
+
 describe("itensDoFeed", () => {
   const feed = { id: "infomoney", nome: "InfoMoney", regiao: "br" };
 
@@ -100,6 +143,15 @@ describe("itensDoFeed", () => {
   test("sem data ou com data inválida usa o agora", () => {
     const xml = { rss: { channel: { item: [{ title: "a", link: "x" }, { title: "b", link: "y", pubDate: "lixo" }] } } };
     assert.deepEqual(itensDoFeed(xml, feed, AGORA).map((n) => n.publicado), [AGORA.toISOString(), AGORA.toISOString()]);
+  });
+
+  test("link fora de http(s) vira null no item", () => {
+    const xml = { rss: { channel: { item: [
+      { title: "ok", link: "https://a.com/ok" },
+      { title: "js", link: "javascript:alert(1)" },
+      { title: "obj", link: { href: "data:text/html,x" } },
+    ] } } };
+    assert.deepEqual(itensDoFeed(xml, feed, AGORA).map((n) => n.link), ["https://a.com/ok", null, null]);
   });
 
   test("XML sem itens devolve lista vazia", () => {
@@ -134,6 +186,15 @@ describe("selecionarNoticias", () => {
       n("", 1), { ...n("Sem link", 1), link: "" },
     ], [], opcoes);
     assert.deepEqual(r.map((x) => x.titulo), ["Futuro próximo", "No limite antigo"]);
+  });
+
+  test("descarta itens com link fora de http(s), inclusive vindos do JSON anterior", () => {
+    const r = selecionarNoticias(
+      [n("Link bom novo", 1), { ...n("Link javascript", 1), link: "javascript:alert(1)" }],
+      [{ ...n("Link data anterior", 2), link: "data:text/html,x" }, { ...n("Link relativo anterior", 2), link: "/x" }, n("Link bom anterior", 3)],
+      opcoes,
+    );
+    assert.deepEqual(r.map((x) => x.titulo), ["Link bom novo", "Link bom anterior"]);
   });
 
   test("filtra por palavras de mercado só nos feeds marcados e remove o campo interno", () => {
