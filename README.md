@@ -38,4 +38,16 @@ npm run serve
 
 Depois abra http://localhost:8080.
 
+## Testes
+
+```bash
+npm test
+```
+
+Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
+
 Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e as cotações da CNBC ficam no início de `scripts/update.mjs`.
+
+## Licença
+
+[MIT](LICENSE). Histórico de mudanças em [CHANGELOG.md](CHANGELOG.md).

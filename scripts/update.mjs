@@ -5,6 +5,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { XMLParser } from "fast-xml-parser";
 import Anthropic from "@anthropic-ai/sdk";
+import {
+  diaBR, horaBR as horaDe, indexarCNBC, itensDoFeed, selecionarNoticias, montarCotacoes,
+  simbolosMapa, montarMapas, montarAgenda, precisaResumo as decidirResumo, montarPedido, vincularNoticias,
+} from "./logica.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(ROOT, "site", "data");
@@ -15,7 +19,6 @@ const SUMMARY_FIRST_HOUR = 6; // horário de Brasília
 const SUMMARY_LAST_HOUR = 20;
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const UA = { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128 Safari/537.36" };
-const TZ = "America/Sao_Paulo";
 
 // ---------- fontes ----------
 
@@ -124,11 +127,8 @@ const PAIS_FF = { USD: "EUA", EUR: "Zona do Euro", GBP: "Reino Unido", JPY: "Jap
 // ---------- utilidades ----------
 
 const agora = new Date();
-const partesBR = (d) => Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d).map((p) => [p.type, p.value]));
-const hojeBR = (() => { const p = partesBR(agora); return `${p.year}-${p.month}-${p.day}`; })();
-const horaBR = Number(partesBR(agora).hour);
-const diaBR = (d) => { const p = partesBR(d); return `${p.year}-${p.month}-${p.day}`; };
-const horaMinBR = (d) => { const p = partesBR(d); return `${p.hour}:${p.minute}`; };
+const hojeBR = diaBR(agora);
+const horaBR = horaDe(agora);
 
 async function get(url, { json = false, timeout = 20000 } = {}) {
   const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(timeout) });
@@ -148,33 +148,12 @@ async function salvar(nome, dados) {
   await fs.writeFile(path.join(DATA_DIR, nome), JSON.stringify(dados, null, 1));
 }
 
-const ENTIDADES = { nbsp: " ", amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", hellip: "…", ndash: "–", mdash: "—", lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”" };
-const decodificar = (s) => s
-  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
-  .replace(/&([a-z]+);/gi, (m, n) => ENTIDADES[n.toLowerCase()] ?? m);
-const limpar = (s = "") => decodificar(decodificar(String(s).replace(/<[^>]+>/g, " "))).replace(/\s+/g, " ").trim();
-const chave = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, "").split(" ").filter((w) => w.length > 3).slice(0, 8).join(" ");
-
 // ---------- notícias ----------
 
 async function coletarNoticias() {
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
   const resultados = await Promise.allSettled(FEEDS.map(async (f) => {
-    const xml = parser.parse(await get(f.url));
-    let itens = xml?.rss?.channel?.item || [];
-    if (!Array.isArray(itens)) itens = [itens];
-    return itens.map((it) => {
-      let titulo = limpar(typeof it.title === "object" ? it.title["#text"] : it.title);
-      let fonte = f.nome;
-      if (f.id.startsWith("gnews")) {
-        fonte = limpar(typeof it.source === "object" ? it.source["#text"] : it.source) || "Google News";
-        titulo = titulo.replace(new RegExp(`\\s+-\\s+${fonte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
-        fonte = fonte.split(" - ")[0];
-      }
-      const data = new Date(it.pubDate || it["dc:date"] || Date.now());
-      return { titulo, link: typeof it.link === "object" ? it.link.href : it.link, fonte, regiao: f.regiao, publicado: isNaN(data) ? agora.toISOString() : data.toISOString(), _filtrar: f.filtrar };
-    });
+    return itensDoFeed(parser.parse(await get(f.url)), f, agora);
   }));
   const novos = [];
   resultados.forEach((r, i) => {
@@ -183,19 +162,8 @@ async function coletarNoticias() {
   });
 
   const anterior = (await lerAnterior("noticias.json"))?.itens || [];
-  const limite = Date.now() - 36 * 3600e3;
-  const vistos = new Set();
-  const itens = [];
-  for (const n of [...novos, ...anterior].sort((a, b) => b.publicado.localeCompare(a.publicado))) {
-    if (!n.titulo || !n.link || new Date(n.publicado) < limite || new Date(n.publicado) > Date.now() + 3600e3) continue;
-    if (n._filtrar && !PALAVRAS_MERCADO.test(n.titulo)) continue;
-    const k = chave(n.titulo);
-    if (vistos.has(k)) continue;
-    vistos.add(k);
-    const { _filtrar, ...limpo } = n;
-    itens.push(limpo);
-  }
-  return { atualizado: agora.toISOString(), itens: itens.slice(0, 150) };
+  const itens = selecionarNoticias(novos, anterior, { agoraMs: Date.now(), palavrasMercado: PALAVRAS_MERCADO });
+  return { atualizado: agora.toISOString(), itens };
 }
 
 // ---------- cotações ----------
@@ -203,27 +171,7 @@ async function coletarNoticias() {
 async function coletarCotacoes() {
   const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(QUOTES.map((q) => q.s).join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
   const j = await get(url, { json: true });
-  const porSimbolo = Object.fromEntries((j?.FormattedQuoteResult?.FormattedQuote || []).map((q) => [q.symbol, q]));
-  const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[,%+]/g, "")); return Number.isFinite(n) ? n : 0; };
-  const MESES = { Jan: "jan", Feb: "fev", Mar: "mar", Apr: "abr", May: "mai", Jun: "jun", Jul: "jul", Aug: "ago", Sep: "set", Oct: "out", Nov: "nov", Dec: "dez" };
-  const ativos = QUOTES.map(({ grupo, s, nome, contrato }) => {
-    const q = porSimbolo[s];
-    if (!q || q.last == null) return null;
-    // "S&P 500 Fut (Dec'26)" -> "(dez/26)"
-    const venc = contrato && /\((\w{3})'(\d{2})\)/.exec(q.name || "");
-    if (venc) nome = `${nome} (${MESES[venc[1]] || venc[1]}/${venc[2]})`;
-    const juros = grupo === "Juros";
-    const ultimo = num(q.last);
-    const variacao = q.change === "UNCH" ? 0 : num(q.change);
-    const anterior = ultimo - variacao;
-    return {
-      grupo, simbolo: s, nome, ultimo, variacao,
-      // Para juros, a variação relevante é em pontos-base; para o resto, em %.
-      variacao_pct: juros ? null : anterior ? +((variacao / anterior) * 100).toFixed(2) : 0,
-      variacao_bps: juros ? +(variacao * 100).toFixed(1) : null,
-      horario: q.last_time,
-    };
-  }).filter(Boolean);
+  const ativos = montarCotacoes(QUOTES, indexarCNBC(j));
   return { atualizado: agora.toISOString(), fonte: "CNBC (atraso de até 15 min)", ativos };
 }
 
@@ -235,30 +183,14 @@ async function cotarCNBC(simbolos) {
     const lote = simbolos.slice(i, i + 40);
     const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(lote.join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
     const j = await get(url, { json: true });
-    for (const q of j?.FormattedQuoteResult?.FormattedQuote || []) porSimbolo[q.symbol] = q;
+    Object.assign(porSimbolo, indexarCNBC(j));
   }
   return porSimbolo;
 }
 
 async function coletarMapa() {
-  const num = (v) => { const n = parseFloat(String(v ?? "").replace(/[,%+]/g, "")); return Number.isFinite(n) ? n : null; };
-  // "5.487T" -> 5487 (em bilhões)
-  const bilhoes = (v) => { const m = /^([\d.]+)([TBM])$/.exec(String(v ?? "")); return m ? +m[1] * { T: 1000, B: 1, M: 0.001 }[m[2]] : null; };
-  const bolsa = (ex = "") => (/sao paulo/i.test(ex) ? "BMFBOVESPA" : /nasdaq/i.test(ex) ? "NASDAQ" : /nyse/i.test(ex) ? "NYSE" : "");
-  const todos = Object.entries(MAPAS).flatMap(([id, setores]) => Object.values(setores).flat().map((t) => t + SUFIXO_MAPA[id]));
-  const cot = await cotarCNBC(todos);
-  const mapas = {};
-  for (const [id, setores] of Object.entries(MAPAS)) {
-    mapas[id] = Object.entries(setores).flatMap(([setor, tickers]) => tickers.map((t) => {
-      const q = cot[t + SUFIXO_MAPA[id]];
-      if (!q || q.last == null || q.code !== 0) return null;
-      const ultimo = num(q.last);
-      const variacao_pct = q.change === "UNCH" ? 0 : num(q.change_pct);
-      if (ultimo == null || variacao_pct == null) return null;
-      return { ticker: t, nome: q.altName || q.name || t, setor, ultimo, moeda: q.currencyCode || "", variacao_pct, valor_mercado: bilhoes(q.mktcapView), bolsa: bolsa(q.exchange),
-        tamanho: id === "IBOV" ? PESO_IBOV[t] ?? null : bilhoes(q.mktcapView) };
-    }).filter(Boolean));
-  }
+  const cot = await cotarCNBC(simbolosMapa(MAPAS, SUFIXO_MAPA));
+  const mapas = montarMapas(MAPAS, SUFIXO_MAPA, cot, PESO_IBOV);
   const total = Object.values(mapas).reduce((s, l) => s + l.length, 0);
   if (!total) throw new Error("nenhuma ação retornada");
   return { atualizado: agora.toISOString(), fonte: "CNBC", mapas };
@@ -268,20 +200,10 @@ async function coletarMapa() {
 
 async function coletarAgenda() {
   const eventos = await get(FF_URL, { json: true });
-  const imp = { High: "alta", Medium: "media", Low: "baixa", Holiday: "feriado" };
-  const lista = eventos.map((e) => {
-    const d = new Date(e.date);
-    return {
-      data: diaBR(d), hora: horaMinBR(d), moeda: e.country, pais: PAIS_FF[e.country] || e.country,
-      evento: e.title, importancia: imp[e.impact] || "baixa",
-      previsao: e.forecast || "", anterior: e.previous || "", atual: e.actual || "",
-    };
-  }).sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora));
   return {
     atualizado: agora.toISOString(),
     fonte: "Forex Factory (horário de Brasília)",
-    hoje: lista.filter((e) => e.data === hojeBR && e.importancia !== "baixa"),
-    semana: lista.filter((e) => e.importancia === "alta"),
+    ...montarAgenda(eventos, { hoje: hojeBR, paises: PAIS_FF }),
   };
 }
 
@@ -336,34 +258,15 @@ Em "noticias_relevantes", escolha de 5 a 10 notícias com maior potencial de mex
 Em "agenda_destaques", escolha os eventos de hoje mais importantes (no máximo 6) e traduza os nomes.`;
 
 function precisaResumo(anterior) {
-  if (!process.env.ANTHROPIC_API_KEY) return false;
-  if (process.env.FORCAR_RESUMO === "1") return true;
-  if (horaBR < SUMMARY_FIRST_HOUR || horaBR > SUMMARY_LAST_HOUR) return false;
-  if (!anterior?.gerado_em) return true;
-  if (diaBR(new Date(anterior.gerado_em)) !== hojeBR) return true;
-  return Date.now() - new Date(anterior.gerado_em).getTime() >= SUMMARY_INTERVAL_MIN * 60e3;
+  return decidirResumo(anterior, {
+    temChave: !!process.env.ANTHROPIC_API_KEY, forcar: process.env.FORCAR_RESUMO === "1", agora,
+    primeiraHora: SUMMARY_FIRST_HOUR, ultimaHora: SUMMARY_LAST_HOUR, intervaloMin: SUMMARY_INTERVAL_MIN,
+  });
 }
 
 async function gerarResumo({ noticias, cotacoes, agenda }) {
   const itens = noticias.itens.slice(0, 90);
-  const fmtAtivo = (a) => `${a.nome}: ${a.ultimo} (${a.variacao_bps != null ? `${a.variacao_bps >= 0 ? "+" : ""}${a.variacao_bps} bps` : `${a.variacao_pct >= 0 ? "+" : ""}${a.variacao_pct}%`})`;
-  const grupos = [...new Set(cotacoes.ativos.map((a) => a.grupo))];
-  const blocoCotacoes = grupos.map((g) => `## ${g}\n` + cotacoes.ativos.filter((a) => a.grupo === g).map(fmtAtivo).join("\n")).join("\n\n");
-  const blocoAgenda = agenda.hoje.map((e) => `${e.hora} | ${e.pais} | ${e.evento} | importância ${e.importancia} | previsão ${e.previsao || "-"} | anterior ${e.anterior || "-"} | atual ${e.atual || "-"}`).join("\n") || "(sem eventos relevantes no calendário internacional hoje)";
-  const blocoNoticias = itens.map((n, i) => `[${i}] (${horaMinBR(new Date(n.publicado))}, ${n.fonte}) ${n.titulo}`).join("\n");
-
-  const pedido = `Agora são ${horaMinBR(agora)} de ${hojeBR} (horário de Brasília).
-
-# Cotações (variação no dia; juros em pontos-base)
-${blocoCotacoes}
-
-# Agenda econômica de hoje (horário de Brasília; não inclui eventos do Brasil)
-${blocoAgenda}
-
-# Notícias recentes
-${blocoNoticias}
-
-Monte o panorama econômico de agora.`;
+  const pedido = montarPedido({ itens, cotacoes, agenda, agora });
 
   const client = new Anthropic();
   const resp = await client.beta.messages.create({
@@ -379,9 +282,7 @@ Monte o panorama econômico de agora.`;
   if (resp.stop_reason === "max_tokens") throw new Error("resumo cortado por max_tokens");
   const texto = resp.content.find((b) => b.type === "text")?.text;
   const dados = JSON.parse(texto);
-  dados.noticias_relevantes = dados.noticias_relevantes
-    .filter((n) => itens[n.id])
-    .map(({ id, ...n }) => ({ ...n, link: itens[id].link, fonte: itens[id].fonte, publicado: itens[id].publicado }));
+  dados.noticias_relevantes = vincularNoticias(dados.noticias_relevantes, itens);
   console.log(`resumo gerado (${resp.model}): ${resp.usage.input_tokens} in / ${resp.usage.output_tokens} out`);
   return { ...dados, gerado_em: agora.toISOString(), modelo: resp.model };
 }
