@@ -33,6 +33,8 @@ Para gerar um resumo novo na hora: **Actions → Atualizar panorama → Run work
 
 ## Rodar localmente
 
+Requer Node.js 24 ou mais novo.
+
 ```bash
 npm install
 npm run update
@@ -49,7 +51,7 @@ npm test
 
 Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a regra de dado desatualizado (`site/atraso.js`) e a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
 
-O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 22 e no 24. Ele não publica nada nem usa segredos.
+O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 24 e no 26. Ele não publica nada nem usa segredos.
 
 Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e as cotações da CNBC ficam no início de `scripts/update.mjs`.
 

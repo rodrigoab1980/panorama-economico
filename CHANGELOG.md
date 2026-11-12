@@ -11,12 +11,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Licença MIT.
 - Este changelog.
 - Aviso de dado desatualizado na página (#11): cada bloco (notícias, placar, mapa e resumo) mostra data e hora da última atualização e fica destacado em laranja quando passa de 1 h sem atualizar (2 h para o resumo da IA). Só conta o horário em que a coleta roda (seg–sex, 6h–21h de Brasília), para não acusar atraso à noite nem no fim de semana. Lógica em `site/atraso.js`, com testes.
-- Workflow de CI (`.github/workflows/ci.yml`) que roda `npm test` em todo PR e na `main` (Node 22 e 24), com badge no README.
+- Workflow de CI (`.github/workflows/ci.yml`) que roda `npm test` em todo PR e na `main` (Node 24 e 26), com badge no README.
 
 ### Alterado
 - A lógica pura de `scripts/update.mjs` (leitura de RSS, filtro e deduplicação de notícias, cotações, mapa de ações, agenda e decisão de gerar o resumo) foi para `scripts/logica.mjs`, sem rede nem disco. O comportamento e os JSON gerados não mudaram.
 
 ### Corrigido
+- Actions dos workflows em versões que rodam em Node 24, já que o GitHub está descontinuando o Node 20 nas actions: `checkout@v7`, `setup-node@v7`, `configure-pages@v6`, `upload-pages-artifact@v5` e `deploy-pages@v5`. O job de atualização passa a usar Node 24, o CI testa Node 24 e 26 e o `engines` do `package.json` exige Node 24 ou mais novo (#12).
 - Feed do Yahoo Finance: a URL antiga (`finance.yahoo.com/news/rssindex`) respondia 404 e foi trocada pelo feed de manchetes de S&P 500, Dow Jones e Nasdaq (`feeds.finance.yahoo.com/rss/2.0/headline`) (#9).
 - Aba B3: a Eletrobras passou a negociar como AXIA3 (Axia Energia); o widget trocou `BMFBOVESPA:ELET3` por `BMFBOVESPA:AXIA3` (#10).
 

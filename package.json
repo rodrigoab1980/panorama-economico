@@ -10,7 +10,7 @@
     "serve": "python -m http.server 8080 --directory site"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",
