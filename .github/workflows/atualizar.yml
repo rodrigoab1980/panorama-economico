@@ -70,6 +70,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           SUMMARY_INTERVAL_MIN: ${{ vars.SUMMARY_INTERVAL_MIN || '60' }}
+          # Alertas de movimento fora do padrão; vazio usa o padrão do código (2.5, 3 e 15).
+          ALERTA_DESVIOS: ${{ vars.ALERTA_DESVIOS }}
+          ALERTA_PCT: ${{ vars.ALERTA_PCT }}
+          ALERTA_BPS: ${{ vars.ALERTA_BPS }}
           FORCAR_RESUMO: ${{ inputs.forcar_resumo && '1' || '' }}
         run: node scripts/update.mjs
 
