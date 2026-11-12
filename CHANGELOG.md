@@ -15,6 +15,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ### Alterado
 - A lógica pura de `scripts/update.mjs` (leitura de RSS, filtro e deduplicação de notícias, cotações, mapa de ações, agenda e decisão de gerar o resumo) foi para `scripts/logica.mjs`, sem rede nem disco. O comportamento e os JSON gerados não mudaram.
 
+### Segurança
+- Notícias só aceitam links absolutos `http:` ou `https:` (`linkSeguro` em `scripts/logica.mjs`). Itens com `javascript:`, `data:`, link relativo, vazio ou inválido são descartados, inclusive os que vierem do JSON publicado anteriormente (#8).
+
 ## Antes deste changelog
 
 - Mapa de ações próprio com cotações da CNBC (#2, #3).
