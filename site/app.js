@@ -53,7 +53,7 @@ const ABAS = [
   { id: "b3", nome: "B3", simbolos: [
     ["BMFBOVESPA:IBOV", "Ibovespa"], ["BMFBOVESPA:PETR4", "Petrobras PN"], ["BMFBOVESPA:VALE3", "Vale ON"], ["BMFBOVESPA:ITUB4", "Itaú PN"],
     ["BMFBOVESPA:BBDC4", "Bradesco PN"], ["BMFBOVESPA:BBAS3", "Banco do Brasil ON"], ["BMFBOVESPA:ITSA4", "Itaúsa PN"], ["BMFBOVESPA:BPAC11", "BTG Pactual"],
-    ["BMFBOVESPA:B3SA3", "B3 ON"], ["BMFBOVESPA:ABEV3", "Ambev ON"], ["BMFBOVESPA:WEGE3", "WEG ON"], ["BMFBOVESPA:ELET3", "Eletrobras ON"],
+    ["BMFBOVESPA:B3SA3", "B3 ON"], ["BMFBOVESPA:ABEV3", "Ambev ON"], ["BMFBOVESPA:WEGE3", "WEG ON"], ["BMFBOVESPA:AXIA3", "Axia Energia ON (ex-Eletrobras)"],
     ["BMFBOVESPA:PRIO3", "PRIO ON"], ["BMFBOVESPA:SUZB3", "Suzano ON"], ["BMFBOVESPA:RENT3", "Localiza ON"]] },
   { id: "energia", nome: "Energia", simbolos: [
     ["TVC:UKOIL", "Petróleo Brent"], ["TVC:USOIL", "Petróleo WTI"], ["CAPITALCOM:NATURALGAS", "Gás natural"],
