@@ -25,9 +25,13 @@ describe("pularAgendada", () => {
     assert.equal(pularAgendada(null, AGORA).pular, false);
   });
 
-  test("no limite da janela (12 min) ainda pula; passou, roda", () => {
-    assert.equal(pularAgendada([run("workflow_dispatch", 12)], AGORA).pular, true);
-    assert.equal(pularAgendada([run("workflow_dispatch", 12.1)], AGORA).pular, false);
+  test("no limite da janela (15 min) ainda pula; passou, roda", () => {
+    assert.equal(pularAgendada([run("workflow_dispatch", 15)], AGORA).pular, true);
+    assert.equal(pularAgendada([run("workflow_dispatch", 15.1)], AGORA).pular, false);
+  });
+
+  test("agendada atrasada pelo GitHub (ex.: :07 que saiu :20) encontra a externa de :15", () => {
+    assert.equal(pularAgendada([run("workflow_dispatch", 5), run("workflow_dispatch", 20)], AGORA).pular, true);
   });
 
   test("execução externa que falhou ou foi cancelada não conta: a agendada roda para cobrir", () => {
@@ -46,6 +50,6 @@ describe("pularAgendada", () => {
   });
 
   test("janela configurável", () => {
-    assert.equal(pularAgendada([run("workflow_dispatch", 20)], AGORA, { janelaMin: 30 }).pular, true);
+    assert.equal(pularAgendada([run("workflow_dispatch", 25)], AGORA, { janelaMin: 30 }).pular, true);
   });
 });

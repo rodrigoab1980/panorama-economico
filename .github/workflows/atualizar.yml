@@ -23,7 +23,7 @@ permissions:
   actions: read   # a guarda consulta as execuções recentes deste workflow
 
 jobs:
-  # Execução agendada (reserva) pula se o cron-job.org já disparou o workflow nos últimos 12 min.
+  # Execução agendada (reserva) pula se o cron-job.org já disparou o workflow nos últimos 15 min (o externo roda em :00/:15/:30/:45; o reserva, em :07/:22/:37/:52).
   # Fica fora da concurrency abaixo: se ficasse dentro, a agendada cancelaria a externa antes de decidir pular.
   guarda:
     if: github.event_name == 'schedule'

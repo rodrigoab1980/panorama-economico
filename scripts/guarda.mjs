@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import { pularAgendada } from "./logica.mjs";
 
 const { GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_RUN_ID, GITHUB_OUTPUT } = process.env;
-const JANELA_MIN = Number(process.env.GUARDA_JANELA_MIN || 12);
+const JANELA_MIN = Number(process.env.GUARDA_JANELA_MIN || 15);
 
 let decisao = { pular: false };
 try {

@@ -333,7 +333,7 @@ export function detectarAlertas(ativos, historico, hoje, cfg = ALERTA_PADRAO) {
 const FALHAS = new Set(["failure", "cancelled", "timed_out", "startup_failure"]);
 
 // `execucoes`: lista da API do GitHub (actions/workflows/.../runs): { event, created_at, status, conclusion, id }.
-export function pularAgendada(execucoes, agora, { janelaMin = 12, idAtual = null } = {}) {
+export function pularAgendada(execucoes, agora, { janelaMin = 15, idAtual = null } = {}) {
   const desde = new Date(agora).getTime() - janelaMin * 60e3;
   const recente = (execucoes || []).find((r) => r?.event === "workflow_dispatch"
     && r.id !== idAtual
