@@ -8,7 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   diaBR, horaBR as horaDe, indexarCNBC, itensDoFeed, selecionarNoticias, montarCotacoes,
   simbolosMapa, montarMapas, montarAgenda, precisaResumo as decidirResumo, montarPedido, vincularNoticias,
-  normalizarHistorico, registrarFechamento, serializarHistorico, variacoesPeriodo,
+  normalizarHistorico, registrarFechamento, serializarHistorico, variacoesPeriodo, configAlerta, detectarAlertas,
 } from "./logica.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,6 +20,8 @@ const HISTORICO = path.join(DADOS_DIR, "historico.json");
 const ARCHIVE_DIR = path.join(DADOS_DIR, "arquivo");
 // A partir desta hora (Brasília) a coleta conta como fechamento do dia e o resumo vai para o arquivo.
 const HORA_FECHAMENTO = 19;
+// Alertas de movimento fora do padrão (variáveis ALERTA_DESVIOS, ALERTA_PCT, ALERTA_BPS do Actions).
+const ALERTA = configAlerta(process.env);
 const SITE_URL = (process.env.SITE_URL || "").replace(/\/$/, "");
 const SUMMARY_INTERVAL_MIN = Number(process.env.SUMMARY_INTERVAL_MIN || 60);
 const SUMMARY_FIRST_HOUR = 6; // horário de Brasília
@@ -181,7 +183,10 @@ async function coletarCotacoes() {
   const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(QUOTES.map((q) => q.s).join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
   const j = await get(url, { json: true });
   const ativos = variacoesPeriodo(montarCotacoes(QUOTES, indexarCNBC(j)), historico, hojeBR);
-  return { atualizado: agora.toISOString(), fonte: "CNBC (atraso de até 15 min)", ativos };
+  const alertas = detectarAlertas(ativos, historico, hojeBR, ALERTA);
+  if (alertas.length) console.log(`alertas: ${alertas.map((a) => a.simbolo).join(", ")}`);
+  return { atualizado: agora.toISOString(), fonte: "CNBC (atraso de até 15 min)", ativos, alertas,
+    criterio_alerta: { desvios: ALERTA.desvios, pct: ALERTA.pct, bps: ALERTA.bps, min_dias: ALERTA.minDias } };
 }
 
 // ---------- mapa de ações ----------

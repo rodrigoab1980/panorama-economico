@@ -257,3 +257,70 @@ export function variacoesPeriodo(ativos, historico, hoje, periodos = PERIODOS) {
     return { ...a, ...extra };
   });
 }
+
+// ---------- alertas de movimento fora do padrão ----------
+//
+// Um movimento do dia é "fora do padrão" quando é X vezes maior que a oscilação diária típica do ativo
+// (desvio padrão das variações diárias do histórico). Com histórico curto, usa um limite fixo.
+
+export const ALERTA_PADRAO = { desvios: 2.5, pct: 3, bps: 15, minDias: 20, janela: 60 };
+// Folga para erro de ponto flutuante: "exatamente no limite" conta como alerta.
+const EPS = 1e-9;
+
+// Lê a configuração das variáveis do Actions; valor ausente, zero, negativo ou não numérico usa o padrão.
+export function configAlerta(env = {}) {
+  const ler = (nome, padrao) => { const n = Number(env[nome]); return env[nome] !== "" && Number.isFinite(n) && n > 0 ? n : padrao; };
+  return {
+    ...ALERTA_PADRAO,
+    desvios: ler("ALERTA_DESVIOS", ALERTA_PADRAO.desvios),
+    pct: ler("ALERTA_PCT", ALERTA_PADRAO.pct),
+    bps: ler("ALERTA_BPS", ALERTA_PADRAO.bps),
+  };
+}
+
+// Variações diárias do ativo no histórico (antes de `hoje`), entre fechamentos consecutivos em que ele tem valor.
+// Preços em %, juros em pontos-base. Devolve as `janela` mais recentes.
+export function variacoesDiarias(historico, simbolo, hoje, juros = false, janela = ALERTA_PADRAO.janela) {
+  const { fechamentos } = normalizarHistorico(historico);
+  const valores = Object.keys(fechamentos).filter((d) => d < hoje).sort()
+    .map((d) => fechamentos[d]?.[simbolo]).filter(Number.isFinite);
+  const saida = [];
+  for (let i = 1; i < valores.length; i++) {
+    const [a, b] = [valores[i - 1], valores[i]];
+    if (juros) saida.push((b - a) * 100);
+    else if (a) saida.push((b / a - 1) * 100);
+  }
+  return saida.slice(-janela);
+}
+
+// Desvio padrão amostral; null com menos de 2 valores.
+export function desvioPadrao(xs) {
+  if (!xs || xs.length < 2) return null;
+  const media = xs.reduce((s, x) => s + x, 0) / xs.length;
+  return Math.sqrt(xs.reduce((s, x) => s + (x - media) ** 2, 0) / (xs.length - 1));
+}
+
+// Avalia o movimento do dia de um ativo. Devolve o alerta ou null.
+//   criterio "desvio": |variação| >= desvios × desvio padrão (com pelo menos minDias variações no histórico)
+//   criterio "fixo":   |variação| >= pct (preços) ou bps (juros), enquanto o histórico é curto
+export function avaliarMovimento(ativo, historico, hoje, cfg = ALERTA_PADRAO) {
+  const juros = ativo.variacao_bps != null;
+  const mov = juros ? ativo.variacao_bps : ativo.variacao_pct;
+  if (!Number.isFinite(mov) || mov === 0) return null;
+  const base = { simbolo: ativo.simbolo, nome: ativo.nome, variacao: mov, unidade: juros ? "bps" : "%" };
+  const hist = variacoesDiarias(historico, ativo.simbolo, hoje, juros, cfg.janela);
+  const dp = hist.length >= cfg.minDias ? desvioPadrao(hist) : null;
+  if (dp) {
+    const vezes = Math.abs(mov) / dp;
+    return vezes >= cfg.desvios - EPS ? { ...base, criterio: "desvio", vezes: +vezes.toFixed(1), normal: +dp.toFixed(juros ? 1 : 2), dias: hist.length } : null;
+  }
+  const limite = juros ? cfg.bps : cfg.pct;
+  return Math.abs(mov) >= limite - EPS ? { ...base, criterio: "fixo", limite } : null;
+}
+
+// Todos os alertas do dia, do movimento mais extremo para o menor.
+export function detectarAlertas(ativos, historico, hoje, cfg = ALERTA_PADRAO) {
+  const forca = (a) => (a.criterio === "desvio" ? a.vezes / cfg.desvios : Math.abs(a.variacao) / a.limite);
+  return (ativos || []).map((a) => avaliarMovimento(a, historico, hoje, cfg)).filter(Boolean)
+    .sort((x, y) => forca(y) - forca(x));
+}
