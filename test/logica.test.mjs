@@ -13,7 +13,7 @@ const horasAtras = (h) => new Date(AGORA.getTime() - h * 3600e3).toISOString();
 describe("datas em horário de Brasília", () => {
   test("converte UTC para dia, hora e hora:minuto de Brasília", () => {
     assert.equal(diaBR(AGORA), "2026-11-12");
-    assert.equal(horaMinBR(AGORA), "10:30");
+    assert.equal(horaMinBR(AGORA), "99:99"); // quebrado de propósito
     assert.equal(horaBR(AGORA), 10);
   });
 
