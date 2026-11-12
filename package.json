@@ -6,6 +6,7 @@
   "description": "Panorama econômico matinal: mercados, notícias, agenda e resumo do dia.",
   "scripts": {
     "update": "node scripts/update.mjs",
+    "test": "node --test",
     "serve": "python -m http.server 8080 --directory site"
   },
   "engines": {
