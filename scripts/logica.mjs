@@ -324,3 +324,21 @@ export function detectarAlertas(ativos, historico, hoje, cfg = ALERTA_PADRAO) {
   return (ativos || []).map((a) => avaliarMovimento(a, historico, hoje, cfg)).filter(Boolean)
     .sort((x, y) => forca(y) - forca(x));
 }
+
+// ---------- gatilho externo x agendamento do GitHub ----------
+//
+// O cron-job.org dispara o workflow (workflow_dispatch) no horário; o `schedule` do GitHub fica de reserva.
+// Uma execução agendada pula se uma disparada de fora já começou há pouco (e não falhou), para não duplicar.
+
+const FALHAS = new Set(["failure", "cancelled", "timed_out", "startup_failure"]);
+
+// `execucoes`: lista da API do GitHub (actions/workflows/.../runs): { event, created_at, status, conclusion, id }.
+export function pularAgendada(execucoes, agora, { janelaMin = 12, idAtual = null } = {}) {
+  const desde = new Date(agora).getTime() - janelaMin * 60e3;
+  const recente = (execucoes || []).find((r) => r?.event === "workflow_dispatch"
+    && r.id !== idAtual
+    && new Date(r.created_at).getTime() >= desde
+    && new Date(r.created_at).getTime() <= new Date(agora).getTime() + 60e3
+    && !FALHAS.has(r.conclusion));
+  return recente ? { pular: true, motivo: `execução ${recente.id} (workflow_dispatch) de ${recente.created_at}` } : { pular: false };
+}
