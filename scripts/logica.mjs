@@ -187,3 +187,73 @@ Monte o panorama econômico de agora.`;
 export const vincularNoticias = (relevantes, itens) => relevantes
   .filter((n) => itens[n.id])
   .map(({ id, ...n }) => ({ ...n, link: itens[id].link, fonte: itens[id].fonte, publicado: itens[id].publicado }));
+
+// ---------- histórico diário (fechamentos) ----------
+//
+// Formato de historico.json (branch `dados`):
+//   { "formato": 1, "fechamentos": { "2026-11-12": { ".SPX": 7644.91, "US10Y": 5.068, ... }, ... } }
+// Um registro por dia útil (data de Brasília), com o último valor coletado a partir das 19h.
+
+export const historicoVazio = () => ({ formato: 1, fechamentos: {} });
+
+// Aceita qualquer coisa lida do disco; o que não estiver no formato vira histórico vazio.
+export function normalizarHistorico(h) {
+  if (!h || typeof h !== "object" || !h.fechamentos || typeof h.fechamentos !== "object") return historicoVazio();
+  return { formato: 1, fechamentos: h.fechamentos };
+}
+
+// Grava (ou substitui) o fechamento do dia com o `ultimo` de cada ativo. Não altera o histórico recebido.
+export function registrarFechamento(historico, dia, ativos) {
+  const valores = Object.fromEntries((ativos || [])
+    .filter((a) => a?.simbolo && Number.isFinite(a.ultimo))
+    .map((a) => [a.simbolo, a.ultimo]));
+  const base = normalizarHistorico(historico);
+  if (!Object.keys(valores).length) return base;
+  return { formato: 1, fechamentos: { ...base.fechamentos, [dia]: valores } };
+}
+
+// Uma linha por dia, em ordem de data: o diff do commit diário mostra só o dia novo.
+export function serializarHistorico(historico) {
+  const { fechamentos } = normalizarHistorico(historico);
+  const linhas = Object.keys(fechamentos).sort().map((d) => `  ${JSON.stringify(d)}: ${JSON.stringify(fechamentos[d])}`);
+  return `{"formato": 1, "fechamentos": {\n${linhas.join(",\n")}\n}}\n`;
+}
+
+// "2026-11-12" menos n dias corridos.
+export const diasAntes = (dia, n) => new Date(Date.parse(`${dia}T00:00:00Z`) - n * 86400e3).toISOString().slice(0, 10);
+
+// Fechamento de referência: o mais recente em ou antes de `alvo`, desde que não seja mais velho que
+// `toleranciaDias` (cobre fim de semana, feriado e dia sem coleta). Fora disso, null.
+export function fechamentoReferencia(historico, simbolo, alvo, toleranciaDias = 4) {
+  const limite = diasAntes(alvo, toleranciaDias);
+  const { fechamentos } = normalizarHistorico(historico);
+  const dias = Object.keys(fechamentos).filter((d) => d <= alvo && d >= limite).sort().reverse();
+  for (const d of dias) {
+    const v = fechamentos[d]?.[simbolo];
+    if (Number.isFinite(v)) return { dia: d, valor: v };
+  }
+  return null;
+}
+
+// Variação do valor atual contra a referência: % para preços, pontos-base para juros (taxas em %).
+export function variacaoDesde(atual, ref, juros = false) {
+  if (!ref || !Number.isFinite(atual)) return null;
+  if (juros) return { variacao_bps: +((atual - ref.valor) * 100).toFixed(1), desde: ref.dia };
+  if (!ref.valor) return null;
+  return { variacao_pct: +((atual / ref.valor - 1) * 100).toFixed(2), desde: ref.dia };
+}
+
+export const PERIODOS = { semana: 7, mes: 30 };
+
+// Acrescenta `semana` e `mes` a cada ativo (null quando o histórico não cobre o período).
+export function variacoesPeriodo(ativos, historico, hoje, periodos = PERIODOS) {
+  const h = normalizarHistorico(historico);
+  return ativos.map((a) => {
+    const juros = a.variacao_bps != null;
+    const extra = {};
+    for (const [nome, dias] of Object.entries(periodos)) {
+      extra[nome] = variacaoDesde(a.ultimo, fechamentoReferencia(h, a.simbolo, diasAntes(hoje, dias)), juros);
+    }
+    return { ...a, ...extra };
+  });
+}

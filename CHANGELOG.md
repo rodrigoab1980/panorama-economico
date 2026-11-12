@@ -11,10 +11,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Licença MIT.
 - Este changelog.
 - Aviso de dado desatualizado na página (#11): cada bloco (notícias, placar, mapa e resumo) mostra data e hora da última atualização e fica destacado em laranja quando passa de 1 h sem atualizar (2 h para o resumo da IA). Só conta o horário em que a coleta roda (seg–sex, 6h–21h de Brasília), para não acusar atraso à noite nem no fim de semana. Lógica em `site/atraso.js`, com testes.
+- Histórico diário em JSON (#13): a partir das 19h, o fechamento de cada ativo do placar é gravado em `historico.json` na branch `dados`. O placar mostra a variação na semana (7 dias) e no mês (30 dias), usando o dia útil anterior mais próximo quando falta dado e deixando "—" quando o histórico ainda não cobre o período. Cálculo em `scripts/logica.mjs`, com testes.
 - Workflow de CI (`.github/workflows/ci.yml`) que roda `npm test` em todo PR e na `main` (Node 24 e 26), com badge no README.
 
 ### Alterado
 - A lógica pura de `scripts/update.mjs` (leitura de RSS, filtro e deduplicação de notícias, cotações, mapa de ações, agenda e decisão de gerar o resumo) foi para `scripts/logica.mjs`, sem rede nem disco. O comportamento e os JSON gerados não mudaram.
+
+- O resumo do fim do dia passa a ser arquivado em `arquivo/AAAA-MM-DD.json` na branch `dados`, e não mais na `main`. Assim o robô não faz mais push na `main`, que pode ser protegida com o CI obrigatório. Falhas ao gravar na `dados` não impedem o deploy (#13).
 
 ### Corrigido
 - Actions dos workflows em versões que rodam em Node 24, já que o GitHub está descontinuando o Node 20 nas actions: `checkout@v7`, `setup-node@v7`, `configure-pages@v6`, `upload-pages-artifact@v5` e `deploy-pages@v5`. O job de atualização passa a usar Node 24, o CI testa Node 24 e 26 e o `engines` do `package.json` exige Node 24 ou mais novo (#12).

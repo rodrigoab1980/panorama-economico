@@ -5,7 +5,7 @@
 Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos dias úteis.
 
 - **Resumo do dia** escrito pelo Claude: tom do mercado, Ásia, Europa, EUA, Brasil e emergentes, commodities e juros, pontos-chave e as notícias que podem mexer com os preços. É refeito a cada hora, das 6h às 20h.
-- **Como estão os mercados**: placar com bolsas, câmbio, commodities e juros de 10 anos (CNBC).
+- **Como estão os mercados**: placar com bolsas, câmbio, commodities e juros de 10 anos (CNBC), com a variação do dia, da semana e do mês. Semana e mês vêm do [histórico diário](#histórico-diário) próprio e mostram "—" até o histórico cobrir o período.
 - **Ativos em abas** (widgets TradingView, atraso de até 15 min): Futuros EUA, Europa, Ásia/Pacífico, Dólar DXY, Emergentes, Títulos Brasil (curva DI), Títulos EUA, Metais, Agrícolas, B3, Energia e Futuros.
 - **Mapa de ações** do S&P 500 e do Ibovespa, desenhado pelo próprio site com cotações da CNBC (atualiza a cada 15 minutos). Cor = variação do dia; tamanho = valor de mercado (EUA) ou peso aproximado no índice (Ibovespa). As listas ficam em `MAPAS` e `PESO_IBOV`, no início de `scripts/update.mjs`.
 - **Notícias ao vivo**: InfoMoney, Valor, Money Times, Investing, CNBC, MarketWatch, Yahoo Finance (manchetes de S&P 500, Dow Jones e Nasdaq) e Google News. Atualizadas a cada 15 minutos. Se uma fonte falhar, as demais seguem normalmente e as notícias já coletadas continuam na página.
@@ -16,11 +16,35 @@ Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos di
 
 ```
 GitHub Actions (a cada 15 min, seg–sex, 6h07–20h52)
+  └─ baixa a branch `dados` (histórico) na pasta dados/
   └─ scripts/update.mjs → site/data/*.json  (notícias, cotações, agenda, resumo)
+  └─ a partir das 19h: grava o fechamento do dia e o resumo na branch `dados`
   └─ publica a pasta site/ no GitHub Pages
 Navegador
   └─ site/index.html lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
 ```
+
+## Histórico diário
+
+O placar calcula a variação na semana e no mês com um histórico próprio, guardado na branch **`dados`** do repositório (não na `main`). O workflow cria essa branch sozinho na primeira execução.
+
+- **O que é gravado:** a partir das 19h de Brasília, cada execução grava o valor de cada ativo do placar como fechamento do dia. A última coleta do dia (20h52) vence. Só entram cotações coletadas na hora, nunca o dado antigo usado quando a CNBC falha.
+- **Onde:** `historico.json` na branch `dados`, mais os resumos do fim do dia em `arquivo/AAAA-MM-DD.json`. Cada dia vira um commit do `github-actions[bot]` nessa branch.
+- **Formato** (uma linha por dia, para o diff mostrar só o dia novo):
+
+  ```json
+  {"formato": 1, "fechamentos": {
+    "2026-11-11": {".SPX":7619.38,"US10Y":4.989,".BVSP":172060.43},
+    "2026-11-12": {".SPX":7644.91,"US10Y":5.068,".BVSP":171238.81}
+  }}
+  ```
+  As chaves são a data de Brasília e o símbolo da CNBC (o mesmo de `simbolo` em `cotacoes.json`). Juros ficam em % ao ano.
+- **Como a variação é calculada:** contra o fechamento de 7 dias corridos atrás (semana) e de 30 dias atrás (mês). Se esse dia não tem dado (fim de semana, feriado, coleta que falhou), usa o dia anterior mais próximo, até 4 dias antes. Se não houver nada nesse intervalo, ou o histórico ainda for curto, a variação fica vazia ("—") em vez de comparar com um dado velho demais. Preços em %, juros em pontos-base. Passe o mouse sobre o número para ver a data de referência.
+- **Limitação:** os futuros (ES, NQ, petróleo, ouro...) usam sempre o 1º vencimento. Na semana em que o contrato vira, a variação compara contratos diferentes.
+- **Falhas não derrubam o site:** se a branch `dados` não puder ser baixada ou gravada, o site é publicado do mesmo jeito, só sem as variações de semana e mês.
+- **Rodando localmente**, o histórico fica na pasta `dados/`, ignorada pelo git (ou em outra pasta, com a variável `DADOS_DIR`).
+
+As funções de cálculo ficam em `scripts/logica.mjs` (`registrarFechamento`, `fechamentoReferencia`, `variacoesPeriodo`) e têm testes em `test/historico.test.mjs`.
 
 ## Configuração
 
@@ -49,7 +73,7 @@ Depois abra http://localhost:8080.
 npm test
 ```
 
-Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a regra de dado desatualizado (`site/atraso.js`) e a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
+Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a regra de dado desatualizado (`site/atraso.js`) e a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda, histórico diário com variação semanal e mensal e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
 
 O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 24 e no 26. Ele não publica nada nem usa segredos.
 

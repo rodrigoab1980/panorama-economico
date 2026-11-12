@@ -8,11 +8,18 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   diaBR, horaBR as horaDe, indexarCNBC, itensDoFeed, selecionarNoticias, montarCotacoes,
   simbolosMapa, montarMapas, montarAgenda, precisaResumo as decidirResumo, montarPedido, vincularNoticias,
+  normalizarHistorico, registrarFechamento, serializarHistorico, variacoesPeriodo,
 } from "./logica.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(ROOT, "site", "data");
-const ARCHIVE_DIR = path.join(ROOT, "arquivo");
+// Pasta com a branch `dados` (histórico e resumos arquivados). No Actions, o workflow faz o checkout dela aqui;
+// numa execução local, é só uma pasta ignorada pelo git.
+const DADOS_DIR = path.resolve(process.env.DADOS_DIR || path.join(ROOT, "dados"));
+const HISTORICO = path.join(DADOS_DIR, "historico.json");
+const ARCHIVE_DIR = path.join(DADOS_DIR, "arquivo");
+// A partir desta hora (Brasília) a coleta conta como fechamento do dia e o resumo vai para o arquivo.
+const HORA_FECHAMENTO = 19;
 const SITE_URL = (process.env.SITE_URL || "").replace(/\/$/, "");
 const SUMMARY_INTERVAL_MIN = Number(process.env.SUMMARY_INTERVAL_MIN || 60);
 const SUMMARY_FIRST_HOUR = 6; // horário de Brasília
@@ -173,7 +180,7 @@ async function coletarNoticias() {
 async function coletarCotacoes() {
   const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(QUOTES.map((q) => q.s).join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
   const j = await get(url, { json: true });
-  const ativos = montarCotacoes(QUOTES, indexarCNBC(j));
+  const ativos = variacoesPeriodo(montarCotacoes(QUOTES, indexarCNBC(j)), historico, hojeBR);
   return { atualizado: agora.toISOString(), fonte: "CNBC (atraso de até 15 min)", ativos };
 }
 
@@ -291,6 +298,14 @@ async function gerarResumo({ noticias, cotacoes, agenda }) {
 
 // ---------- principal ----------
 
+async function lerHistorico() {
+  try { return normalizarHistorico(JSON.parse(await fs.readFile(HISTORICO, "utf8"))); }
+  catch (e) {
+    if (e.code !== "ENOENT") console.warn(`histórico ilegível, começando vazio: ${e.message}`);
+    return normalizarHistorico(null);
+  }
+}
+
 async function tentar(nome, fn, arquivo) {
   try {
     const dados = await fn();
@@ -304,6 +319,9 @@ async function tentar(nome, fn, arquivo) {
     return anterior;
   }
 }
+
+const historico = await lerHistorico();
+console.log(`histórico: ${Object.keys(historico.fechamentos).length} dias`);
 
 const [noticias, cotacoes, agenda] = await Promise.all([
   tentar("notícias", coletarNoticias, "noticias.json"),
@@ -325,8 +343,15 @@ if (precisaResumo(resumoAnterior) && noticias && cotacoes && agenda) {
 }
 await salvar("resumo.json", resumo || { gerado_em: null, sem_chave: !process.env.ANTHROPIC_API_KEY });
 
-// Arquivo diário (a partir das 19h): guarda o último resumo do dia no repositório.
-if (resumo?.gerado_em && horaBR >= 19 && diaBR(new Date(resumo.gerado_em)) === hojeBR) {
+// Fechamento do dia (a partir das 19h): só com cotações coletadas agora, nunca com o fallback publicado.
+if (horaBR >= HORA_FECHAMENTO && cotacoes?.atualizado === agora.toISOString()) {
+  await fs.mkdir(DADOS_DIR, { recursive: true });
+  await fs.writeFile(HISTORICO, serializarHistorico(registrarFechamento(historico, hojeBR, cotacoes.ativos)));
+  console.log(`histórico: fechamento de ${hojeBR} gravado`);
+}
+
+// Arquivo diário (a partir das 19h): guarda o último resumo do dia na branch `dados`.
+if (resumo?.gerado_em && horaBR >= HORA_FECHAMENTO && diaBR(new Date(resumo.gerado_em)) === hojeBR) {
   await fs.mkdir(ARCHIVE_DIR, { recursive: true });
   await fs.writeFile(path.join(ARCHIVE_DIR, `${hojeBR}.json`), JSON.stringify(resumo, null, 1));
   console.log(`arquivo: ${hojeBR}.json`);

@@ -186,6 +186,11 @@ body.movendo { user-select: none; }
 .tabela td { padding: 4px 0; border-bottom: 1px solid var(--linha); }
 .tabela tr:last-child td { border-bottom: 0; }
 .tabela td.n { text-align: right; white-space: nowrap; padding-left: 12px; }
+/* Cabeçalho do placar e colunas de semana/mês (histórico diário): menores, para não competir com o dia. */
+.tabela th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--papel-2); padding: 0 0 4px; border-bottom: 1px solid var(--linha); }
+.tabela th.n { text-align: right; padding-left: 12px; }
+.tabela th.periodo { cursor: help; }
+.tabela td.periodo { font-size: 13.5px; padding-left: 10px; }
 .tabela .cod { display: inline-block; min-width: 30px; font-weight: 650; color: var(--papel-2); }
 .sobe { color: var(--alta); }
 .desce { color: var(--baixa); }

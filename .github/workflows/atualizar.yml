@@ -40,6 +40,31 @@ jobs:
 
       - run: npm ci
 
+      # Histórico e resumos arquivados ficam na branch `dados`, não na `main` (assim a `main` pode ser protegida).
+      # Nenhum destes passos derruba o deploy: sem a branch, o site sai igual, só sem as variações de semana e mês.
+      - name: Baixar o histórico (branch dados)
+        id: baixar_dados
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          ref: dados
+          path: dados
+
+      # Só na primeira vez (a branch ainda não existe): cria `dados` vazia, sem os arquivos da main.
+      - name: Criar a branch dados
+        if: steps.baixar_dados.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          path: dados
+      - name: Esvaziar a branch dados nova
+        if: steps.baixar_dados.outcome == 'failure'
+        continue-on-error: true
+        working-directory: dados
+        run: |
+          git checkout --orphan dados
+          git rm -rfq .
+
       - name: Coletar dados e gerar resumo
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -48,15 +73,19 @@ jobs:
           FORCAR_RESUMO: ${{ inputs.forcar_resumo && '1' || '' }}
         run: node scripts/update.mjs
 
-      # Guarda o resumo do fim do dia no repositório (histórico e mantém o agendamento ativo).
-      - name: Arquivar resumo do dia
+      # A partir das 19h: grava o fechamento do dia e o resumo arquivado na branch `dados`.
+      - name: Gravar histórico (branch dados)
+        continue-on-error: true
+        working-directory: dados
         run: |
-          if [ -n "$(git status --porcelain arquivo)" ]; then
+          # Sem checkout próprio aqui, o git subiria até o repositório da main: não grava nada.
+          [ -d .git ] || { echo "sem a branch dados; nada gravado"; exit 0; }
+          if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add arquivo
-            git commit -m "Arquivo do resumo de $(TZ=America/Sao_Paulo date +%F)"
-            git push
+            git add -A
+            git commit -m "dados: fechamento de $(TZ=America/Sao_Paulo date +%F)"
+            git push origin HEAD:dados
           fi
 
       - uses: actions/configure-pages@v6
