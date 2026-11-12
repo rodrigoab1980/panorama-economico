@@ -1,5 +1,7 @@
 # Panorama Econômico
 
+[![CI](https://github.com/rodrigoab1980/panorama-economico/actions/workflows/ci.yml/badge.svg)](https://github.com/rodrigoab1980/panorama-economico/actions/workflows/ci.yml)
+
 Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos dias úteis.
 
 - **Resumo do dia** escrito pelo Claude: tom do mercado, Ásia, Europa, EUA, Brasil e emergentes, commodities e juros, pontos-chave e as notícias que podem mexer com os preços. É refeito a cada hora, das 6h às 20h.
@@ -45,6 +47,8 @@ npm test
 ```
 
 Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
+
+O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 22 e no 24. Ele não publica nada nem usa segredos.
 
 Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e as cotações da CNBC ficam no início de `scripts/update.mjs`.
 
