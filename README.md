@@ -28,6 +28,34 @@ Navegador
   └─ site/index.html lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
 ```
 
+### Estrutura do repositório
+
+| Caminho | O que é |
+|---|---|
+| `scripts/update.mjs` | Coleta (rede), gravação dos JSON, histórico e chamada ao Claude. Configuração das fontes no início do arquivo. |
+| `scripts/logica.mjs` | Toda a lógica pura: sem rede, sem disco, sem relógio implícito. É o que os testes cobrem. |
+| `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
+| `site/` | A página publicada: `index.html`, `app.js` (renderização), `atraso.js` (regra de dado desatualizado, usada também nos testes) e `style.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
+| `test/` | Testes `node:test`, um arquivo por assunto. |
+| `.github/workflows/atualizar.yml` | Coleta, histórico e deploy no GitHub Pages. |
+| `.github/workflows/ci.yml` | Roda os testes em todo PR e na `main`. Não publica nada. |
+| branch `dados` | Histórico diário e resumos arquivados. Só o robô escreve nela. |
+
+## Decisões de arquitetura
+
+As escolhas que moldam o projeto, com a alternativa considerada e o motivo. As marcadas com uma issue foram decididas entre duas opções antes do código.
+
+1. **Site estático + GitHub Actions, sem servidor.** O Actions coleta e grava JSON; o GitHub Pages serve os arquivos; o navegador só lê. *Alternativa:* um servidor próprio (VPS, função serverless). *Por quê:* custo zero, nada para manter no ar, e a página continua de pé mesmo se a coleta parar.
+2. **Cada fonte falha sozinha, com fallback para o último JSON publicado.** Cada coleta (notícias, cotações, agenda, mapa) tem timeout de 20 s; se falhar, o script reaproveita o JSON que já está no site. A página mostra quando cada bloco foi atualizado e destaca o que passou de 1 h (#11). *Alternativa:* abortar a execução inteira. *Por quê:* uma fonte fora do ar não deve apagar as outras.
+3. **Lógica pura separada do I/O, testada com `node:test`, sem dependências novas** (#6). Tudo que decide algo (filtrar notícias, calcular variação, alertar, pular execução) fica em `scripts/logica.mjs` e recebe o "agora" por parâmetro. *Alternativa:* Jest/Vitest. *Por quê:* o Node já traz o executor de testes; menos dependências, menos atualização.
+4. **Histórico na branch `dados`, não na `main`** (#13, opção A). *Alternativa:* guardar só no site publicado, relendo a versão anterior a cada execução (opção B). *Por quê:* fica versionado (cada dia é um commit, dá para auditar e recuperar) e o robô não precisa escrever na `main`, que pode ser protegida com o CI obrigatório.
+5. **Alerta relativo à volatilidade do próprio ativo** (#14, opção A): movimento ≥ 2,5 desvios padrão das variações diárias, com limite fixo enquanto o histórico é curto. *Alternativa:* um limite fixo em % igual para todos (opção B). *Por quê:* 3% é rotina para bitcoin e raro para um índice; o limite fixo alertaria demais em uns e de menos em outros.
+6. **Gatilho externo (cron-job.org) com o `schedule` do GitHub de reserva e uma guarda contra duplicatas** (#15). *Alternativa:* só o `schedule`. *Por quê:* o agendamento do GitHub atrasa e descarta execuções. Os horários ficam defasados (:00 externo, :07 reserva), e a reserva pula se o externo rodou nos últimos 15 min.
+7. **O token do gatilho nunca entra no repositório.** É fine-grained, restrito a este repositório, só com *Actions: Read and write* e com validade, e fica apenas no cron-job.org. *Alternativa:* guardar nos Secrets. *Por quê:* o repositório não precisa dele; quem chama a API é o cron-job.org.
+8. **Cotações da CNBC no servidor, widgets da TradingView no navegador.** O placar, o mapa, o histórico e os alertas usam a CNBC, porque precisam de números que o script consiga ler. As abas usam widgets prontos, que já atualizam ao vivo. *Por quê:* sem chave de API paga para nenhuma das duas.
+9. **Resumo pelo Claude no máximo de hora em hora** (`SUMMARY_INTERVAL_MIN`), só das 6h às 20h, e só se houver chave. *Por quê:* controla o custo; sem a chave, o resto do site funciona igual.
+10. **Node 24 ou mais novo, CI no 24 e no 26** (#12). *Por quê:* as actions do GitHub deixaram o Node 20; testar também a versão seguinte avisa cedo de incompatibilidades.
+
 ## Histórico diário
 
 O placar calcula a variação na semana e no mês com um histórico próprio, guardado na branch **`dados`** do repositório (não na `main`). O workflow cria essa branch sozinho na primeira execução.
@@ -150,6 +178,16 @@ Os testes usam o executor nativo do Node (`node:test`), sem dependências extras
 O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 24 e no 26. Ele não publica nada nem usa segredos.
 
 Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e as cotações da CNBC ficam no início de `scripts/update.mjs`.
+
+## Como contribuir
+
+O roteiro de evolução virou issues, e cada mudança segue o mesmo caminho:
+
+1. Uma issue por vez, numa branch própria (`feat/`, `fix/`, `test/`, `docs/`, `chore/`).
+2. Commits pequenos no formato [Conventional Commits](https://www.conventionalcommits.org/pt-br/) (`feat: ...`, `fix: ...`).
+3. Pull request com o que mudou, por quê e os testes. O CI precisa passar no Node 24 e no 26.
+4. README e CHANGELOG atualizados na mesma PR.
+5. Nunca commitar chaves ou tokens: segredos ficam nos Secrets do GitHub ou no `.env` local, que está no `.gitignore`.
 
 ## Licença
 
