@@ -1,0 +1,137 @@
+CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1;Ativo Total;41489701.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1;Ativo Total;41494475.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01;Ativo Circulante;27221359.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01;Ativo Circulante;26776141.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.01;Caixa e Equivalentes de Caixa;7347599.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.01;Caixa e Equivalentes de Caixa;6416587.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.01.01;Caixa e Bancos;1900225.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.01.01;Caixa e Bancos;1759166.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.01.02;Aplicações Financeiras;5447374.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.01.02;Aplicações Financeiras;4657421.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02;Aplicações Financeiras;648477.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02;Aplicações Financeiras;918724.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02.01;Aplicações Financeiras Avaliadas a Valor Justo através do Resultado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02.01;Aplicações Financeiras Avaliadas a Valor Justo através do Resultado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02.01.01;Títulos para Negociação;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02.01.01;Títulos para Negociação;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02.01.02;Títulos Designados a Valor Justo;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02.01.02;Títulos Designados a Valor Justo;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02.02;Aplicações Financeiras Avaliadas a Valor Justo através de Outros Resultados Abrangentes;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02.02;Aplicações Financeiras Avaliadas a Valor Justo através de Outros Resultados Abrangentes;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.02.03;Aplicações Financeiras Avaliadas ao Custo Amortizado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.02.03;Aplicações Financeiras Avaliadas ao Custo Amortizado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.03;Contas a Receber;7394411.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.03;Contas a Receber;7306408.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.03.01;Clientes;7394411.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.03.01;Clientes;7306408.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.03.02;Outras Contas a Receber;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.03.02;Outras Contas a Receber;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.04;Estoques;9903951.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.04;Estoques;9991563.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.05;Ativos Biológicos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.05;Ativos Biológicos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.06;Tributos a Recuperar;817414.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.06;Tributos a Recuperar;1141966.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.06.01;Tributos Correntes a Recuperar;817414.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.06.01;Tributos Correntes a Recuperar;1141966.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.06.01.01;Imposto de Renda/Contribuição Social a Recuperar;131878.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.06.01.01;Imposto de Renda/Contribuição Social a Recuperar;318385.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.06.01.02;Outros Tributos a Recuperar;685536.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.06.01.02;Outros Tributos a Recuperar;823581.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.07;Despesas Antecipadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.07;Despesas Antecipadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08;Outros Ativos Circulantes;1109507.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08;Outros Ativos Circulantes;1000893.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08.01;Ativos Não-Correntes a Venda;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08.01;Ativos Não-Correntes a Venda;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08.02;Ativos de Operações Descontinuadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08.02;Ativos de Operações Descontinuadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08.03;Outros;1109507.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08.03;Outros;1000893.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08.03.01;Instrumentos Financeiros Derivativos;210749.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08.03.01;Instrumentos Financeiros Derivativos;31846.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.01.08.03.02;Outros;898758.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.01.08.03.02;Outros;969047.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02;Ativo Não Circulante;14268342.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02;Ativo Não Circulante;14718334.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01;Ativo Realizável a Longo Prazo;1442220.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01;Ativo Realizável a Longo Prazo;1371996.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.01;Aplicações Financeiras Avaliadas a Valor Justo através do Resultado;17134.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.01;Aplicações Financeiras Avaliadas a Valor Justo através do Resultado;13749.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.01.01;Títulos Designados a Valor Justo;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.01.01;Títulos Designados a Valor Justo;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.02;Aplicações Financeiras Avaliadas a Valor Justo através de Outros Resultados Abrangentes;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.02;Aplicações Financeiras Avaliadas a Valor Justo através de Outros Resultados Abrangentes;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.03;Aplicações Financeiras Avaliadas ao Custo Amortizado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.03;Aplicações Financeiras Avaliadas ao Custo Amortizado;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.04;Contas a Receber;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.04;Contas a Receber;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.04.01;Clientes;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.04.01;Clientes;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.04.02;Outras Contas a Receber;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.04.02;Outras Contas a Receber;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.05;Estoques;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.05;Estoques;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.06;Ativos Biológicos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.06;Ativos Biológicos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.07;Tributos Diferidos;1141821.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.07;Tributos Diferidos;1004585.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.07.01;Imposto de Renda e Contribuição Social Diferidos;1141821.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.07.01;Imposto de Renda e Contribuição Social Diferidos;1004585.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.08;Despesas Antecipadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.08;Despesas Antecipadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.09;Créditos com Partes Relacionadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.09;Créditos com Partes Relacionadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.09.01;Créditos com Coligadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.09.01;Créditos com Coligadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.09.03;Créditos com Controladores;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.09.03;Créditos com Controladores;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.09.04;Créditos com Outras Partes Relacionadas;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.09.04;Créditos com Outras Partes Relacionadas;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10;Outros Ativos Não Circulantes;283265.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10;Outros Ativos Não Circulantes;353662.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.01;Ativos Não-Correntes a Venda;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.01;Ativos Não-Correntes a Venda;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.02;Ativos de Operações Descontinuadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.02;Ativos de Operações Descontinuadas;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.03;Depósitos Judiciais;58279.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.03;Depósitos Judiciais;57661.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.04;Imposto de Renda/Contribuição Social a Recuperar;8394.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.04;Imposto de Renda/Contribuição Social a Recuperar;6945.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.05;Outros Tributos a Recuperar;115193.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.05;Outros Tributos a Recuperar;159799.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.06;Instrumentos Financeiros Derivativos;6166.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.06;Instrumentos Financeiros Derivativos;716.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.01.10.07;Outros;95233.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.01.10.07;Outros;128541.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02;Investimentos;71808.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02;Investimentos;58911.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02.01;Participações Societárias;71808.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02.01;Participações Societárias;58911.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02.01.01;Participações em Coligadas;70548.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02.01.01;Participações em Coligadas;57736.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02.01.04;Participações em Controladas em Conjunto;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02.01.04;Participações em Controladas em Conjunto;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02.01.05;Outros Investimentos;1260.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02.01.05;Outros Investimentos;1175.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.02.02;Propriedades para Investimento;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.02.02;Propriedades para Investimento;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.03;Imobilizado;9933659.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.03;Imobilizado;10548232.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.03.01;Imobilizado em Operação;9035224.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.03.01;Imobilizado em Operação;9758608.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.03.02;Direito de Uso em Arrendamento;898435.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.03.02;Direito de Uso em Arrendamento;789624.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.03.03;Imobilizado em Andamento;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.03.03;Imobilizado em Andamento;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.04;Intangível;2820655.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.04;Intangível;2739195.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.04.01;Intangíveis;755630.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.04.01;Intangíveis;803070.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.04.01.01;Contrato de Concessão;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.04.01.01;Contrato de Concessão;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.04.01.02;Outros;755630.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.04.01.02;Outros;803070.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2024-12-31;1.02.04.02;Goodwill;2065025.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2025-09-30;1.02.04.02;Goodwill;1936125.0000000000;S

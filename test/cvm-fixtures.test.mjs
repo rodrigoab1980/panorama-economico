@@ -107,7 +107,10 @@ describe("base de 12 meses pelo ITR (WEG, 3T26)", () => {
   test("lucro 12m = anual 2025 + acumulado 9M26 − acumulado 9M25", () => {
     const ano = valor(anual, "3.11", atual);
     const acum = valor(dre, "3.11", (r) => atual(r) && r.DT_INI_EXERC === "2026-01-01");
-    const acumAnt = valor(dre, "3.11", (r) => r.ORDEM_EXERC === "PENÚLTIMO" && r.DT_INI_EXERC === "2025-01-01");
+    // O acumulado do ano anterior vem do ITR de 30/09/2025 como entregue (ÚLTIMO), não do PENÚLTIMO do ITR de 2026.
+    const dre2025 = lerCsv("weg/itr_cia_aberta_DRE_con_2025.csv").linhas;
+    const acumAnt = valor(dre2025, "3.11", (r) => atual(r) && r.DT_INI_EXERC === "2025-01-01");
+    assert.equal(acumAnt, 5_074_596);
     assert.equal(ano + acum - acumAnt, 6_690_278);
   });
 });

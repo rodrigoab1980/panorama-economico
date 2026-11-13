@@ -1,0 +1,241 @@
+CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2;Passivo Total;20371449.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2;Passivo Total;21769383.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01;Passivo Circulante;2854430.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01;Passivo Circulante;2589623.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.01;Obrigações Sociais e Trabalhistas;240837.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.01;Obrigações Sociais e Trabalhistas;264498.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.01.01;Obrigações Sociais;240837.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.01.01;Obrigações Sociais;264498.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.01.01.01;Obrigações Sociais e Trabalhistas;240837.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.01.01.01;Obrigações Sociais e Trabalhistas;264498.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.01.02;Obrigações Trabalhistas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.01.02;Obrigações Trabalhistas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.02;Fornecedores;408590.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.02;Fornecedores;404994.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.02.01;Fornecedores Nacionais;408590.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.02.01;Fornecedores Nacionais;404994.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.02.02;Fornecedores Estrangeiros;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.02.02;Fornecedores Estrangeiros;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03;Obrigações Fiscais;50261.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03;Obrigações Fiscais;44242.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03.01;Obrigações Fiscais Federais;50261.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03.01;Obrigações Fiscais Federais;44242.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03.01.01;Imposto de Renda e Contribuição Social a Pagar;9470.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03.01.01;Imposto de Renda e Contribuição Social a Pagar;5834.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03.01.02;Obrigações Fiscais;40791.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03.01.02;Obrigações Fiscais;38408.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03.02;Obrigações Fiscais Estaduais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03.02;Obrigações Fiscais Estaduais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.03.03;Obrigações Fiscais Municipais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.03.03;Obrigações Fiscais Municipais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04;Empréstimos e Financiamentos;1759317.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04;Empréstimos e Financiamentos;1596787.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.01;Empréstimos e Financiamentos;1096406.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.01;Empréstimos e Financiamentos;906297.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.01.01;Em Moeda Nacional;857569.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.01.01;Em Moeda Nacional;826150.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.01.02;Em Moeda Estrangeira;238837.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.01.02;Em Moeda Estrangeira;80147.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.02;Debêntures;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.02;Debêntures;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.03;Financiamento por Arrendamento;662911.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.03;Financiamento por Arrendamento;690490.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.03.01;Arrendamento a pagar;108047.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.03.01;Arrendamento a pagar;113485.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.04.03.02;Parceria agricola a pagar;554864.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.04.03.02;Parceria agricola a pagar;577005.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05;Outras Obrigações;395425.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05;Outras Obrigações;279102.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.01;Passivos com Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.01;Passivos com Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.01.01;Débitos com Coligadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.01.01;Débitos com Coligadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.01.03;Débitos com Controladores;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.01.03;Débitos com Controladores;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.01.04;Débitos com Outras Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.01.04;Débitos com Outras Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02;Outros;395425.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02;Outros;279102.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.01;Dividendos e JCP a Pagar;150139.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.01;Dividendos e JCP a Pagar;20.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.02;Dividendo Mínimo Obrigatório a Pagar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.02;Dividendo Mínimo Obrigatório a Pagar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.03;Obrigações por Pagamentos Baseados em Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.03;Obrigações por Pagamentos Baseados em Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.04;Instrumentos financeiros derivativos;158129.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.04;Instrumentos financeiros derivativos;207006.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.05;Obrigações com a Copersucar;8336.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.05;Obrigações com a Copersucar;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.06;Adiantamentos de clientes;37414.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.06;Adiantamentos de clientes;47732.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.07;Aquisição de participações societárias;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.07;Aquisição de participações societárias;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.05.02.08;Outros passivos;41407.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.05.02.08;Outros passivos;24344.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06;Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06;Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.01;Provisões Fiscais Previdenciárias Trabalhistas e Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.01;Provisões Fiscais Previdenciárias Trabalhistas e Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.01.01;Provisões Fiscais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.01.01;Provisões Fiscais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.01.02;Provisões Previdenciárias e Trabalhistas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.01.02;Provisões Previdenciárias e Trabalhistas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.01.03;Provisões para Benefícios a Empregados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.01.03;Provisões para Benefícios a Empregados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.01.04;Provisões Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.01.04;Provisões Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.02;Outras Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.02;Outras Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.02.01;Provisões para Garantias;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.02.01;Provisões para Garantias;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.02.02;Provisões para Reestruturação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.02.02;Provisões para Reestruturação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.06.02.03;Provisões para Passivos Ambientais e de Desativação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.06.02.03;Provisões para Passivos Ambientais e de Desativação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.07;Passivos sobre Ativos Não-Correntes a Venda e Descontinuados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.07;Passivos sobre Ativos Não-Correntes a Venda e Descontinuados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.07.01;Passivos sobre Ativos Não-Correntes a Venda;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.07.01;Passivos sobre Ativos Não-Correntes a Venda;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.01.07.02;Passivos sobre Ativos de Operações Descontinuadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.01.07.02;Passivos sobre Ativos de Operações Descontinuadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02;Passivo Não Circulante;10654648.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02;Passivo Não Circulante;12480398.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01;Empréstimos e Financiamentos;7652261.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01;Empréstimos e Financiamentos;9323127.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.01;Empréstimos e Financiamentos;5440412.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.01;Empréstimos e Financiamentos;7183164.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.01.01;Em Moeda Nacional;4997531.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.01.01;Em Moeda Nacional;5993071.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.01.02;Em Moeda Estrangeira;442881.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.01.02;Em Moeda Estrangeira;1190093.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.02;Debêntures;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.02;Debêntures;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.03;Financiamento por Arrendamento;2211849.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.03;Financiamento por Arrendamento;2139963.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.03.01;Arrendamento a pagar;528856.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.03.01;Arrendamento a pagar;532830.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.01.03.02;Parceria agricola a pagar;1682993.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.01.03.02;Parceria agricola a pagar;1607133.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02;Outras Obrigações;2056868.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02;Outras Obrigações;2243277.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.01;Passivos com Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.01;Passivos com Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.01.01;Débitos com Coligadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.01.01;Débitos com Coligadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.01.03;Débitos com Controladores;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.01.03;Débitos com Controladores;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.01.04;Débitos com Outras Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.01.04;Débitos com Outras Partes Relacionadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02;Outros;2056868.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02;Outros;2243277.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.01;Obrigações por Pagamentos Baseados em Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.01;Obrigações por Pagamentos Baseados em Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.02;Adiantamento para Futuro Aumento de Capital;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.02;Adiantamento para Futuro Aumento de Capital;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.03;Obrigações com a Copersucar;173709.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.03;Obrigações com a Copersucar;139276.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.04;Tributos a recolher;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.04;Tributos a recolher;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.05;Aquisição de participações societárias;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.05;Aquisição de participações societárias;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.06;Instrumentos financeiros derivativos;13596.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.06;Instrumentos financeiros derivativos;51999.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.07;Outros passivos;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.07;Outros passivos;26368.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.02.02.08;Tributos com exigibilidade suspensa;1869563.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.02.02.08;Tributos com exigibilidade suspensa;2025634.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.03;Tributos Diferidos;821353.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.03;Tributos Diferidos;792961.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.03.01;Imposto de Renda e Contribuição Social Diferidos;821353.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.03.01;Imposto de Renda e Contribuição Social Diferidos;792961.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04;Provisões;124166.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04;Provisões;121033.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.01;Provisões Fiscais Previdenciárias Trabalhistas e Cíveis;124166.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.01;Provisões Fiscais Previdenciárias Trabalhistas e Cíveis;121033.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.01.01;Provisões Fiscais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.01.01;Provisões Fiscais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.01.02;Provisões Previdenciárias e Trabalhistas;124166.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.01.02;Provisões Previdenciárias e Trabalhistas;121033.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.01.03;Provisões para Benefícios a Empregados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.01.03;Provisões para Benefícios a Empregados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.01.04;Provisões Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.01.04;Provisões Cíveis;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.02;Outras Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.02;Outras Provisões;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.02.01;Provisões para Garantias;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.02.01;Provisões para Garantias;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.02.02;Provisões para Reestruturação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.02.02;Provisões para Reestruturação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.04.02.03;Provisões para Passivos Ambientais e de Desativação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.04.02.03;Provisões para Passivos Ambientais e de Desativação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.05;Passivos sobre Ativos Não-Correntes a Venda e Descontinuados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.05;Passivos sobre Ativos Não-Correntes a Venda e Descontinuados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.05.01;Passivos sobre Ativos Não-Correntes a Venda;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.05.01;Passivos sobre Ativos Não-Correntes a Venda;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.05.02;Passivos sobre Ativos de Operações Descontinuadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.05.02;Passivos sobre Ativos de Operações Descontinuadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.06;Lucros e Receitas a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.06;Lucros e Receitas a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.06.01;Lucros a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.06.01;Lucros a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.06.02;Receitas a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.06.02;Receitas a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.02.06.03;Subvenções de Investimento a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.02.06.03;Subvenções de Investimento a Apropriar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03;Patrimônio Líquido Consolidado;6862371.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03;Patrimônio Líquido Consolidado;6699362.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.01;Capital Social Realizado;3941717.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.01;Capital Social Realizado;4445192.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.01.01;Capital Social;3941717.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.01.01;Capital Social;4445192.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.01.02;Redutora de Capital;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.01.02;Redutora de Capital;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02;Reservas de Capital;-16325.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02;Reservas de Capital;-90323.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.01;Ágio na Emissão de Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.01;Ágio na Emissão de Ações;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.02;Reserva Especial de Ágio na Incorporação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.02;Reserva Especial de Ágio na Incorporação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.03;Alienação de Bônus de Subscrição;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.03;Alienação de Bônus de Subscrição;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.04;Opções Outorgadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.04;Opções Outorgadas;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.05;Ações em Tesouraria;-16325.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.05;Ações em Tesouraria;-90323.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.06;Adiantamento para Futuro Aumento de Capital;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.06;Adiantamento para Futuro Aumento de Capital;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.02.07;Reserva de capital;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.02.07;Reserva de capital;0.0000000000;N
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.03;Reservas de Reavaliação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.03;Reservas de Reavaliação;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04;Reservas de Lucros;1818821.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04;Reservas de Lucros;1164152.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.01;Reserva Legal;387377.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.01;Reserva Legal;415214.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.02;Reserva Estatutária;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.02;Reserva Estatutária;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.03;Reserva para Contingências;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.03;Reserva para Contingências;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.04;Reserva de Lucros a Realizar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.04;Reserva de Lucros a Realizar;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.05;Reserva de Retenção de Lucros;927969.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.05;Reserva de Retenção de Lucros;748938.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.06;Reserva Especial para Dividendos Não Distribuídos;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.06;Reserva Especial para Dividendos Não Distribuídos;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.07;Reserva de Incentivos Fiscais;503475.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.07;Reserva de Incentivos Fiscais;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.08;Dividendo Adicional Proposto;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.08;Dividendo Adicional Proposto;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.04.09;Ações em Tesouraria;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.04.09;Ações em Tesouraria;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.05;Lucros/Prejuízos Acumulados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.05;Lucros/Prejuízos Acumulados;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.06;Ajustes de Avaliação Patrimonial;1118158.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.06;Ajustes de Avaliação Patrimonial;1180341.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.07;Ajustes Acumulados de Conversão;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.07;Ajustes Acumulados de Conversão;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.08;Outros Resultados Abrangentes;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.08;Outros Resultados Abrangentes;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;PENÚLTIMO;2024-03-31;2.03.09;Participação dos Acionistas Não Controladores;0.0000000000;S
+51.466.860/0001-56;2025-03-31;1;SAO MARTINHO S.A.;020516;DF Consolidado - Balanço Patrimonial Passivo;REAL;MIL;ÚLTIMO;2025-03-31;2.03.09;Participação dos Acionistas Não Controladores;0.0000000000;S

@@ -4,9 +4,16 @@
 
 // Quais recortes compõem cada fixture, por CD_CVM.
 export const FIXTURES = {
-  "005410": { pasta: "weg", documentos: [{ doc: "dfp", ano: 2025 }, { doc: "itr", ano: 2026, dtRefer: "2026-09-30" }] },
+  // O ITR do mesmo período do ano anterior entra porque a base de 12 meses usa o acumulado dele (#33).
+  "005410": { pasta: "weg", documentos: [{ doc: "dfp", ano: 2025 }, { doc: "itr", ano: 2025, dtRefer: "2025-09-30" }, { doc: "itr", ano: 2026, dtRefer: "2026-09-30" }] },
   "005258": { pasta: "raia-drogasil", documentos: [{ doc: "dfp", ano: 2025 }] },
   "024392": { pasta: "hapvida", documentos: [{ doc: "dfp", ano: 2022 }, { doc: "dfp", ano: 2023 }] },
+  // São Martinho: exercício de abril a março. O arquivo do ano AAAA traz os documentos com DT_REFER em AAAA,
+  // então a DFP de 31/03/2026 está no arquivo de 2026. O último ITR entregue é o de 30/06/2026 (1º trimestre).
+  "020516": {
+    pasta: "sao-martinho",
+    documentos: [{ doc: "dfp", ano: 2025 }, { doc: "dfp", ano: 2026 }, { doc: "itr", ano: 2025, dtRefer: "2025-06-30" }, { doc: "itr", ano: 2026, dtRefer: "2026-06-30" }],
+  },
 };
 
 // Fixture do FCA (cadastro e códigos de negociação), usada nos testes do universo (#32).

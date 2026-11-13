@@ -87,7 +87,7 @@ describe("fixtures reais: PENÚLTIMO preservado e marcado", () => {
 
 describe("fixtures reais: períodos", () => {
   test("WEG ITR 3T26: a DRE devolve trimestre e acumulado da 3.11, nos dois exercícios", () => {
-    const lucro = achar(WEG, { documento: "itr", conta: "3.11" }).map((f) => [f.ordem, f.inicio, f.fim, f.valor]).sort();
+    const lucro = achar(WEG, { documento: "itr", dtRefer: "2026-09-30", conta: "3.11" }).map((f) => [f.ordem, f.inicio, f.fim, f.valor]).sort();
     assert.deepEqual(lucro, [
       ["penultimo", "2025-01-01", "2025-09-30", 5_074_596],
       ["penultimo", "2025-07-01", "2025-09-30", 1_744_754],

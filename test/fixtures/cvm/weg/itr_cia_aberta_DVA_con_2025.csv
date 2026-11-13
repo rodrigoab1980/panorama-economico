@@ -1,0 +1,83 @@
+CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_INI_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.01;Receitas;29906282.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.01;Receitas;33404235.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.01.01;Vendas de Mercadorias, Produtos e Serviços;29887541.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.01.01;Vendas de Mercadorias, Produtos e Serviços;33371319.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.01.02;Outras Receitas;26429.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.01.02;Outras Receitas;75650.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.01.03;Receitas refs. à Construção de Ativos Próprios;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.01.03;Receitas refs. à Construção de Ativos Próprios;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.01.04;Provisão/Reversão de Créds. Liquidação Duvidosa;-7688.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.01.04;Provisão/Reversão de Créds. Liquidação Duvidosa;-42734.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.02;Insumos Adquiridos de Terceiros;-16160919.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.02;Insumos Adquiridos de Terceiros;-17789396.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.02.01;Custos Prods., Mercs. e Servs. Vendidos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.02.01;Custos Prods., Mercs. e Servs. Vendidos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.02.02;Materiais, Energia, Servs. de Terceiros e Outros;-16175484.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.02.02;Materiais, Energia, Servs. de Terceiros e Outros;-17830867.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.02.03;Perda/Recuperação de Valores Ativos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.02.03;Perda/Recuperação de Valores Ativos;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.02.04;Outros;14565.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.02.04;Outros;41471.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.03;Valor Adicionado Bruto;13745363.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.03;Valor Adicionado Bruto;15614839.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.04;Retenções;-567815.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.04;Retenções;-705858.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.04.01;Depreciação, Amortização e Exaustão;-567815.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.04.01;Depreciação, Amortização e Exaustão;-705858.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.04.02;Outras;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.04.02;Outras;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.05;Valor Adicionado Líquido Produzido;13177548.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.05;Valor Adicionado Líquido Produzido;14908981.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.06;Vlr Adicionado Recebido em Transferência;1386773.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.06;Vlr Adicionado Recebido em Transferência;1961922.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.06.01;Resultado de Equivalência Patrimonial;-1034.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.06.01;Resultado de Equivalência Patrimonial;-7133.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.06.02;Receitas Financeiras;1387807.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.06.02;Receitas Financeiras;1969055.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.06.03;Outros;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.06.03;Outros;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.06.03.01;Reconhecimento Crédito Tributário - Exclusão do ICMS na Base de cálculo do PIS/COFINS;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.06.03.01;Reconhecimento Crédito Tributário - Exclusão do ICMS na Base de cálculo do PIS/COFINS;0.0000000000;N
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.07;Valor Adicionado Total a Distribuir;14564321.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.07;Valor Adicionado Total a Distribuir;16870903.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08;Distribuição do Valor Adicionado;14564321.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08;Distribuição do Valor Adicionado;16870903.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.01;Pessoal;5610772.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.01;Pessoal;6732665.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.01.01;Remuneração Direta;4810150.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.01.01;Remuneração Direta;5761093.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.01.02;Benefícios;638145.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.01.02;Benefícios;783186.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.01.03;F.G.T.S.;162477.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.01.03;F.G.T.S.;188386.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.01.04;Outros;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.01.04;Outros;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.02;Impostos, Taxas e Contribuições;3157087.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.02;Impostos, Taxas e Contribuições;3155963.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.02.01;Federais;2757175.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.02.01;Federais;2671994.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.02.02;Estaduais;371131.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.02.02;Estaduais;446194.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.02.03;Municipais;28781.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.02.03;Municipais;37775.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.03;Remuneração de Capitais de Terceiros;1246627.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.03;Remuneração de Capitais de Terceiros;1907679.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.03.01;Juros;1221743.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.03.01;Juros;1868278.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.03.02;Aluguéis;24884.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.03.02;Aluguéis;39401.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.03.03;Outras;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.03.03;Outras;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.04;Remuneração de Capitais Próprios;4549835.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.04;Remuneração de Capitais Próprios;5074596.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.04.01;Juros sobre o Capital Próprio;799605.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.04.01;Juros sobre o Capital Próprio;1195772.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.04.02;Dividendos;786877.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.04.02;Dividendos;719353.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.04.03;Lucros Retidos / Prejuízo do Período;2761815.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.04.03;Lucros Retidos / Prejuízo do Período;2873332.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.04.04;Part. Não Controladores nos Lucros Retidos;201538.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.04.04;Part. Não Controladores nos Lucros Retidos;286139.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;PENÚLTIMO;2024-01-01;2024-09-30;7.08.05;Outros;0.0000000000;S
+84.429.695/0001-11;2025-09-30;1;WEG S.A.;005410;DF Consolidado - Demonstração de Valor Adicionado;REAL;MIL;ÚLTIMO;2025-01-01;2025-09-30;7.08.05;Outros;0.0000000000;S
