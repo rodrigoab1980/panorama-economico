@@ -1,7 +1,9 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { FIXTURES, arquivosDoDocumento, cnpjDoCodigo, recortarCsv } from "../scripts/cvm/fixtures.mjs";
+import {
+  FIXTURES, FIXTURE_FCA, arquivosDoDocumento, arquivosDoFca, cnpjDoCodigo, cnpjsDoFca, recortarCsv, recortarFca,
+} from "../scripts/cvm/fixtures.mjs";
 
 const latin1 = (s) => Buffer.from(s, "latin1");
 const CAB = "CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;ORDEM_EXERC";
@@ -39,7 +41,7 @@ describe("recortarCsv", () => {
   });
   test("recortar uma fixture pelo próprio CNPJ devolve os mesmos bytes", () => {
     const dir = new URL("./fixtures/cvm/", import.meta.url);
-    for (const pasta of readdirSync(dir)) {
+    for (const pasta of readdirSync(dir).filter((p) => p !== FIXTURE_FCA.pasta)) {
       for (const nome of readdirSync(new URL(`${pasta}/`, dir))) {
         const bytes = readFileSync(new URL(`${pasta}/${nome}`, dir));
         const cnpj = bytes.toString("latin1").split("\r\n")[1].split(";")[0];
@@ -61,5 +63,33 @@ describe("FIXTURES e arquivosDoDocumento", () => {
       const esperados = documentos.flatMap(({ doc, ano }) => arquivosDoDocumento(doc, ano)).sort();
       assert.deepEqual(readdirSync(new URL(`${pasta}/`, dir)).sort(), esperados, pasta);
     }
+  });
+});
+
+describe("fixture do FCA", () => {
+  const dir = new URL(`./fixtures/cvm/${FIXTURE_FCA.pasta}/`, import.meta.url);
+  const [geral, valores] = arquivosDoFca(FIXTURE_FCA.ano);
+  const ler = (nome) => readFileSync(new URL(nome, dir));
+
+  test("os arquivos commitados são os de FIXTURE_FCA", () => {
+    assert.deepEqual(readdirSync(dir).sort(), [geral, valores].sort());
+  });
+
+  test("cnpjsDoFca acha o CNPJ de cada código CVM e recusa código ausente", () => {
+    const cnpjs = cnpjsDoFca(ler(geral), FIXTURE_FCA.cdCvms);
+    assert.equal(cnpjs.length, FIXTURE_FCA.cdCvms.length);
+    assert.equal(cnpjs[0], "33.000.167/0001-01"); // Petrobras, 009512
+    assert.throws(() => cnpjsDoFca(ler(geral), ["999999"]), /999999 não aparece/);
+  });
+
+  test("recortar a fixture pelos próprios CNPJs devolve os mesmos bytes", () => {
+    const cnpjs = cnpjsDoFca(ler(geral), FIXTURE_FCA.cdCvms);
+    for (const nome of [geral, valores]) assert.deepEqual(recortarFca(ler(nome), cnpjs), ler(nome), nome);
+  });
+
+  test("recortarFca filtra pela coluna CNPJ_Companhia, com latin1 e CRLF intactos (sintético)", () => {
+    const csv = latin1("CNPJ_Companhia;Nome\r\n11.111.111/0001-11;AÇÃO\r\n22.222.222/0001-22;OUTRA\r\n");
+    assert.deepEqual(recortarFca(csv, ["11.111.111/0001-11"]), latin1("CNPJ_Companhia;Nome\r\n11.111.111/0001-11;AÇÃO\r\n"));
+    assert.throws(() => recortarFca(latin1("A;B\r\n"), []), /CNPJ_Companhia/);
   });
 });

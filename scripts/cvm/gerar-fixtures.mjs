@@ -1,12 +1,15 @@
 // Gera as fixtures de test/fixtures/cvm/ a partir de CSVs da CVM já extraídos.
 // Sem rede e sem ZIP: só lê a pasta indicada e grava os recortes, byte a byte.
 //
-// Uso: node scripts/cvm/gerar-fixtures.mjs <pasta-dos-csv> [CD_CVM ...] [--saida <pasta>]
-// Sem CD_CVM, gera todas as fixtures de FIXTURES (scripts/cvm/fixtures.mjs).
+// Uso: node scripts/cvm/gerar-fixtures.mjs <pasta-dos-csv> [CD_CVM ... | fca] [--saida <pasta>]
+// Sem CD_CVM, gera todas as fixtures de DFP/ITR de FIXTURES (scripts/cvm/fixtures.mjs).
+// Com "fca", gera a fixture do FCA (FIXTURE_FCA), a partir dos CSVs do FCA na mesma pasta.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { FIXTURES, arquivosDoDocumento, cnpjDoCodigo, recortarCsv } from "./fixtures.mjs";
+import {
+  FIXTURES, FIXTURE_FCA, arquivosDoDocumento, arquivosDoFca, cnpjDoCodigo, cnpjsDoFca, recortarCsv, recortarFca,
+} from "./fixtures.mjs";
 
 const args = process.argv.slice(2);
 const iSaida = args.indexOf("--saida");
@@ -25,8 +28,20 @@ const ler = (nome) => {
 };
 
 for (const cd of codigos.length ? codigos : Object.keys(FIXTURES)) {
+  if (cd === "fca") {
+    const destino = join(saida, FIXTURE_FCA.pasta);
+    mkdirSync(destino, { recursive: true });
+    const [geral] = arquivosDoFca(FIXTURE_FCA.ano);
+    const cnpjs = cnpjsDoFca(ler(geral), FIXTURE_FCA.cdCvms);
+    for (const nome of arquivosDoFca(FIXTURE_FCA.ano)) {
+      const recorte = recortarFca(ler(nome), cnpjs);
+      writeFileSync(join(destino, nome), recorte);
+      console.log(`${FIXTURE_FCA.pasta}/${nome}: ${recorte.toString("latin1").split("\r\n").length - 2} linhas`);
+    }
+    continue;
+  }
   const fx = FIXTURES[cd];
-  if (!fx) throw new Error(`CD_CVM ${cd} não está em FIXTURES (scripts/cvm/fixtures.mjs). Conhecidos: ${Object.keys(FIXTURES).join(", ")}`);
+  if (!fx) throw new Error(`CD_CVM ${cd} não está em FIXTURES (scripts/cvm/fixtures.mjs). Conhecidos: ${Object.keys(FIXTURES).join(", ")}, fca`);
   const destino = join(saida, fx.pasta);
   mkdirSync(destino, { recursive: true });
   for (const { doc, ano, dtRefer } of fx.documentos) {

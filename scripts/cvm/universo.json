@@ -1,0 +1,1168 @@
+{
+  "obs": "Gerado por scripts/cvm/gerar-universo.mjs. Não edite à mão: mude tickers-ibovespa.json, excecoes-tickers.json ou setores.json e gere de novo.",
+  "carteira": {
+    "dataReferencia": "2026-11-13",
+    "fonte": "B3, carteira teórica do Ibovespa (Índices > Ibovespa > Composição da carteira > Carteira do dia)",
+    "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+    "consultadoEm": "2026-11-13"
+  },
+  "fca": [
+    "fca_cia_aberta_valor_mobiliario_2026.csv",
+    "fca_cia_aberta_geral_2026.csv"
+  ],
+  "mapeadas": [
+    {
+      "cnpj": "07.526.557/0001-00",
+      "cdCvm": "023264",
+      "nome": "AMBEV S.A.",
+      "setor": "Alimentos e bebidas",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ABEV3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "05.878.397/0001-32",
+      "cdCvm": "022357",
+      "nome": "ALLOS S.A.",
+      "setor": "Shoppings",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ALOS3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "06.057.223/0001-71",
+      "cdCvm": "025372",
+      "nome": "SENDAS DISTRIBUIDORA S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ASAI3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "28.594.234/0001-23",
+      "cdCvm": "026620",
+      "nome": "Auren Energia S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "AURE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "00.001.180/0001-26",
+      "cdCvm": "002437",
+      "nome": "AXIA Energia S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "AXIA3",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "AXIA7",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "16.590.234/0001-76",
+      "cdCvm": "022349",
+      "nome": "AZZAS 2154 S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "AZZA3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "09.346.601/0001-25",
+      "cdCvm": "021610",
+      "nome": "B3 S.A. - BRASIL, BOLSA, BALCÃO",
+      "setor": "Serviços financeiros",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "B3SA3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "00.000.000/0001-91",
+      "cdCvm": "001023",
+      "nome": "BCO BRASIL S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "banco",
+      "tickers": [
+        {
+          "ticker": "BBAS3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "60.746.948/0001-12",
+      "cdCvm": "000906",
+      "nome": "BCO BRADESCO S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "banco",
+      "tickers": [
+        {
+          "ticker": "BBDC3",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "BBDC4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "17.344.597/0001-94",
+      "cdCvm": "023159",
+      "nome": "BB SEGURIDADE PARTICIPAÇÕES S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "seguradora",
+      "tickers": [
+        {
+          "ticker": "BBSE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "67.620.377/0001-14",
+      "cdCvm": "020931",
+      "nome": "MINERVA S.A.",
+      "setor": "Alimentos e bebidas",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "BEEF3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "30.306.294/0001-45",
+      "cdCvm": "022616",
+      "nome": "BCO BTG PACTUAL S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "banco",
+      "tickers": [
+        {
+          "ticker": "BPAC11",
+          "origem": "excecao",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "03.847.461/0001-92",
+      "cdCvm": "018724",
+      "nome": "BRADESPAR S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": "holding",
+      "tickers": [
+        {
+          "ticker": "BRAP3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "BRAP4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "12.091.809/0001-55",
+      "cdCvm": "025291",
+      "nome": "Brava Energia S.A.",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "BRAV3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "45.242.914/0001-05",
+      "cdCvm": "024848",
+      "nome": "C&A Modas S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CEAB3",
+          "origem": "excecao",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "17.155.730/0001-64",
+      "cdCvm": "002453",
+      "nome": "CIA ENERGETICA DE MINAS GERAIS - CEMIG",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CMIG3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "CMIG4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "08.902.291/0001-15",
+      "cdCvm": "025585",
+      "nome": "CSN MINERAÇÃO S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CMIN3",
+          "origem": "excecao",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.800.026/0001-40",
+      "cdCvm": "017973",
+      "nome": "COGNA EDUCAÇÃO S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "COGN3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.429.144/0001-93",
+      "cdCvm": "018660",
+      "nome": "CPFL ENERGIA S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CPFE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "76.483.817/0001-20",
+      "cdCvm": "014311",
+      "nome": "CIA PARANAENSE DE ENERGIA - COPEL",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CPLE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "50.746.577/0001-15",
+      "cdCvm": "019836",
+      "nome": "COSAN S.A.",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CSAN3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "17.281.106/0001-03",
+      "cdCvm": "019445",
+      "nome": "CIA SANEAMENTO DE MINAS GERAIS-COPASA MG",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CSMG3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "33.042.730/0001-04",
+      "cdCvm": "004030",
+      "nome": "CIA SIDERURGICA NACIONAL",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CSNA3",
+          "origem": "excecao",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "08.797.760/0001-83",
+      "cdCvm": "025100",
+      "nome": "Cury Construtora e Incorporadora S.A.",
+      "setor": "Construção civil",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CURY3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "22.543.331/0001-00",
+      "cdCvm": "023795",
+      "nome": "CAIXA SEGURIDADE PARTICIPAÇÕES S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "seguradora",
+      "tickers": [
+        {
+          "ticker": "CXSE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "73.178.600/0001-18",
+      "cdCvm": "014460",
+      "nome": "CYRELA BRAZIL REALTY S.A.EMPREEND E PART",
+      "setor": "Construção civil",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "CYRE3",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "CYRE4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "16.614.075/0001-00",
+      "cdCvm": "021350",
+      "nome": "DIRECIONAL ENGENHARIA S.A.",
+      "setor": "Construção civil",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "DIRR3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.474.103/0001-19",
+      "cdCvm": "017329",
+      "nome": "ENGIE BRASIL ENERGIA S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "EGIE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "07.689.002/0001-89",
+      "cdCvm": "020087",
+      "nome": "EMBRAER S.A.",
+      "setor": "Indústria",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "EMBJ3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "04.423.567/0001-21",
+      "cdCvm": "021237",
+      "nome": "ENEVA S.A",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ENEV3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "00.864.214/0001-06",
+      "cdCvm": "015253",
+      "nome": "ENERGISA S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ENGI11",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "ENGI3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "ENGI4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "03.220.438/0001-73",
+      "cdCvm": "020010",
+      "nome": "EQUATORIAL S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "EQTL3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "60.840.055/0001-31",
+      "cdCvm": "021881",
+      "nome": "FLEURY S.A.",
+      "setor": "Saúde",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "FLRY3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "33.611.500/0001-19",
+      "cdCvm": "003980",
+      "nome": "GERDAU S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "GGBR3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "GGBR4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "92.690.783/0001-09",
+      "cdCvm": "008656",
+      "nome": "METALURGICA GERDAU S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "GOAU3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "GOAU4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "05.197.443/0001-38",
+      "cdCvm": "024392",
+      "nome": "HAPVIDA PARTICIPAÇÕES E INVESTIMENTOS S.A.",
+      "setor": "Saúde",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "HAPV3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.932.074/0001-91",
+      "cdCvm": "021431",
+      "nome": "HYPERA S.A.",
+      "setor": "Saúde",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "HYPE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "60.543.816/0001-93",
+      "cdCvm": "008672",
+      "nome": "IGUATEMI S.A.",
+      "setor": "Shoppings",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "IGTI11",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "IGTI3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "IGTI4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "02.998.611/0001-04",
+      "cdCvm": "018376",
+      "nome": "ISA ENERGIA BRASIL",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "ISAE3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "ISAE4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "61.532.644/0001-15",
+      "cdCvm": "007617",
+      "nome": "ITAÚSA S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "holding",
+      "tickers": [
+        {
+          "ticker": "ITSA3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "ITSA4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "60.872.504/0001-23",
+      "cdCvm": "019348",
+      "nome": "ITAU UNIBANCO HOLDING S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "banco",
+      "tickers": [
+        {
+          "ticker": "ITUB3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "ITUB4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "89.637.490/0001-45",
+      "cdCvm": "012653",
+      "nome": "KLABIN S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "KLBN11",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "92.754.738/0001-62",
+      "cdCvm": "008133",
+      "nome": "LOJAS RENNER S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "LREN3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "03.853.896/0001-40",
+      "cdCvm": "020788",
+      "nome": "MARFRIG GLOBAL FOODS S.A.",
+      "setor": "Alimentos e bebidas",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "MBRF3",
+          "origem": "excecao",
+          "ibovespa": true
+        }
+      ],
+      "obs": "MBRF3 é o código da Marfrig depois da incorporação das ações da BRF. O fato relevante conjunto de 08/09/2025 fixou o fechamento em 22/09/2025 (mesma data do fim de negociação do BRFS3 no FCA), com as ações negociadas como MBRF3 a partir de 23/09/2025 e 0,8521 ação da Marfrig por ação da BRF. O histórico desta entrada é só o da Marfrig; a BRF (CNPJ 01.838.723/0001-27) continua como companhia separada na CVM. Série combinada, se houver, é assunto da #33."
+    },
+    {
+      "cnpj": "47.960.950/0001-21",
+      "cdCvm": "022470",
+      "nome": "MAGAZINE LUIZA S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "MGLU3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.846.056/0001-97",
+      "cdCvm": "018821",
+      "nome": "MOTIVA INFRAESTRUTURA DE MOBILIDADE S.A.",
+      "setor": "Transporte e logística",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "MOTV3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "08.343.492/0001-20",
+      "cdCvm": "020915",
+      "nome": "MRV ENGENHARIA E PARTICIPACOES S.A.",
+      "setor": "Construção civil",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "MRVE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "07.816.890/0001-53",
+      "cdCvm": "020982",
+      "nome": "MULTIPLAN - EMPREEND IMOBILIARIOS S.A.",
+      "setor": "Shoppings",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "MULT3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "71.673.990/0001-77",
+      "cdCvm": "019550",
+      "nome": "NATURA COSMÉTICOS S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "NATU3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "33.000.167/0001-01",
+      "cdCvm": "009512",
+      "nome": "PETROLEO BRASILEIRO S.A. PETROBRAS",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "PETR3",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "PETR4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "88.611.835/0001-29",
+      "cdCvm": "008451",
+      "nome": "MARCOPOLO S.A.",
+      "setor": "Indústria",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "POMO3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "POMO4",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "10.629.105/0001-68",
+      "cdCvm": "022187",
+      "nome": "PRIO S.A.",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "PRIO3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.149.205/0001-69",
+      "cdCvm": "016659",
+      "nome": "PORTO SEGURO S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "seguradora",
+      "tickers": [
+        {
+          "ticker": "PSSA3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "61.585.865/0001-51",
+      "cdCvm": "005258",
+      "nome": "Raia Drogasil S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "RADL3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.387.241/0001-60",
+      "cdCvm": "017450",
+      "nome": "RUMO S.A.",
+      "setor": "Transporte e logística",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "RAIL3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "06.047.087/0001-39",
+      "cdCvm": "024821",
+      "nome": "Rede D'Or São Luiz S.A.",
+      "setor": "Saúde",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "RDOR3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "16.670.085/0001-55",
+      "cdCvm": "019739",
+      "nome": "Localiza Rent a Car S.A.",
+      "setor": "Transporte e logística",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "RENT3",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "RENT4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "90.400.888/0001-42",
+      "cdCvm": "020532",
+      "nome": "BCO SANTANDER (BRASIL) S.A.",
+      "setor": "Financeiro",
+      "foraDaPagina": "banco",
+      "tickers": [
+        {
+          "ticker": "SANB11",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "SANB3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "SANB4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "43.776.517/0001-80",
+      "cdCvm": "014443",
+      "nome": "CIA SANEAMENTO BASICO EST SAO PAULO",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "SBSP3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "07.594.978/0001-78",
+      "cdCvm": "024260",
+      "nome": "SMARTFIT ESCOLA DE GINÁSTICA E DANÇA S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "SMFT3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "16.404.287/0001-55",
+      "cdCvm": "013986",
+      "nome": "SUZANO S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "SUZB3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "07.859.971/0001-30",
+      "cdCvm": "020257",
+      "nome": "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.",
+      "setor": "Energia e saneamento",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "TAEE11",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "TAEE3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "TAEE4",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "71.476.527/0001-35",
+      "cdCvm": "021148",
+      "nome": "CONSTRUTORA TENDA S.A.",
+      "setor": "Construção civil",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "TEND3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.421.421/0001-11",
+      "cdCvm": "024929",
+      "nome": "TIM S.A.",
+      "setor": "Telecom e tecnologia",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "TIMS3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "53.113.791/0001-22",
+      "cdCvm": "019992",
+      "nome": "TOTVS S.A.",
+      "setor": "Telecom e tecnologia",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "TOTS3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "33.256.439/0001-39",
+      "cdCvm": "018465",
+      "nome": "ULTRAPAR PARTICIPACOES S.A.",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "UGPA3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "60.894.730/0001-05",
+      "cdCvm": "014320",
+      "nome": "USINAS SID DE MINAS GERAIS S.A.-USIMINAS",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "USIM3",
+          "origem": "fca",
+          "ibovespa": false
+        },
+        {
+          "ticker": "USIM5",
+          "origem": "fca",
+          "ibovespa": true
+        },
+        {
+          "ticker": "USIM6",
+          "origem": "fca",
+          "ibovespa": false
+        }
+      ]
+    },
+    {
+      "cnpj": "33.592.510/0001-54",
+      "cdCvm": "004170",
+      "nome": "VALE S.A.",
+      "setor": "Materiais básicos",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "VALE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "23.373.000/0001-32",
+      "cdCvm": "024716",
+      "nome": "VAMOS LOCAÇÃO DE CAMINHÕES, MÁQUINAS E EQUIPAMENTOS S.A.",
+      "setor": "Transporte e logística",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "VAMO3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "34.274.233/0001-02",
+      "cdCvm": "024295",
+      "nome": "VIBRA ENERGIA S/A",
+      "setor": "Petróleo e gás",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "VBBR3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "33.839.910/0001-11",
+      "cdCvm": "024805",
+      "nome": "Vivara Participações S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "VIVA3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "02.558.157/0001-62",
+      "cdCvm": "017671",
+      "nome": "TELEFÔNICA BRASIL S.A",
+      "setor": "Telecom e tecnologia",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "VIVT3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "84.429.695/0001-11",
+      "cdCvm": "005410",
+      "nome": "WEG S.A.",
+      "setor": "Indústria",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "WEGE3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    },
+    {
+      "cnpj": "08.807.432/0001-10",
+      "cdCvm": "021016",
+      "nome": "YDUQS PARTICIPACOES S.A.",
+      "setor": "Consumo e serviços",
+      "foraDaPagina": null,
+      "tickers": [
+        {
+          "ticker": "YDUQ3",
+          "origem": "fca",
+          "ibovespa": true
+        }
+      ]
+    }
+  ],
+  "pendentes": []
+}

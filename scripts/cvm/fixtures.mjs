@@ -9,6 +9,27 @@ export const FIXTURES = {
   "024392": { pasta: "hapvida", documentos: [{ doc: "dfp", ano: 2022 }, { doc: "dfp", ano: 2023 }] },
 };
 
+// Fixture do FCA (cadastro e códigos de negociação), usada nos testes do universo (#32).
+// Cada empresa cobre um caso: ON e PN, unit, código inválido, nome trocado, ticker com dígito,
+// data de fim preenchida por engano e negociação encerrada de verdade.
+export const FIXTURE_FCA = {
+  pasta: "fca",
+  ano: 2026,
+  cdCvms: [
+    "009512", // Petrobras: ON e PN (PETR3, PETR4)
+    "012653", // Klabin: só a unit (KLBN11)
+    "015253", // Energisa: unit, ON e PN (ENGI11, ENGI3, ENGI4)
+    "004030", // CSN: código de negociação inválido ("4030")
+    "002437", // Axia Energia: antiga Eletrobras (ELET3 → AXIA3)
+    "021610", // B3: ticker com dígito no meio (B3SA3)
+    "024848", // C&A: data de fim igual à de início (CEAB3)
+    "016292", // BRF: BRFS3 com negociação encerrada em 2025
+    "020788", // Marfrig: código "ADR"; hoje negocia como MBRF3
+  ],
+};
+
+export const arquivosDoFca = (ano) => [`fca_cia_aberta_geral_${ano}.csv`, `fca_cia_aberta_valor_mobiliario_${ano}.csv`];
+
 const DEMONSTRATIVOS = ["DRE", "BPA", "BPP", "DFC_MI", "DVA"];
 
 // Nomes dos CSVs de um documento: índice, demonstrativos consolidados e,
@@ -37,6 +58,29 @@ export function cnpjDoCodigo(indice, cdCvm) {
     if (c[iCod] === cdCvm) return c[iCnpj];
   }
   return null;
+}
+
+// CNPJs das companhias com esses códigos CVM, pelo fca_cia_aberta_geral_AAAA.csv.
+// Código que não aparece dá erro, para a fixture não sair incompleta em silêncio.
+export function cnpjsDoFca(geral, cdCvms) {
+  const { cab, linhas } = separar(geral);
+  const iCnpj = cab.indexOf("CNPJ_Companhia"), iCod = cab.indexOf("Codigo_CVM");
+  if (iCnpj < 0 || iCod < 0) throw new Error("FCA geral sem as colunas CNPJ_Companhia e Codigo_CVM");
+  const achados = new Map(linhas.map((l) => l.split(";")).map((c) => [c[iCod], c[iCnpj]]));
+  return cdCvms.map((cd) => {
+    if (!achados.has(cd)) throw new Error(`CD_CVM ${cd} não aparece no FCA geral`);
+    return achados.get(cd);
+  });
+}
+
+// Cabeçalho + linhas das companhias pedidas num CSV do FCA (coluna CNPJ_Companhia), com CRLF no fim.
+export function recortarFca(bytes, cnpjs) {
+  const { cabecalho, cab, linhas } = separar(bytes);
+  const iCnpj = cab.indexOf("CNPJ_Companhia");
+  if (iCnpj < 0) throw new Error("CSV do FCA sem a coluna CNPJ_Companhia");
+  const quero = new Set(cnpjs);
+  const ficam = linhas.filter((l) => quero.has(l.split(";")[iCnpj]));
+  return Buffer.from([cabecalho, ...ficam].map((l) => `${l}\r\n`).join(""), "latin1");
 }
 
 // Cabeçalho + linhas do CNPJ (e, se informado, só do DT_REFER), com CRLF no fim.
