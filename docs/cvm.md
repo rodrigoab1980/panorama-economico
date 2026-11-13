@@ -19,7 +19,7 @@ Medições feitas em 12/11/2026 sobre os arquivos do portal de dados abertos da 
 
 `{doc}_cia_aberta_AAAA.csv` (índice dos documentos), mais um CSV por demonstrativo, sempre em duas versões: `_con` (consolidado) e `_ind` (individual):
 
-`BPA` (ativo), `BPP` (passivo e PL), `DRE`, `DRA` (resultado abrangente), `DFC_MI` (fluxo de caixa, método indireto), `DFC_MD` (método direto), `DMPL`, `DVA`, além de `composicao_capital` (só na DFP) e `parecer`.
+`BPA` (ativo), `BPP` (passivo e PL), `DRE`, `DRA` (resultado abrangente), `DFC_MI` (fluxo de caixa, método indireto), `DFC_MD` (método direto), `DMPL`, `DVA`, além de `composicao_capital` (número de ações; vem na DFP **e no ITR**) e `parecer`.
 
 FCA: `geral`, `valor_mobiliario` (com o código de negociação), `endereco`, `dri`, `auditor`, `escriturador`, `canal_divulgacao`, `departamento_acionistas` e `pais_estrangeiro_negociacao`.
 
@@ -153,6 +153,61 @@ Desde 2019, aluguéis viram "arrendamento": o pagamento sai do FCO e vai para o 
 | **FCL descontando o principal dos arrendamentos** | **106.493** |
 
 Sem o ajuste, o FCL fica quase 10 vezes maior. No balanço, o passivo de arrendamento aparece na conta fixa 2.01.04.03 / 2.02.01.03 ("Financiamento por Arrendamento") **ou** em contas próprias da empresa (2.01.05 / 2.02.02, com "Passivo de arrendamento", "Arrendamentos" etc.).
+
+### Classificador da DFC (#36)
+
+`scripts/cvm/classificador-dfc.mjs` acha as linhas pela descrição, depois de tirar os acentos, passar para minúsculas e juntar os espaços. Só linhas sem código fixo são classificadas. A regra de cada categoria fica na constante `CATEGORIAS`:
+
+| Categoria | Onde | Regra (sobre a descrição normalizada) |
+|---|---|---|
+| `capex` | 6.02 | imobilizado, intangível, software, ativo de contrato ou contratual, ativo biológico, plantio, madeira em pé. De fora: venda, alienação, baixa, recebimento; aquisição de empresa, controlada ou participação, combinação de negócios; aplicações financeiras e títulos; direito de uso |
+| `jurosPagos` | 6.01.02, 6.01.03 e 6.03 | "juros" (ou "encargos financeiros", "encargos de dívida") + pago, pagamento, amortização ou liquidação. De fora: capital próprio, JCP, recebido, provisionado, apropriado, "principal", derivativos |
+| `jurosArrendamento` | 6.01.02, 6.01.03 e 6.03 | "juros" (ou "encargos") + arrendamento ou leasing, sem "principal" |
+| `principalArrendamento` | 6.03 | arrendamento ou leasing, menos as linhas que são só de juros. "Principal e juros" numa linha entra aqui inteira |
+| `proventos` | 6.03 | dividendo, juros sobre (o) capital próprio, JCP ou JSCP, "pagamento de proventos", "remuneração aos acionistas", sem não controladores, minoritários, SCPs e SPEs e sem "recebi" |
+| `proventosNaoControladores` | 6.03 | a mesma regra, com não controladores, minoritários, SCPs ou SPEs |
+| `daDfc` | 6.01.01 | depreciação, amortização ou exaustão, sem custo de transação ou de captação, debênture, ágio, juros, empréstimo e despesa antecipada |
+
+- **O bloco 6.01.01 (ajustes do lucro) nunca tem pagamento.** "Juros provisionados" e "Despesas de juros - arrendamento" ficam ali e não são saída de caixa. Por isso os juros pagos só são procurados em 6.01.02, 6.01.03 e 6.03.
+- **Prioridade** (`ORDEM`): juros de arrendamento, principal de arrendamento, proventos a não controladores, proventos, juros pagos, capex, D&A. Uma linha entra em uma categoria só, a primeira em que bate.
+- **Linha e sublinha** na mesma categoria: conta só a de cima.
+- **Linha mista de capex** (com "investimentos", "propriedade para investimento" ou "arrendamento" junto) entra, com `mista: true`. Na DFP de 2025 são três: Rumo, CSN e SmartFit.
+- **Linha que mistura dívida e arrendamento** não entra em nenhuma categoria, e a categoria fica `null` com o motivo. Na DFP de 2025 são a Vivo e a Vamos, no principal e nos juros.
+- **"Financiamento por arrendamento"** é arrendamento, não dívida (Direcional).
+- **"Proventos"** sozinho não é dividendo: na Ambev, "Proventos de Empréstimos" quer dizer recursos obtidos.
+- **O código muda dentro da mesma companhia.** Na WEG, "Imobilizado" é 6.02.02 na DFP de 2025 e 6.02.01 nos ITR de 2025 e de 2026.
+- Exceções por companhia ficam em `scripts/cvm/excecoes-dfc.json`, com motivo obrigatório. O arquivo começa vazio.
+
+Cobertura medida nas 64 companhias da página (arquivos de 12/11/2026):
+
+| Categoria | DFP de 2025 | 12 meses | Quem fica de fora na DFP de 2025 |
+|---|---:|---:|---|
+| capex | 64 | 63 | ninguém |
+| D&A da DFC | 64 | 63 | ninguém |
+| proventos | 63 | 60 | Eneva (não tem a linha) |
+| juros pagos | 58 | 55 | Minerva, Equatorial, Marfrig e Tenda (sem linha que a regra reconheça); Vivo e Vamos (misturados com arrendamento) |
+| principal de arrendamento | 50 | 49 | 12 sem linha de arrendamento na DFC; Vivo e Vamos (misturado com dívida) |
+| juros de arrendamento | 21 | 17 | a maioria não tem linha própria: os juros estão no FCO sem destaque, ou dentro do principal |
+| proventos a não controladores | 8 | 7 | a maioria não tem a linha |
+
+Nos 12 meses a 64ª companhia é a TIM, com a base indisponível. Em 12 casos de 10 companhias, a linha aparece numa parcela e não em outra (a descrição mudou ou a linha zerada foi omitida num ITR), e a categoria fica `null` com o motivo.
+
+Casos que a regra deixa de fora de propósito, para decisão: "propriedades para investimento" (Allos, Multiplan, MRV: são os shoppings e os terrenos), "Aquisições de ativos de óleo e gás" (Brava), "Juros Pagos/Recebidos" (Equatorial, um líquido) e "Pagamento de ... (Principal e juros)" (Tenda).
+
+**D&A da DVA × D&A da DFC.** Na DFP de 2025 as duas são iguais em 50 das 64 companhias e ficam dentro de 15% em 59. Divergem mais de 15% em cinco, sempre com a DFC maior: C&A (2,09 vezes), Hapvida (1,80), Cogna (1,35), Auren (1,24) e CPFL (1,16). Não investiguei o motivo linha a linha; a hipótese é que a DVA delas não traga toda a amortização. O EBITDA continua usando a DVA.
+
+### Composição do capital: número de ações e escala
+
+Os arquivos `dfp_cia_aberta_composicao_capital_AAAA.csv` e `itr_cia_aberta_composicao_capital_AAAA.csv` trazem, por documento e versão, o total de ações do capital integralizado e as ações em tesouraria (`QT_ACAO_TOTAL_CAP_INTEGR` e `QT_ACAO_TOTAL_TESOURO`). O ITR mais recente das 64 companhias traz a composição, então os 12 meses usam as ações da data do ITR.
+
+**O arquivo não diz a escala.** Na DFP de 2025, 17 das 64 companhias informam em milhares de ações (Ambev, Assaí, Auren, Axia, Cemig, Copasa, Cyrela, Embraer, Eneva, Lojas Renner, MRV, Natura, Taesa, Tenda, Vale, Vibra e Yduqs) e as outras 47, em unidades. A Vale informa 4.539.007 e tem 4,5 bilhões de ações. `escalaDasAcoes` (em `scripts/cvm/composicao-capital.mjs`) decide assim:
+
+1. Pelo lucro por ação que a companhia informa na DRE do mesmo documento (conta 3.99.01): o lucro da controladora dividido por ele dá o número de ações que a companhia usou. Se é da ordem do total informado, a escala é unidade; se é cerca de mil vezes maior, é mil. Resolve 56 das 64.
+2. Sem lucro por ação informado, ou quando ele não fecha, pela ordem de grandeza: total abaixo de 100 milhões está em milhares. O maior total em milhares é 15,8 milhões (Ambev) e o menor em unidades, 206 milhões (Azzas). Usada em 8 das 64, todas em unidades.
+
+O lucro por ação informado só serve para isso. Nenhum indicador é calculado com ele.
+
+**Lucro da controladora (3.11.01).** Três companhias deixam 3.11.01 e 3.11.02 zeradas na DFP de 2025 e informam só o 3.11 (Klabin, Sabesp e Vamos): para elas o lucro por ação fica `null`. O Assaí só entrega a demonstração individual, que não tem a conta: vale o 3.11.
 
 ## Base de 12 meses pelo ITR
 
@@ -304,7 +359,7 @@ Motivo: o gargalo é ler os ZIPs, não armazenar (ver Volume acima). E as regras
 
 ## Fixtures
 
-Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; preservados pelo `.gitattributes`), com o índice, DRE, BPA, BPP, DFC_MI e DVA consolidados e, na DFP, a composição do capital:
+Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; preservados pelo `.gitattributes`), com o índice, DRE, BPA, BPP, DFC_MI e DVA consolidados e a composição do capital (da DFP e do ITR):
 
 | Pasta | Empresa | Arquivos | Por quê |
 |---|---|---|---|

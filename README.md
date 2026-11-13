@@ -40,7 +40,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
-| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida e liquidez de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
+| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `classificador-dfc.mjs` (lógica pura, testada) acha pela descrição as linhas da DFC que não têm código fixo (capex, juros pagos, arrendamentos e proventos), com as exceções por companhia em `excecoes-dfc.json`. `composicao-capital.mjs` (lógica pura, testada) lê o número de ações. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida, liquidez, fluxo de caixa e por ação de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
 | `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
 | `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
@@ -151,15 +151,49 @@ As escolhas por trás das fórmulas:
 8. **Dívida lançada em outras obrigações entra pela descrição.** A Allos deixa as contas de empréstimos zeradas e registra a dívida numa linha própria de outras obrigações. Por isso a dívida bruta soma também as linhas sem código fixo de 2.01.05 (curto prazo) e 2.02.02 (longo prazo) cuja descrição tem "empréstimo" e também "financiamento" ou "debênture". O empréstimo compulsório fica de fora: é um passivo com consumidores, não uma dívida financeira. Vale a mesma regra de não contar uma linha e a sublinha dela.
 9. **Dívida fora das contas padrão vira aviso, não zero.** Se, mesmo assim, a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e tudo o que depende dela (inclusive o ROIC) ficam vazios, com o motivo "a dívida pode estar fora das contas padrão". O limite de 0,5% separa quem só paga tarifas e IOF de quem tem dívida. Hoje nenhuma das 64 companhias dispara o aviso.
 
-Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente.
+Fluxo de caixa, proventos e valores por ação:
+
+| Indicador | Fórmula |
+|---|---|
+| FCO, FCI e FCF | DFC 6.01, 6.02 e 6.03 (caixa das atividades operacionais, de investimento e de financiamento) |
+| Capex | Pagamentos por imobilizado, intangível, ativo de contrato e ativo biológico, achados pela descrição das linhas de 6.02 |
+| FCL | FCO − capex |
+| FCL depois dos arrendamentos | FCO − capex − pagamentos de arrendamento que estão no financiamento (principal e juros) |
+| FCO ÷ EBITDA | FCO ÷ EBITDA |
+| Capex ÷ FCO | Capex ÷ FCO |
+| Juros pagos | Juros de dívida pagos, achados pela descrição das linhas de 6.01 e 6.03, sem os de arrendamento |
+| Cobertura dos juros pagos | EBIT ÷ juros pagos |
+| Custo da dívida pelos juros pagos | Juros pagos ÷ dívida bruta |
+| Proventos pagos | Dividendos e juros sobre o capital próprio pagos aos acionistas da companhia, achados pela descrição das linhas de 6.03 |
+| Ações em circulação | Ações do capital − ações em tesouraria, no fim do período |
+| Diluição | Ações em circulação ÷ as do exercício anterior − 1 (só na série anual) |
+| Lucro por ação | Lucro da controladora (DRE 3.11.01) ÷ ações em circulação, em R$ |
+| FCO por ação e FCL por ação | FCO ÷ ações; FCL ÷ ações, em R$ |
+
+As escolhas do fluxo de caixa:
+
+10. **As linhas da DFC são achadas pela descrição.** Capex, juros pagos, arrendamentos e proventos não têm código fixo: a mesma linha muda de código de uma companhia para outra, e até entre a DFP e o ITR da mesma companhia. Um classificador (`scripts/cvm/classificador-dfc.mjs`) tira os acentos, passa para minúsculas e aplica a regra de cada categoria, que fica à vista em `CATEGORIAS`. Linha não identificada deixa o indicador vazio, com o motivo, e nunca vira zero. Exceções de uma companhia vão em `scripts/cvm/excecoes-dfc.json`, sempre com o motivo.
+11. **Ativo de contrato entra no capex.** Nas concessões (Sabesp, Cemig) é o capex de verdade; sem ele, o capex dessas companhias daria quase zero.
+12. **Ativo biológico entra no capex.** Plantio e madeira em pé (Klabin, Suzano) são reinvestimento para manter a operação.
+13. **Aquisição de empresa fica fora do capex.** Uma compra distorceria a série de um ano. Venda de ativos e aplicações financeiras também ficam de fora. Linha que mistura capex com outra coisa ("adições ao imobilizado, intangível e investimentos") entra, marcada como mista.
+14. **Proventos são só os pagos aos acionistas da companhia.** Os pagos a não controladores saem numa categoria separada, porque esse dinheiro não vai para quem tem a ação.
+15. **Há sempre dois FCL.** O primeiro é FCO − capex. O segundo desconta também os pagamentos de arrendamento. Desde 2019 (IFRS 16), o aluguel deixou de sair do caixa operacional e passou a aparecer no financiamento, o que engorda o FCO de quem aluga muito. Na Raia Drogasil, em 2025, o FCL é de 1.027.677 mil e cai para 106.493 mil depois dos arrendamentos. Os juros de arrendamento que a companhia já lança no FCO não são descontados de novo. Sem linha de arrendamento na DFC, o segundo FCL fica vazio, e não igual ao primeiro. Quando a companhia junta o pagamento de arrendamento com o de dívida numa linha só (Vivo), ele também fica vazio, com o motivo.
+16. **O EBITDA continua usando a D&A da DVA.** O classificador calcula a D&A da DFC só para conferência.
+17. **O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado (3.11).** A parte dos minoritários não pertence ao acionista. Quando a demonstração é individual, vale o 3.11. Quando a companhia não abre o lucro entre controladora e não controladores, o lucro por ação fica vazio.
+18. **O número de ações vem da composição do capital, convertido para unidades.** O arquivo da CVM não diz se a quantidade está em unidades ou em milhares, e cerca de um quarto das companhias informa em milhares. A escala é descoberta pelo lucro por ação que a própria companhia informa no mesmo documento; sem ele, pela ordem de grandeza (menos de 100 milhões está em milhares). É o único uso do lucro por ação informado: nenhum indicador é calculado com ele.
+19. **A diluição não desconta desdobramentos e grupamentos.** Um desdobramento de 1 para 3 aparece como +200%, e um grupamento de 15 para 1, como −93%. O dado de eventos societários não está nos arquivos usados.
+
+Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente. As linhas da DFC achadas pela descrição são classificadas em cada uma das três parcelas (o ano fechado, o acumulado do ITR atual e o acumulado do ITR do ano anterior) e só então somadas. Se a linha aparece numa parcela e não em outra, o indicador fica vazio, com o motivo dizendo em qual documento ela faltou. As ações são as do ITR mais recente.
 
 Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores, as margens e os saldos do balanço saem, mas ROE, ROA, ROIC, dívida líquida ÷ EBITDA, cobertura de juros e custo da dívida não: nada é anualizado. O EBITDA depende da DVA; sem ela, fica vazio, e o EBIT não entra no lugar.
 
 Nos indicadores de dívida, a dívida líquida negativa é um valor válido (caixa líquido), não um vazio. Dívida líquida ÷ EBITDA fica vazia com EBITDA zero ou negativo. Parcela de curto prazo e custo da dívida ficam vazios para quem não tem dívida ("sem dívida financeira"). A cobertura e o custo ficam vazios com despesa financeira zero ou negativa, e também quando a companhia informa só o resultado financeiro líquido, sem abrir receitas e despesas. As duas liquidezes ficam vazias com passivo circulante zero.
 
+No fluxo de caixa, capex ÷ FCO fica vazio com FCO zero ou negativo, e FCO ÷ EBITDA, com EBITDA zero ou negativo. O FCL negativo é um valor válido. A cobertura e o custo pelos juros pagos ficam vazios quando os juros não foram identificados, quando são zero, ou quando vêm misturados com os juros de arrendamento. Sem a composição do capital do período, as ações e os valores por ação ficam vazios. A diluição fica vazia no primeiro ano da série e nos 12 meses.
+
 São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
-A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados e os balanços de 2025 da WEG e da Raia Drogasil.
+A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`, `fluxosClassificados`, `calcularIndicadoresDaSerie`), em `scripts/cvm/classificador-dfc.mjs` (`CATEGORIAS`, `ORDEM`, `classificarLinhas`) e em `scripts/cvm/composicao-capital.mjs` (`lerComposicaoCapital`, `escalaDasAcoes`). Os testes ficam em `test/cvm-indicadores.test.mjs` e `test/cvm-fluxo-de-caixa.test.mjs`, que conferem os números com os releases de resultados, os balanços e as demonstrações de fluxo de caixa de 2025 da WEG e da Raia Drogasil.
 
 ## Atualização confiável (cron-job.org)
 
