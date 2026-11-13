@@ -1,13 +1,16 @@
-// Indicadores de resultado e de retorno de UM período: um item da série anual ou a base de 12 meses,
-// os dois na forma que sai de montarSeries (scripts/cvm/series.mjs).
+// Indicadores de UM período: um item da série anual ou a base de 12 meses, os dois na forma que sai
+// de montarSeries (scripts/cvm/series.mjs). Resultado e retorno (#34); caixa, dívida e liquidez (#35).
 // Lógica pura: sem disco, sem rede e sem relógio.
 //
-// Regras (briefing da #34, resumidas no README, seção "Indicadores fundamentalistas"):
+// Regras (briefings da #34 e da #35, resumidas no README, seção "Indicadores fundamentalistas"):
 // 1. Valores em R$ mil inteiros, como na série. Razões em fração (0,365), sem arredondar.
 // 2. ROE, ROA e ROIC usam o saldo do fim do período, não a média.
 // 3. Ausência é null com motivo. Nunca 0 no lugar de "não deu".
-// 4. Período de transição (menos de 12 meses) tem fluxos e margens, mas não tem retorno: nada é anualizado.
+// 4. Período de transição (menos de 12 meses) tem fluxos, margens e saldos, mas não tem retorno nem as
+//    razões que misturam fluxo com saldo: nada é anualizado.
 // 5. Nada aqui usa 3.99 (lucro por ação).
+// 6. A dívida bruta é sem arrendamentos (IFRS 16). Os arrendamentos saem à parte, e há sempre as duas versões.
+// 7. Dívida líquida negativa (caixa líquido) é valor válido, não null.
 
 import { valorDaConta } from "./series.mjs";
 
@@ -15,23 +18,51 @@ import { valorDaConta } from "./series.mjs";
 // incentivos e prejuízo fiscal, e deixaria o ROIC instável sem motivo operacional.
 export const ALIQUOTA_ROIC = 0.34;
 
+// Onde procurar o passivo de arrendamento (IFRS 16).
+//   fixas:     "Financiamento por Arrendamento", dentro de Empréstimos e Financiamentos (curto e longo prazo).
+//              Quem lança ali tem o arrendamento DENTRO da 2.01.04 e da 2.02.01: por isso a dívida bruta subtrai as duas.
+//   grupos:    "Outras Obrigações" de curto e de longo prazo. Ali a companhia cria subcontas sem código
+//              fixo, e só a descrição diz o que são.
+//   descricao: a subconta entra quando a descrição bate com esta expressão.
+//   excecoes:  descrições que batem com `descricao` mas não são passivo de arrendamento. Vazia hoje: na
+//              varredura das 64 companhias da página (DFP de 2025) nenhuma descrição que bate ficou de fora.
+//              "Aluguéis" (aluguel a pagar) não bate com a expressão e, por isso, já não entra.
+export const ARRENDAMENTOS = {
+  fixas: ["2.01.04.03", "2.02.01.03"],
+  grupos: ["2.01.05", "2.02.02"],
+  descricao: /arrendament/i,
+  excecoes: [],
+};
+
+// Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
+// do ativo total. Por que 0,5%: quem não tem dívida ainda paga tarifas, IOF e ajustes a valor presente,
+// mas isso fica em poucos décimos de ponto do ativo; já uma dívida de 10% do ativo a 10% ao ano custa
+// 1% do ativo. Meio por cento separa os dois casos com folga dos dois lados.
+export const LIMITE_DESPESA_SEM_DIVIDA = 0.005;
+
 // Nome de cada conta usada, para o motivo de um null.
 const CONTAS = {
   "3.01": "receita líquida",
   "3.03": "lucro bruto",
   "3.05": "EBIT",
   "3.06": "resultado financeiro",
+  "3.06.02": "despesas financeiras",
   "3.11": "lucro líquido",
   "7.04.01": "depreciação e amortização, na DVA",
   "1": "ativo total",
+  "1.01": "ativo circulante",
   "1.01.01": "caixa e equivalentes",
   "1.01.02": "aplicações financeiras",
+  "2.01": "passivo circulante",
   "2.01.04": "empréstimos e financiamentos de curto prazo",
   "2.02.01": "empréstimos e financiamentos de longo prazo",
   "2.03": "patrimônio líquido",
 };
 
+const APROXIMACAO = "As despesas financeiras são uma aproximação dos juros: incluem variação cambial, juros de arrendamento e outros encargos";
+
 export const INDICADORES = [
+  // Resultado e retorno (#34)
   { id: "receita", nome: "Receita líquida", unidade: "R$ mil", formula: "Receita líquida de vendas e serviços (DRE, conta 3.01)" },
   { id: "lucroBruto", nome: "Lucro bruto", unidade: "R$ mil", formula: "Lucro bruto, como a companhia informa (DRE, conta 3.03)" },
   { id: "margemBruta", nome: "Margem bruta", unidade: "razão", formula: "Lucro bruto ÷ receita líquida" },
@@ -46,45 +77,80 @@ export const INDICADORES = [
   { id: "roa", nome: "ROA", unidade: "razão", formula: "Lucro líquido ÷ ativo total no fim do período" },
   {
     id: "roic", nome: "ROIC", unidade: "razão",
-    formula: "EBIT × (1 − 34%) ÷ capital investido no fim do período. Capital investido = patrimônio líquido + empréstimos e financiamentos − caixa e aplicações financeiras. Os 34% são a alíquota nominal de IR e CSLL; os arrendamentos não entram na dívida",
+    formula: "EBIT × (1 − 34%) ÷ capital investido no fim do período. Capital investido = patrimônio líquido + dívida bruta − caixa. Os 34% são a alíquota nominal de IR e CSLL; os arrendamentos não entram na dívida",
   },
+  // Caixa, dívida e liquidez (#35), sempre com o saldo do fim do período
+  { id: "patrimonioLiquido", nome: "Patrimônio líquido", unidade: "R$ mil", formula: "Patrimônio líquido consolidado, com a parte dos minoritários (balanço, conta 2.03)" },
+  { id: "caixa", nome: "Caixa", unidade: "R$ mil", formula: "Caixa e equivalentes + aplicações financeiras do ativo circulante (balanço, contas 1.01.01 e 1.01.02)" },
+  {
+    id: "dividaBruta", nome: "Dívida bruta", unidade: "R$ mil",
+    formula: "Empréstimos, financiamentos e debêntures de curto e de longo prazo (balanço, contas 2.01.04 e 2.02.01), sem os arrendamentos",
+  },
+  {
+    id: "arrendamentos", nome: "Arrendamentos", unidade: "R$ mil",
+    formula: "Passivo de arrendamento de curto e de longo prazo: o financiamento por arrendamento (contas 2.01.04.03 e 2.02.01.03) mais as linhas de arrendamento em outras obrigações",
+  },
+  { id: "dividaBrutaComArrendamentos", nome: "Dívida bruta com arrendamentos", unidade: "R$ mil", formula: "Dívida bruta + arrendamentos" },
+  { id: "dividaLiquida", nome: "Dívida líquida", unidade: "R$ mil", formula: "Dívida bruta − caixa, sem os arrendamentos. Valor negativo quer dizer mais caixa do que dívida" },
+  { id: "dividaLiquidaComArrendamentos", nome: "Dívida líquida com arrendamentos", unidade: "R$ mil", formula: "Dívida bruta + arrendamentos − caixa" },
+  { id: "dividaBrutaSobrePl", nome: "Dívida bruta ÷ patrimônio líquido", unidade: "razão", formula: "Dívida bruta ÷ patrimônio líquido" },
+  { id: "dividaLiquidaSobreEbitda", nome: "Dívida líquida ÷ EBITDA", unidade: "razão", formula: "Dívida líquida no fim do período ÷ EBITDA do período, em número de vezes" },
+  { id: "dividaCurtoPrazo", nome: "Dívida de curto prazo", unidade: "razão", formula: "Parte da dívida bruta que vence em até 12 meses: dívida de curto prazo ÷ dívida bruta" },
+  { id: "despesasFinanceiras", nome: "Despesas financeiras", unidade: "R$ mil", formula: "Despesas financeiras do período (DRE, conta 3.06.02), com o sinal trocado" },
+  { id: "coberturaJuros", nome: "Cobertura de juros", unidade: "razão", formula: `EBIT ÷ despesas financeiras, em número de vezes. ${APROXIMACAO}` },
+  { id: "custoDivida", nome: "Custo aproximado da dívida", unidade: "razão", formula: `Despesas financeiras do período ÷ dívida bruta no fim do período. ${APROXIMACAO}` },
+  { id: "liquidezCorrente", nome: "Liquidez corrente", unidade: "razão", formula: "Ativo circulante ÷ passivo circulante" },
+  { id: "liquidezImediata", nome: "Liquidez imediata", unidade: "razão", formula: "Caixa ÷ passivo circulante" },
 ];
 
 const ok = (valor) => ({ valor, motivo: null });
 const nulo = (motivo) => ({ valor: null, motivo });
+const milhar = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 // Demonstrativo de cada conta na série anual, pelo primeiro dígito do código.
 const DEMONSTRATIVO = { 1: "BPA", 2: "BPP", 3: "DRE", 6: "DFC", 7: "DVA" };
+const VAZIO = { fluxo: () => null, estoque: () => null, passivo: () => [] };
 
 // Adaptador: a mesma leitura para um período da série anual e para a base de 12 meses.
-// Devolve { tipo, meses, motivo, fluxo(conta), estoque(conta) }:
+// Devolve { tipo, meses, motivo, fluxo(conta), estoque(conta), passivo() }:
 //   tipo "anual"         exercício de cerca de 12 meses
 //   tipo "transicao"     exercício com outra duração (`meses` diz quantos)
 //   tipo "12-meses"      base de 12 meses (pelo ITR ou ano fechado); o balanço é o da data mais recente
 //   tipo "indisponivel"  não há o que calcular; `motivo` diz por quê
 // fluxo() e estoque() devolvem o valor em R$ mil, ou null quando a conta não está no período.
+// passivo() devolve todas as contas do passivo no fim do período, fixas e não fixas: [{ conta, descricao, valor }].
 export function adaptarPeriodo(origem) {
-  if (origem == null) return { tipo: "indisponivel", meses: null, motivo: "sem dados do período", fluxo: () => null, estoque: () => null };
+  if (origem == null) return { tipo: "indisponivel", meses: null, motivo: "sem dados do período", ...VAZIO };
   if (typeof origem.fluxo === "function" && typeof origem.estoque === "function") return origem; // já adaptado
 
   // Base de 12 meses (saída de base12Meses).
   if ("fluxos" in origem) {
     if (origem.tipo === "indisponivel" || origem.fluxos == null) {
-      return { tipo: "indisponivel", meses: null, motivo: origem.motivo ?? "base de 12 meses indisponível", fluxo: () => null, estoque: () => null };
+      return { tipo: "indisponivel", meses: null, motivo: origem.motivo ?? "base de 12 meses indisponível", ...VAZIO };
     }
+    const doBpp = (c) => c.demonstrativo === "BPP";
     return {
       tipo: "12-meses", meses: 12, motivo: null,
       fluxo: (conta) => origem.fluxos[conta]?.valor ?? null,
       estoque: (conta) => origem.estoques?.contas[conta]?.valor ?? null,
+      passivo: () => [
+        ...Object.entries(origem.estoques?.contas ?? {}).filter(([, c]) => doBpp(c)).map(([conta, c]) => ({ conta, descricao: c.descricao, valor: c.valor })),
+        ...(origem.estoques?.naoFixas ?? []).filter(doBpp).map(({ conta, descricao, valor }) => ({ conta, descricao, valor })),
+      ],
     };
   }
 
   // Período da série anual (item de serieAnual).
-  const ler = (conta) => valorDaConta(origem.demonstrativos?.[DEMONSTRATIVO[conta[0]]], conta);
   if (origem.tipo !== "anual" && origem.tipo !== "transicao") {
-    return { tipo: "indisponivel", meses: null, motivo: "o período não tem DRE, DFC nem DVA", fluxo: () => null, estoque: () => null };
+    return { tipo: "indisponivel", meses: null, motivo: "o período não tem DRE, DFC nem DVA", ...VAZIO };
   }
-  return { tipo: origem.tipo, meses: origem.meses, motivo: null, fluxo: ler, estoque: ler };
+  const ler = (conta) => valorDaConta(origem.demonstrativos?.[DEMONSTRATIVO[conta[0]]], conta);
+  const bpp = origem.demonstrativos?.BPP;
+  return {
+    tipo: origem.tipo, meses: origem.meses, motivo: null, fluxo: ler, estoque: ler,
+    passivo: () => [...new Set((bpp?.contas ?? []).map((c) => c.conta))]
+      .map((conta) => ({ conta, descricao: bpp.contas.find((c) => c.conta === conta).descricao, valor: valorDaConta(bpp, conta) })),
+  };
 }
 
 const fluxo = (p, conta) => {
@@ -117,12 +183,65 @@ export function caixa(periodo) {
   return combinar([estoque(p, "1.01.01"), estoque(p, "1.01.02")], (a, b) => a + b);
 }
 
-// Dívida bruta = empréstimos e financiamentos de curto (2.01.04) e de longo prazo (2.02.01), no fim do período.
-// Não inclui arrendamentos (IFRS 16): a versão com arrendamentos é da #35.
+// Despesas financeiras do período = − DRE 3.06.02 (a DRE traz o valor negativo). Só troca o sinal.
+// Há companhias que informam só o resultado financeiro líquido (3.06) e deixam receitas (3.06.01) e
+// despesas (3.06.02) zeradas. Aí o zero não é "sem despesa": é "não informado", e o resultado é null.
+export function despesasFinanceiras(periodo) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return nulo(p.motivo);
+  const despesas = fluxo(p, "3.06.02");
+  if (despesas.valor === 0 && p.fluxo("3.06.01") === 0 && p.fluxo("3.06") != null && p.fluxo("3.06") !== 0) {
+    return nulo("a companhia não abre o resultado financeiro em receitas e despesas");
+  }
+  return combinar([despesas], (v) => 0 - v);
+}
+
+// Empréstimos e financiamentos sem o "Financiamento por Arrendamento". A subconta do arrendamento é fixa
+// e quase sempre vem zerada; se não vier no período, conta como 0.
+const semArrendamento = (p, conta, arrendamento) => combinar([estoque(p, conta)], (v) => v - (p.estoque(arrendamento) ?? 0));
+const dividaDeCurtoPrazo = (p) => semArrendamento(p, "2.01.04", "2.01.04.03");
+const dividaDeLongoPrazo = (p) => semArrendamento(p, "2.02.01", "2.02.01.03");
+
+// Dívida bruta = empréstimos, financiamentos e debêntures de curto e de longo prazo, no fim do período:
+// (2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03). Sem arrendamentos (IFRS 16).
+// Alerta: se a soma dá 0 e a despesa financeira passa de LIMITE_DESPESA_SEM_DIVIDA do ativo total, a dívida
+// deve estar em outra linha do passivo (caso da Allos). Aí o resultado é null com o motivo, e tudo o que
+// depende da dívida fica null junto: melhor um null explicado do que um ROIC inflado.
 export function dividaBruta(periodo) {
   const p = adaptarPeriodo(periodo);
   if (p.tipo === "indisponivel") return nulo(p.motivo);
-  return combinar([estoque(p, "2.01.04"), estoque(p, "2.02.01")], (a, b) => a + b);
+  const divida = combinar([dividaDeCurtoPrazo(p), dividaDeLongoPrazo(p)], (a, b) => a + b);
+  if (divida.valor !== 0) return divida;
+  const despesa = despesasFinanceiras(p).valor;
+  const ativo = p.estoque("1");
+  if (despesa != null && ativo != null && ativo > 0 && despesa > LIMITE_DESPESA_SEM_DIVIDA * ativo) {
+    return nulo(`a dívida pode estar fora das contas padrão (despesa financeira de R$ ${milhar(despesa)} mil sem empréstimos no balanço)`);
+  }
+  return divida;
+}
+
+// Contas do passivo que são arrendamento, sem dupla contagem: [{ conta, descricao, valor }].
+// Entram as duas contas fixas e, nos grupos de "Outras Obrigações", as subcontas cuja descrição bate
+// com a regra. Se uma conta bate e um ancestral dela também bate, fica só o ancestral.
+export function contasDeArrendamento(passivo, regra = ARRENDAMENTOS) {
+  const noGrupo = (conta) => regra.grupos.some((g) => conta.startsWith(`${g}.`));
+  const bate = (c) => noGrupo(c.conta) && regra.descricao.test(c.descricao) && !regra.excecoes.some((e) => e.test(c.descricao));
+  const porDescricao = passivo.filter(bate);
+  const semFilhas = porDescricao.filter((c) => !porDescricao.some((pai) => c.conta.startsWith(`${pai.conta}.`)));
+  return [...passivo.filter((c) => regra.fixas.includes(c.conta)), ...semFilhas];
+}
+
+// Arrendamentos = passivo de arrendamento de curto e de longo prazo, no fim do período.
+// Sem nenhuma linha de arrendamento no passivo, o valor é 0: a companhia não informa arrendamento.
+export function arrendamentos(periodo) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return nulo(p.motivo);
+  const passivo = p.passivo?.() ?? [];
+  if (passivo.length === 0) return nulo("falta o passivo do balanço");
+  const linhas = contasDeArrendamento(passivo);
+  const semValor = linhas.find((c) => c.valor == null);
+  if (semValor) return nulo(`a conta ${semValor.conta} (${semValor.descricao}) veio sem valor único`);
+  return ok(linhas.reduce((soma, c) => soma + c.valor, 0));
 }
 
 // Capital investido = patrimônio líquido + dívida bruta − caixa, no fim do período.
@@ -147,10 +266,27 @@ export function calcularIndicadores(periodo) {
   const resultadoFinanceiro = fluxo(p, "3.06");
   const lucroLiquido = fluxo(p, "3.11");
 
+  const pl = estoque(p, "2.03");
+  const cx = caixa(p);
+  const divida = dividaBruta(p);
+  const arrend = arrendamentos(p);
+  const dividaComArrend = combinar([divida, arrend], (a, b) => a + b);
+  const dividaLiquida = combinar([divida, cx], (a, b) => a - b);
+  const despesas = despesasFinanceiras(p);
+  const passivoCirculante = estoque(p, "2.01");
+
   const margem = (numerador) => dividir(numerador, receita, "receita zero ou negativa");
-  // Retorno só com 12 meses de resultado: não anualiza período de transição.
-  const retorno = (numerador, denominador, motivo) =>
-    (p.tipo === "transicao" ? nulo(`período de ${p.meses} meses, retorno não anualizado`) : dividir(numerador, denominador, motivo));
+  // Razão que precisa de 12 meses de resultado: não anualiza período de transição.
+  const transicao = (rotulo) => nulo(`período de ${p.meses} meses, ${rotulo} não anualizado`);
+  const retorno = (numerador, denominador, motivo) => (p.tipo === "transicao" ? transicao("retorno") : dividir(numerador, denominador, motivo));
+  const comFluxo = (calcular) => (p.tipo === "transicao" ? transicao("indicador") : calcular());
+  // Divide pela dívida bruta. Dívida zero é o caso normal de quem não deve: não há o que dividir.
+  const sobreDivida = (numerador) => {
+    if (divida.valor == null) return nulo(divida.motivo);
+    if (divida.valor <= 0) return nulo("sem dívida financeira");
+    return dividir(numerador, divida, "sem dívida financeira");
+  };
+  const liquidez = (numerador) => dividir(numerador, passivoCirculante, "passivo circulante zero ou negativo");
 
   return {
     receita,
@@ -163,8 +299,24 @@ export function calcularIndicadores(periodo) {
     resultadoFinanceiro,
     lucroLiquido,
     margemLiquida: margem(lucroLiquido),
-    roe: retorno(lucroLiquido, estoque(p, "2.03"), "patrimônio líquido zero ou negativo"),
+    roe: retorno(lucroLiquido, pl, "patrimônio líquido zero ou negativo"),
     roa: retorno(lucroLiquido, estoque(p, "1"), "ativo total zero ou negativo"),
     roic: retorno(combinar([ebit], (v) => v * (1 - ALIQUOTA_ROIC)), capitalInvestido(p), "capital investido zero ou negativo"),
+
+    patrimonioLiquido: pl,
+    caixa: cx,
+    dividaBruta: divida,
+    arrendamentos: arrend,
+    dividaBrutaComArrendamentos: dividaComArrend,
+    dividaLiquida,
+    dividaLiquidaComArrendamentos: combinar([dividaComArrend, cx], (a, b) => a - b),
+    dividaBrutaSobrePl: dividir(divida, pl, "patrimônio líquido zero ou negativo"),
+    dividaLiquidaSobreEbitda: comFluxo(() => dividir(dividaLiquida, ebitda, "EBITDA zero ou negativo")),
+    dividaCurtoPrazo: sobreDivida(dividaDeCurtoPrazo(p)),
+    despesasFinanceiras: despesas,
+    coberturaJuros: comFluxo(() => dividir(ebit, despesas, "despesas financeiras zero ou negativas")),
+    custoDivida: comFluxo(() => (despesas.valor != null && despesas.valor <= 0 ? nulo("despesas financeiras zero ou negativas") : sobreDivida(despesas))),
+    liquidezCorrente: liquidez(estoque(p, "1.01")),
+    liquidezImediata: liquidez(cx),
   };
 }
