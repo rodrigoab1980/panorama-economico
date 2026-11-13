@@ -39,12 +39,12 @@ export const arquivosDoFca = (ano) => [`fca_cia_aberta_geral_${ano}.csv`, `fca_c
 
 const DEMONSTRATIVOS = ["DRE", "BPA", "BPP", "DFC_MI", "DVA"];
 
-// Nomes dos CSVs de um documento: índice, demonstrativos consolidados e,
-// na DFP, a composição do capital.
+// Nomes dos CSVs de um documento: índice, demonstrativos consolidados e a composição do capital
+// (o ITR também traz a composição: é dela que sai o número de ações dos 12 meses, #36).
 export function arquivosDoDocumento(doc, ano) {
   const nomes = [`${doc}_cia_aberta_${ano}.csv`];
   for (const d of DEMONSTRATIVOS) nomes.push(`${doc}_cia_aberta_${d}_con_${ano}.csv`);
-  if (doc === "dfp") nomes.push(`${doc}_cia_aberta_composicao_capital_${ano}.csv`);
+  nomes.push(`${doc}_cia_aberta_composicao_capital_${ano}.csv`);
   return nomes;
 }
 

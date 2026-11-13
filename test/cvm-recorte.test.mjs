@@ -52,10 +52,10 @@ describe("recortarCsv", () => {
 });
 
 describe("FIXTURES e arquivosDoDocumento", () => {
-  test("DFP inclui composição do capital; ITR não", () => {
+  test("DFP e ITR incluem a composição do capital", () => {
     assert.ok(arquivosDoDocumento("dfp", 2025).includes("dfp_cia_aberta_composicao_capital_2025.csv"));
-    assert.ok(!arquivosDoDocumento("itr", 2026).some((n) => n.includes("composicao")));
-    assert.equal(arquivosDoDocumento("itr", 2026).length, 6);
+    assert.ok(arquivosDoDocumento("itr", 2026).includes("itr_cia_aberta_composicao_capital_2026.csv"));
+    assert.equal(arquivosDoDocumento("itr", 2026).length, 7);
   });
   test("a lista bate com os arquivos commitados em test/fixtures/cvm", () => {
     const dir = new URL("./fixtures/cvm/", import.meta.url);
