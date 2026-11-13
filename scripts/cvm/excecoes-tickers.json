@@ -1,0 +1,31 @@
+{
+  "obs": "Vínculos manuais ticker → CNPJ, para quando o campo Codigo_Negociacao do FCA vem errado. Cada um precisa de motivo. A exceção vence o FCA.",
+  "excecoes": [
+    {
+      "ticker": "BPAC11",
+      "cnpj": "30.306.294/0001-45",
+      "motivo": "No FCA 2026, o Banco BTG Pactual preencheu \"000000\" no código de negociação da linha de Units (1 ON e 2 PNA) em Bolsa."
+    },
+    {
+      "ticker": "CEAB3",
+      "cnpj": "45.242.914/0001-05",
+      "motivo": "No FCA 2026, a C&A Modas informa o código CEAB3 certo, mas com a data de fim de negociação igual à de início (28/10/2019). A regra trata data de fim preenchida como negociação encerrada, e a ação continua na carteira do Ibovespa."
+    },
+    {
+      "ticker": "CMIN3",
+      "cnpj": "08.902.291/0001-15",
+      "motivo": "No FCA 2026, a CSN Mineração preencheu \"25585\" (o código CVM dela) no código de negociação das ações ordinárias em Bolsa."
+    },
+    {
+      "ticker": "CSNA3",
+      "cnpj": "33.042.730/0001-04",
+      "motivo": "No FCA 2026, a CSN preencheu \"4030\" (o código CVM dela) no código de negociação das ações ordinárias em Bolsa."
+    },
+    {
+      "ticker": "MBRF3",
+      "cnpj": "03.853.896/0001-40",
+      "motivo": "No FCA 2026, a Marfrig Global Foods preencheu \"ADR\" no código de negociação das ações ordinárias em Bolsa. A B3 lista o MBRF3 com o nome \"MARFRIG\" na carteira do Ibovespa.",
+      "obs": "MBRF3 é o código da Marfrig depois da incorporação das ações da BRF em 2025 (no FCA, o BRFS3 tem fim de negociação em 22/09/2025). O histórico desta entrada é só o da Marfrig; a BRF (CNPJ 01.838.723/0001-27) continua como companhia separada na CVM. Série combinada, se houver, é assunto da #33."
+    }
+  ]
+}
