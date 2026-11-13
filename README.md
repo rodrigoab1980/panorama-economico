@@ -40,7 +40,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
-| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
+| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado e de retorno de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
 | `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
 | `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
@@ -96,6 +96,44 @@ Um ativo entra na faixa "⚠ Fora do padrão hoje" quando a variação do dia (c
 - Passando o mouse sobre um alerta, aparece a oscilação típica usada na conta. Sobre o título da faixa, aparece a regra.
 
 Os três números são configuráveis (tabela abaixo). A lógica fica em `scripts/logica.mjs` (`avaliarMovimento`, `detectarAlertas`) e os testes em `test/alertas.test.mjs`. Os alertas vão para `cotacoes.json` (`alertas` e `criterio_alerta`).
+
+## Indicadores fundamentalistas
+
+A página Fundamentalista (em construção na v2.0) mostra, para cada exercício e para os últimos 12 meses, os indicadores abaixo. Eles saem das contas fixas das demonstrações consolidadas que a companhia entrega à CVM. Os valores ficam em R$ mil e as razões em fração, sem arredondar; a página é que arredonda e mostra em %. Cada indicador leva a fórmula em texto, que a página vai mostrar ao passar o mouse.
+
+| Indicador | Fórmula |
+|---|---|
+| Receita líquida | DRE 3.01 |
+| Lucro bruto | DRE 3.03, como a companhia informa |
+| Margem bruta | Lucro bruto ÷ receita líquida |
+| EBIT | DRE 3.05 (resultado antes do resultado financeiro e dos tributos) |
+| Depreciação e amortização (D&A) | DVA 7.04.01, com o sinal trocado |
+| EBITDA | EBIT + D&A |
+| Margem EBITDA | EBITDA ÷ receita líquida |
+| Resultado financeiro | DRE 3.06 |
+| Lucro líquido | DRE 3.11 (consolidado, com a parte dos minoritários) |
+| Margem líquida | Lucro líquido ÷ receita líquida |
+| ROE | Lucro líquido ÷ patrimônio líquido (BPP 2.03) no fim do período |
+| ROA | Lucro líquido ÷ ativo total (BPA 1) no fim do período |
+| ROIC | EBIT × (1 − 34%) ÷ capital investido no fim do período |
+
+Capital investido = patrimônio líquido (2.03) + dívida bruta − caixa. A dívida bruta são os empréstimos e financiamentos de curto e de longo prazo (BPP 2.01.04 + 2.02.01). O caixa é caixa e equivalentes mais aplicações financeiras (BPA 1.01.01 + 1.01.02).
+
+As escolhas por trás das fórmulas:
+
+1. **Saldo do fim do período, não a média.** ROE, ROA e ROIC dividem pelo saldo de fechamento. Assim o primeiro ano da série também tem valor.
+2. **No ROE, lucro e patrimônio entram os dois com minoritários** (3.11 ÷ 2.03), para os dois lados ficarem na mesma base.
+3. **O ROA é lucro ÷ ativo**, a definição clássica. Outras fontes usam EBIT ÷ ativo e chegam a um número maior.
+4. **O ROIC usa a alíquota nominal de 34%** (IR + CSLL), não a efetiva. A efetiva oscila com JCP, incentivos e prejuízo fiscal, e faria o ROIC variar sem motivo operacional.
+5. **A dívida bruta não inclui arrendamentos (IFRS 16).**
+
+Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente.
+
+Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores e as margens saem, mas ROE, ROA e ROIC não: nada é anualizado. O EBITDA depende da DVA; sem ela, fica vazio, e o EBIT não entra no lugar.
+
+São só dados e regras à vista. Nada aqui é recomendação de investimento.
+
+A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados de 2025 da WEG e da Raia Drogasil.
 
 ## Atualização confiável (cron-job.org)
 
