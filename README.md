@@ -107,7 +107,7 @@ A página Fundamentalista (em construção na v2.0) mostra, para cada exercício
 | Lucro bruto | DRE 3.03, como a companhia informa |
 | Margem bruta | Lucro bruto ÷ receita líquida |
 | EBIT | DRE 3.05 (resultado antes do resultado financeiro e dos tributos) |
-| Depreciação e amortização (D&A) | DVA 7.04.01, com o sinal trocado |
+| Depreciação e amortização (D&A) | A da DFC (linhas de depreciação, amortização e exaustão nos ajustes do lucro); sem ela, DVA 7.04.01 com o sinal trocado |
 | EBITDA | EBIT + D&A |
 | Margem EBITDA | EBITDA ÷ receita líquida |
 | Resultado financeiro | DRE 3.06 |
@@ -156,7 +156,7 @@ Fluxo de caixa, proventos e valores por ação:
 | Indicador | Fórmula |
 |---|---|
 | FCO, FCI e FCF | DFC 6.01, 6.02 e 6.03 (caixa das atividades operacionais, de investimento e de financiamento) |
-| Capex | Pagamentos por imobilizado, intangível, ativo de contrato e ativo biológico, achados pela descrição das linhas de 6.02 |
+| Capex | Pagamentos por imobilizado, intangível, ativo de contrato, ativo biológico e propriedade para investimento, achados pela descrição das linhas de 6.02 |
 | FCL | FCO − capex |
 | FCL depois dos arrendamentos | FCO − capex − pagamentos de arrendamento que estão no financiamento (principal e juros) |
 | FCO ÷ EBITDA | FCO ÷ EBITDA |
@@ -175,17 +175,18 @@ As escolhas do fluxo de caixa:
 10. **As linhas da DFC são achadas pela descrição.** Capex, juros pagos, arrendamentos e proventos não têm código fixo: a mesma linha muda de código de uma companhia para outra, e até entre a DFP e o ITR da mesma companhia. Um classificador (`scripts/cvm/classificador-dfc.mjs`) tira os acentos, passa para minúsculas e aplica a regra de cada categoria, que fica à vista em `CATEGORIAS`. Linha não identificada deixa o indicador vazio, com o motivo, e nunca vira zero. Exceções de uma companhia vão em `scripts/cvm/excecoes-dfc.json`, sempre com o motivo.
 11. **Ativo de contrato entra no capex.** Nas concessões (Sabesp, Cemig) é o capex de verdade; sem ele, o capex dessas companhias daria quase zero.
 12. **Ativo biológico entra no capex.** Plantio e madeira em pé (Klabin, Suzano) são reinvestimento para manter a operação.
+12a. **Propriedade para investimento entra no capex**, quando a linha é de aquisição, adição ou construção. Nos shoppings (Allos, Multiplan) é o reinvestimento de verdade: sem ela, o capex ÷ FCO da Multiplan em 2025 saía 2,8%, e com ela sai 52,7%. Baixa e alienação ficam de fora.
 13. **Aquisição de empresa fica fora do capex.** Uma compra distorceria a série de um ano. Venda de ativos e aplicações financeiras também ficam de fora. Linha que mistura capex com outra coisa ("adições ao imobilizado, intangível e investimentos") entra, marcada como mista.
 14. **Proventos são só os pagos aos acionistas da companhia.** Os pagos a não controladores saem numa categoria separada, porque esse dinheiro não vai para quem tem a ação.
 15. **Há sempre dois FCL.** O primeiro é FCO − capex. O segundo desconta também os pagamentos de arrendamento. Desde 2019 (IFRS 16), o aluguel deixou de sair do caixa operacional e passou a aparecer no financiamento, o que engorda o FCO de quem aluga muito. Na Raia Drogasil, em 2025, o FCL é de 1.027.677 mil e cai para 106.493 mil depois dos arrendamentos. Os juros de arrendamento que a companhia já lança no FCO não são descontados de novo. Sem linha de arrendamento na DFC, o segundo FCL fica vazio, e não igual ao primeiro. Quando a companhia junta o pagamento de arrendamento com o de dívida numa linha só (Vivo), ele também fica vazio, com o motivo.
-16. **O EBITDA continua usando a D&A da DVA.** O classificador calcula a D&A da DFC só para conferência.
+16. **A D&A do EBITDA é a da DFC; a da DVA fica de reserva.** A D&A sai das linhas de depreciação, amortização e exaustão nos ajustes do lucro da DFC, achadas pela descrição. Em algumas companhias a DVA não traz a amortização toda: na Hapvida de 2025 a DVA dá 870 milhões e a DFC, 1.562 milhões, e o EBITDA sobe 30%. Quando a DFC não tem a linha, vale a DVA (conta 7.04.01). Nos 12 meses, a DFC só vale se a linha foi identificada nas três parcelas. O resultado diz de onde a D&A saiu (`origem`: "DFC" ou "DVA"). Na DFP de 2025, as 64 companhias da página usam a DFC, e o EBITDA muda em 14 delas. O caso contrário também existe: quem lança a exaustão do ativo biológico numa linha com outro nome ("Ativos biológicos colhidos", na São Martinho) fica com a D&A da DFC menor que a da DVA.
 17. **O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado (3.11).** A parte dos minoritários não pertence ao acionista. Quando a demonstração é individual, vale o 3.11. Quando a companhia não abre o lucro entre controladora e não controladores, o lucro por ação fica vazio.
 18. **O número de ações vem da composição do capital, convertido para unidades.** O arquivo da CVM não diz se a quantidade está em unidades ou em milhares, e cerca de um quarto das companhias informa em milhares. A escala é descoberta pelo lucro por ação que a própria companhia informa no mesmo documento; sem ele, pela ordem de grandeza (menos de 100 milhões está em milhares). É o único uso do lucro por ação informado: nenhum indicador é calculado com ele.
-19. **A diluição não desconta desdobramentos e grupamentos.** Um desdobramento de 1 para 3 aparece como +200%, e um grupamento de 15 para 1, como −93%. O dado de eventos societários não está nos arquivos usados.
+19. **Diluição fora de −50% a +50% não é mostrada.** O arquivo da CVM não traz desdobramentos e grupamentos: um desdobramento de 1 para 3 apareceria como +200% (Direcional, 2025) e um grupamento de 15 para 1, como −94% (Hapvida, 2025), e nenhum dos dois muda a fatia do acionista. Fora da faixa, a diluição fica vazia, com o motivo "variação de N% sugere desdobramento ou grupamento". O limite (`LIMITE_DILUICAO`) tem dois efeitos colaterais conhecidos: uma emissão grande de verdade também fica vazia, e uma bonificação em ações abaixo de 50% passa como se fosse diluição.
 
 Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente. As linhas da DFC achadas pela descrição são classificadas em cada uma das três parcelas (o ano fechado, o acumulado do ITR atual e o acumulado do ITR do ano anterior) e só então somadas. Se a linha aparece numa parcela e não em outra, o indicador fica vazio, com o motivo dizendo em qual documento ela faltou. As ações são as do ITR mais recente.
 
-Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores, as margens e os saldos do balanço saem, mas ROE, ROA, ROIC, dívida líquida ÷ EBITDA, cobertura de juros e custo da dívida não: nada é anualizado. O EBITDA depende da DVA; sem ela, fica vazio, e o EBIT não entra no lugar.
+Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores, as margens e os saldos do balanço saem, mas ROE, ROA, ROIC, dívida líquida ÷ EBITDA, cobertura de juros e custo da dívida não: nada é anualizado. O EBITDA depende da D&A; sem ela na DFC e na DVA, fica vazio, e o EBIT não entra no lugar.
 
 Nos indicadores de dívida, a dívida líquida negativa é um valor válido (caixa líquido), não um vazio. Dívida líquida ÷ EBITDA fica vazia com EBITDA zero ou negativo. Parcela de curto prazo e custo da dívida ficam vazios para quem não tem dívida ("sem dívida financeira"). A cobertura e o custo ficam vazios com despesa financeira zero ou negativa, e também quando a companhia informa só o resultado financeiro líquido, sem abrir receitas e despesas. As duas liquidezes ficam vazias com passivo circulante zero.
 
@@ -193,7 +194,7 @@ No fluxo de caixa, capex ÷ FCO fica vazio com FCO zero ou negativo, e FCO ÷ EB
 
 São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
-A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`, `fluxosClassificados`, `calcularIndicadoresDaSerie`), em `scripts/cvm/classificador-dfc.mjs` (`CATEGORIAS`, `ORDEM`, `classificarLinhas`) e em `scripts/cvm/composicao-capital.mjs` (`lerComposicaoCapital`, `escalaDasAcoes`). Os testes ficam em `test/cvm-indicadores.test.mjs` e `test/cvm-fluxo-de-caixa.test.mjs`, que conferem os números com os releases de resultados, os balanços e as demonstrações de fluxo de caixa de 2025 da WEG e da Raia Drogasil.
+A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`, `LIMITE_DILUICAO`, `fluxosClassificados`, `depreciacaoEAmortizacao`, `calcularIndicadoresDaSerie`), em `scripts/cvm/classificador-dfc.mjs` (`CATEGORIAS`, `ORDEM`, `classificarLinhas`) e em `scripts/cvm/composicao-capital.mjs` (`lerComposicaoCapital`, `escalaDasAcoes`). Os testes ficam em `test/cvm-indicadores.test.mjs` e `test/cvm-fluxo-de-caixa.test.mjs`, que conferem os números com os releases de resultados, os balanços e as demonstrações de fluxo de caixa de 2025 da WEG e da Raia Drogasil.
 
 ## Atualização confiável (cron-job.org)
 

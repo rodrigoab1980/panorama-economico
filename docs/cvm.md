@@ -160,7 +160,7 @@ Sem o ajuste, o FCL fica quase 10 vezes maior. No balanço, o passivo de arrenda
 
 | Categoria | Onde | Regra (sobre a descrição normalizada) |
 |---|---|---|
-| `capex` | 6.02 | imobilizado, intangível, software, ativo de contrato ou contratual, ativo biológico, plantio, madeira em pé. De fora: venda, alienação, baixa, recebimento; aquisição de empresa, controlada ou participação, combinação de negócios; aplicações financeiras e títulos; direito de uso |
+| `capex` | 6.02 | imobilizado, intangível, software, ativo de contrato ou contratual, ativo biológico, plantio, madeira em pé; e aquisição, adição ou construção de propriedade para investimento. De fora: venda, alienação, baixa, recebimento; aquisição de empresa, controlada ou participação, combinação de negócios; aplicações financeiras e títulos; direito de uso |
 | `jurosPagos` | 6.01.02, 6.01.03 e 6.03 | "juros" (ou "encargos financeiros", "encargos de dívida") + pago, pagamento, amortização ou liquidação. De fora: capital próprio, JCP, recebido, provisionado, apropriado, "principal", derivativos |
 | `jurosArrendamento` | 6.01.02, 6.01.03 e 6.03 | "juros" (ou "encargos") + arrendamento ou leasing, sem "principal" |
 | `principalArrendamento` | 6.03 | arrendamento ou leasing, menos as linhas que são só de juros. "Principal e juros" numa linha entra aqui inteira |
@@ -171,7 +171,8 @@ Sem o ajuste, o FCL fica quase 10 vezes maior. No balanço, o passivo de arrenda
 - **O bloco 6.01.01 (ajustes do lucro) nunca tem pagamento.** "Juros provisionados" e "Despesas de juros - arrendamento" ficam ali e não são saída de caixa. Por isso os juros pagos só são procurados em 6.01.02, 6.01.03 e 6.03.
 - **Prioridade** (`ORDEM`): juros de arrendamento, principal de arrendamento, proventos a não controladores, proventos, juros pagos, capex, D&A. Uma linha entra em uma categoria só, a primeira em que bate.
 - **Linha e sublinha** na mesma categoria: conta só a de cima.
-- **Linha mista de capex** (com "investimentos", "propriedade para investimento" ou "arrendamento" junto) entra, com `mista: true`. Na DFP de 2025 são três: Rumo, CSN e SmartFit.
+- **Linha mista de capex** (com "investimentos" ou "arrendamento" junto) entra, com `mista: true`. Na DFP de 2025 são duas: Rumo e SmartFit.
+- **Propriedade para investimento** entra no capex quando a linha é de aquisição, adição ou construção: "Pagamentos para aquisição de propriedades para investimentos (shopping centers)" (Allos, 386.081), "Adições em Propriedades para investimento" (Multiplan, 730.408) e "Aquisição de Propriedades Para Investimento" (MRV, 213.574), R$ mil em 2025. "Baixas em Propriedade para investimento" e "Alienação de Propriedade para Investimento" ficam de fora. Com isso o capex ÷ FCO de 2025 vai de 7,4% para 29,8% na Allos e de 2,8% para 52,7% na Multiplan.
 - **Linha que mistura dívida e arrendamento** não entra em nenhuma categoria, e a categoria fica `null` com o motivo. Na DFP de 2025 são a Vivo e a Vamos, no principal e nos juros.
 - **"Financiamento por arrendamento"** é arrendamento, não dívida (Direcional).
 - **"Proventos"** sozinho não é dividendo: na Ambev, "Proventos de Empréstimos" quer dizer recursos obtidos.
@@ -192,15 +193,41 @@ Cobertura medida nas 64 companhias da página (arquivos de 12/11/2026):
 
 Nos 12 meses a 64ª companhia é a TIM, com a base indisponível. Em 12 casos de 10 companhias, a linha aparece numa parcela e não em outra (a descrição mudou ou a linha zerada foi omitida num ITR), e a categoria fica `null` com o motivo.
 
-Casos que a regra deixa de fora de propósito, para decisão: "propriedades para investimento" (Allos, Multiplan, MRV: são os shoppings e os terrenos), "Aquisições de ativos de óleo e gás" (Brava), "Juros Pagos/Recebidos" (Equatorial, um líquido) e "Pagamento de ... (Principal e juros)" (Tenda).
+Casos que a regra deixa de fora de propósito, para decisão: "Aquisições de ativos de óleo e gás" (Brava), "Juros Pagos/Recebidos" (Equatorial, um líquido) e "Pagamento de ... (Principal e juros)" (Tenda).
 
-**D&A da DVA × D&A da DFC.** Na DFP de 2025 as duas são iguais em 50 das 64 companhias e ficam dentro de 15% em 59. Divergem mais de 15% em cinco, sempre com a DFC maior: C&A (2,09 vezes), Hapvida (1,80), Cogna (1,35), Auren (1,24) e CPFL (1,16). Não investiguei o motivo linha a linha; a hipótese é que a DVA delas não traga toda a amortização. O EBITDA continua usando a DVA.
+**D&A da DVA × D&A da DFC.** Na DFP de 2025 as duas são iguais em 50 das 64 companhias e ficam dentro de 15% em 59. Divergem mais de 15% em cinco, sempre com a DFC maior: C&A (2,09 vezes), Hapvida (1,80), Cogna (1,35), Auren (1,24) e CPFL (1,16). Não investiguei o motivo linha a linha; a hipótese é que a DVA delas não traga toda a amortização.
+
+**O EBITDA usa a D&A da DFC** quando ela é identificada, e a da DVA (7.04.01) de reserva (decisão da revisão da #36). Na DFP de 2025 as 64 companhias têm a linha na DFC. O EBITDA muda em 14 delas e mais de 5% em quatro: Hapvida (+29,8%), C&A (+27,0%), Cogna (+11,9%) e Auren (+9,6%). Nos 12 meses muda mais de 5% em cinco: Hapvida (+34,3%), C&A (+25,2%), Rumo (+10,4%), Auren (+10,2%) e Cogna (+9,0%). Nos 12 meses a D&A da DFC só vale se a linha foi identificada nas três parcelas; senão, vale a DVA.
+
+O caso contrário aparece na fixture da São Martinho (que não está nas 64): a DFC traz "Depreciação e amortização" de 1.086.030 e, à parte, "Ativos biológicos colhidos", que a regra não reconhece; a DVA traz 2.371.247. O EBITDA dela cai de 3.766.048 para 2.480.831 (R$ mil, exercício de 03/2026).
 
 ### Composição do capital: número de ações e escala
 
 Os arquivos `dfp_cia_aberta_composicao_capital_AAAA.csv` e `itr_cia_aberta_composicao_capital_AAAA.csv` trazem, por documento e versão, o total de ações do capital integralizado e as ações em tesouraria (`QT_ACAO_TOTAL_CAP_INTEGR` e `QT_ACAO_TOTAL_TESOURO`). O ITR mais recente das 64 companhias traz a composição, então os 12 meses usam as ações da data do ITR.
 
-**O arquivo não diz a escala.** Na DFP de 2025, 17 das 64 companhias informam em milhares de ações (Ambev, Assaí, Auren, Axia, Cemig, Copasa, Cyrela, Embraer, Eneva, Lojas Renner, MRV, Natura, Taesa, Tenda, Vale, Vibra e Yduqs) e as outras 47, em unidades. A Vale informa 4.539.007 e tem 4,5 bilhões de ações. `escalaDasAcoes` (em `scripts/cvm/composicao-capital.mjs`) decide assim:
+**O arquivo não diz a escala.** Na DFP de 2025, 17 das 64 companhias informam em milhares de ações e as outras 47, em unidades. A Vale informa 4.539.007 e tem 4,5 bilhões de ações. As 17, com o total como está no arquivo:
+
+| Ticker | Companhia | Total informado (em milhares) |
+|---|---|---:|
+| ABEV3 | Ambev | 15.761.639 |
+| ASAI3 | Assaí | 1.353.497 |
+| AURE3 | Auren | 1.050.378 |
+| AXIA3 | Axia Energia | 2.915.428 |
+| CMIG4 | Cemig | 2.861.782 |
+| CSMG3 | Copasa | 380.253 |
+| CYRE3 | Cyrela | 384.000 |
+| EMBJ3 | Embraer | 740.465 |
+| ENEV3 | Eneva | 1.936.974 |
+| LREN3 | Lojas Renner | 1.006.845 |
+| MRVE3 | MRV | 562.827 |
+| NATU3 | Natura | 1.773.371 |
+| TAEE11 | Taesa | 1.033.497 |
+| TEND3 | Tenda | 122.578 |
+| VALE3 | Vale | 4.539.007 |
+| VBBR3 | Vibra | 1.198.000 |
+| YDUQ3 | Yduqs | 274.089 |
+
+A lista é o resultado da regra abaixo nos arquivos de 12/11/2026, não uma entrada dela: a escala é decidida de novo a cada documento. `escalaDasAcoes` (em `scripts/cvm/composicao-capital.mjs`) decide assim:
 
 1. Pelo lucro por ação que a companhia informa na DRE do mesmo documento (conta 3.99.01): o lucro da controladora dividido por ele dá o número de ações que a companhia usou. Se é da ordem do total informado, a escala é unidade; se é cerca de mil vezes maior, é mil. Resolve 56 das 64.
 2. Sem lucro por ação informado, ou quando ele não fecha, pela ordem de grandeza: total abaixo de 100 milhões está em milhares. O maior total em milhares é 15,8 milhões (Ambev) e o menor em unidades, 206 milhões (Azzas). Usada em 8 das 64, todas em unidades.
