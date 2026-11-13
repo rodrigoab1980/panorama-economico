@@ -23,10 +23,13 @@ GitHub Actions: workflow "Atualizar panorama"
   └─ baixa a branch `dados` (histórico) na pasta dados/
   └─ scripts/update.mjs → site/data/*.json  (notícias, cotações, agenda, resumo)
   └─ a partir das 19h: grava o fechamento do dia e o resumo na branch `dados`
-  └─ publica a pasta site/ no GitHub Pages
+  └─ scripts/build.mjs → dist/  (cópia de site/, inclusive site/data/, com o menu comum)
+  └─ publica a pasta dist/ no GitHub Pages
 Navegador
-  └─ site/index.html lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
+  └─ o Diário (index.html, na raiz) lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
 ```
+
+O site tem mais de uma página, com um menu comum: o **Diário** (visão de trade) continua na raiz, e a **Fundamentalista** fica em `fundamentos/` (por enquanto, só um esqueleto; o conteúdo vem na #38). O build troca o marcador `<!-- menu -->` de cada página pelo menu, e o resto do HTML fica igual. Todos os links internos são relativos, porque o GitHub Pages serve o site num subcaminho (`/panorama-economico/`): um link que comece com `/` quebraria em produção. As páginas da v3 (Overview e Treinamentos) só entram no menu quando existirem.
 
 ### Estrutura do repositório
 
@@ -35,12 +38,15 @@ Navegador
 | `scripts/update.mjs` | Coleta (rede), gravação dos JSON, histórico e chamada ao Claude. Configuração das fontes no início do arquivo. |
 | `scripts/logica.mjs` | Toda a lógica pura: sem rede, sem disco, sem relógio implícito. É o que os testes cobrem. |
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
+| `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
+| `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
 | `scripts/cvm/` | Dados da CVM. `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
-| `site/` | A página publicada: `index.html`, `app.js` (renderização), `atraso.js` (regra de dado desatualizado, usada também nos testes) e `style.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
+| `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
+| `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
 | `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
-| `.github/workflows/atualizar.yml` | Coleta, histórico e deploy no GitHub Pages. |
-| `.github/workflows/ci.yml` | Roda os testes em todo PR e na `main`. Não publica nada. |
+| `.github/workflows/atualizar.yml` | Coleta, histórico, build e deploy de `dist/` no GitHub Pages. |
+| `.github/workflows/ci.yml` | Roda os testes e o build em todo PR e na `main`. Não publica nada. |
 | branch `dados` | Histórico diário e resumos arquivados. Só o robô escreve nela. |
 
 ## Decisões de arquitetura
@@ -163,11 +169,12 @@ Requer Node.js 24 ou mais novo.
 
 ```bash
 npm install
-npm run update
-npm run serve
+npm run update   # coleta e grava site/data/
+npm run build    # monta dist/
+npm run serve    # serve dist/
 ```
 
-Depois abra http://localhost:8080.
+Depois abra http://localhost:8080. Mudou algo em `site/`? Rode `npm run build` de novo antes de recarregar.
 
 ## Testes
 

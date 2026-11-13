@@ -36,3 +36,6 @@ jobs:
       - run: npm ci
 
       - run: npm test
+
+      # Build quebrado reprova o PR (o site publicado é o dist/).
+      - run: npm run build

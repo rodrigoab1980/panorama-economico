@@ -7,7 +7,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 ## [Não lançado]
 
 ### Adicionado
+- Build multi-página com menu comum (#30): `npm run build` (`scripts/build.mjs`) monta `dist/` a partir de `site/`, inclusive os JSON de `site/data/`, e troca o marcador `<!-- menu -->` de cada página pelo menu (Diário e Fundamentalista). O Diário continua na raiz e idêntico: a única linha nova no `site/index.html` é o marcador, e um teste confirma que o `dist/index.html` sem o menu é igual byte a byte. Links só relativos (o site fica em `/panorama-economico/`), conferidos por um teste que reprova link quebrado e caminho absoluto. A página `fundamentos/` é um esqueleto com aviso legal (o conteúdo vem na #38). Lógica pura em `scripts/paginas.mjs`, com testes. No celular, o menu é um `<details>`, sem JS; entre 768 e 1100 px ele ganha uma linha própria no cabeçalho.
 - Spike dos dados abertos da CVM (#29): `docs/cvm.md` registra o que foi medido nos arquivos de DFP, ITR e FCA (URLs, formato, contas confirmadas, como o ITR acumula, reapresentações, volume e tempos para decidir entre JSON puro e SQLite) e os riscos para as próximas issues da v2.0. Três fixtures reais em `test/fixtures/cvm/` (WEG, Raia Drogasil e Hapvida), preservadas byte a byte pelo `.gitattributes`, com testes que confirmam esses fatos. As fixtures podem ser recriadas com `scripts/cvm/gerar-fixtures.mjs` (sem rede e sem ZIP), e as medições, com os scripts de `scripts/cvm/spike/` (seção "Como reproduzir").
+
+### Alterado
+- O workflow de atualização publica `dist/` em vez de `site/`, com o build depois da coleta e da gravação do histórico; se o build falhar, nada é publicado. O CI também roda `npm run build`, e `npm run serve` passa a servir `dist/` (#30).
 
 ## [1.0.0] - 2026-11-12
 
