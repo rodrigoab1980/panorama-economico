@@ -39,6 +39,8 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/logica.mjs` | Toda a lógica pura: sem rede, sem disco, sem relógio implícito. É o que os testes cobrem. |
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
+| `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
+| `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. Vai servir aos ZIPs da CVM. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
 | `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `classificador-dfc.mjs` (lógica pura, testada) acha pela descrição as linhas da DFC que não têm código fixo (capex, juros pagos, arrendamentos e proventos), com as exceções por companhia em `excecoes-dfc.json`. `composicao-capital.mjs` (lógica pura, testada) lê o número de ações. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida, liquidez, fluxo de caixa e por ação de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
 | `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
@@ -47,7 +49,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
 | `.github/workflows/atualizar.yml` | Coleta, histórico, build e deploy de `dist/` no GitHub Pages. |
 | `.github/workflows/ci.yml` | Roda os testes e o build em todo PR e na `main`. Não publica nada. |
-| branch `dados` | Histórico diário e resumos arquivados. Só o robô escreve nela. |
+| branch `dados` | Histórico diário, resumos arquivados e o preço das ações do universo (`cotacoes-fundamentos.json`). Só o robô escreve nela. |
 
 ## Decisões de arquitetura
 
@@ -196,6 +198,49 @@ São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
 A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`, `LIMITE_DILUICAO`, `LIMITE_DA_DFC_ABAIXO_DA_DVA`, `fluxosClassificados`, `depreciacaoEAmortizacao`, `calcularIndicadoresDaSerie`), em `scripts/cvm/classificador-dfc.mjs` (`CATEGORIAS`, `ORDEM`, `classificarLinhas`) e em `scripts/cvm/composicao-capital.mjs` (`lerComposicaoCapital`, `escalaDasAcoes`). Os testes ficam em `test/cvm-indicadores.test.mjs` e `test/cvm-fluxo-de-caixa.test.mjs`, que conferem os números com os releases de resultados, os balanços e as demonstrações de fluxo de caixa de 2025 da WEG e da Raia Drogasil.
 
+## Múltiplos e fonte de preço
+
+Os múltiplos juntam o preço da ação com os fundamentos dos 12 meses. O fundamento é coletado uma vez por semana (CVM) e o preço, uma vez por dia; os dois se encontram na hora de montar o site. A lógica fica em `scripts/cvm/multiplos.mjs` (`MULTIPLOS`, `calcularMultiplos`, `valorDeMercado`, `fundamentosParaMultiplos`), pura e testada. A ficha de cada companhia, que mostra esses números, vem na #38.
+
+| Múltiplo | Conta |
+|---|---|
+| Valor de mercado | Soma, classe por classe, das ações em circulação (total menos tesouraria) vezes o último preço do ticker da classe |
+| P/L | Valor de mercado ÷ lucro líquido da controladora em 12 meses (conta 3.11.01) |
+| P/VPA | Valor de mercado ÷ patrimônio líquido da controladora (2.03 menos os não controladores, 2.03.09) |
+| Valor da firma (EV) | Valor de mercado + dívida líquida (sem arrendamentos) + participação dos não controladores (2.03.09) |
+| EV/EBITDA | EV ÷ EBITDA dos 12 meses |
+| Preço/EBIT | Valor de mercado ÷ EBIT dos 12 meses |
+| Earnings yield | Lucro líquido da controladora ÷ valor de mercado |
+| Dividend yield | Proventos pagos em 12 meses (da DFC) ÷ valor de mercado |
+| Preço/FCL | Valor de mercado ÷ FCL dos 12 meses, nas duas versões do FCL (antes e depois dos arrendamentos) |
+
+Regras à vista:
+
+1. **O valor de mercado sai das classes, nunca da unit.** A composição do capital da CVM traz ordinárias e preferenciais em separado. As ordinárias usam o preço do ticker de final 3 e as preferenciais, o de final 4, 5 ou 6 (o que está no Ibovespa tem preferência). A unit só serve de cotação do ticker: somá-la contaria a mesma ação duas vezes. A Klabin está no universo pela unit (KLBN11), e o valor de mercado dela sai de KLBN3 e KLBN4.
+2. **Ações em circulação, sem a tesouraria.** Por isso o valor de mercado fica um pouco abaixo do de fontes que multiplicam o preço pelo total de ações: 9% a menos na PRIO, 6% na Lojas Renner.
+3. **Classe sem cotação usa o preço da outra classe**, e o resultado sai marcado como aproximado, com o motivo. Hoje são dois casos: Sabesp e Copel têm preferenciais na composição do capital, e elas não negociam. Sem cotação em nenhuma classe, o valor de mercado fica vazio.
+4. **Não controladores.** No P/L e no P/VPA eles ficam de fora, porque o valor de mercado é só das ações da controladora. No EV eles entram, porque o EBITDA consolidado inclui 100% das controladas.
+5. **"Não se aplica" em vez de número negativo.** P/L com lucro zero ou negativo, P/VPA com patrimônio zero ou negativo, preço/EBIT, preço/FCL e EV/EBITDA com o denominador zero ou negativo ficam vazios, com o motivo. O EV/EBITDA também fica vazio quando o EV é zero ou negativo (caixa líquido maior que o valor de mercado). O earnings yield continua saindo com lucro negativo, e sai negativo.
+6. **Cotação desatualizada.** Cada preço carrega a data do seu último negócio. Com mais de 5 dias úteis entre essa data e o dia em que o site é montado (`LIMITE_DIAS_UTEIS_COTACAO`), o múltiplo continua saindo, marcado como desatualizado, com a data ao lado. Os dias úteis são contados de segunda a sexta, sem descontar feriados. A regra de atraso do Diário (`site/atraso.js`) não foi reaproveitada: ela conta minutos dentro da janela do workflow.
+7. **Sem os 12 meses, sem múltiplos.** Quando a base de 12 meses da companhia está indisponível (TIM), todos os múltiplos ficam vazios com o motivo da série. O valor de mercado, que só depende do preço e do número de ações, continua saindo.
+8. **O número de ações é o do último ITR.** Uma emissão, bonificação ou desdobramento depois dessa data só aparece no ITR seguinte.
+
+São só dados e regras à vista. Nada aqui é recomendação de investimento.
+
+### Fonte de preço
+
+- **Fonte:** o serviço de cotações da CNBC, o mesmo do placar e do mapa do Diário, com atraso de até 15 minutos. É uma consulta em lotes de 40 símbolos (`https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=...`), com timeout de 20 s. Os símbolos das ações da B3 vão com o sufixo `.SA`: com `-BR` a CNBC não devolve ABEV3, TEND3 e IGTI3, e com `.SA` devolve os 97 tickers do universo, com o mesmo preço (conferido em 13/11/2026).
+- **Adaptador:** só `scripts/precos/cnbc.mjs` conhece a CNBC. `scripts/precos/fonte.mjs` define o contrato, `cotar(tickers) → { [ticker]: { preco, dataHora } }`, em que `dataHora` é a do último negócio e ticker sem cotação fica ausente (nunca zero). Os múltiplos e o build só conhecem o contrato. Trocar de fonte é escrever outro módulo com `cotar` e `FONTE` e mudar a linha de exportação do `fonte.mjs`.
+- **Coleta:** o workflow de atualização grava `cotacoes-fundamentos.json` na branch `dados`, uma vez por dia, na primeira execução depois das 19h de Brasília (e na primeira vez, a qualquer hora). São procurados os tickers do universo e, para cada raiz, os finais 3, 4, 5, 6 e 11: 371 símbolos em 10 chamadas, dos quais 102 existem.
+
+  ```json
+  { "coletadoEm": "2026-11-13T23:36:53.465Z", "fonte": "CNBC (atraso de até 15 min)",
+    "precos": { "WEGE3": { "preco": 51.31, "dataHora": "2026-11-13T18:05:49.000-0300" } } }
+  ```
+- **Falhas:** se nenhuma cotação vier, o arquivo não é tocado e fica valendo o último gravado; o log avisa. Se vier só uma parte, quem não veio continua com o último preço conhecido e com a `dataHora` dele, e a regra de cotação desatualizada marca o que precisar.
+- **Risco registrado:** a CNBC é um endpoint **não oficial**, sem contrato e sem garantia de continuar no ar. A fonte tem de ser revista, com um distribuidor licenciado ou com parecer jurídico, **antes de o site ter qualquer parte paga** (v3). Os dados ficam só para consulta e não são revendidos.
+- **Por que não a B3:** o arquivo oficial de cotações históricas foi testado em 13/11/2026 e o download funciona, mas a página da B3 diz que os dados "destinam-se estritamente à consulta informativa" e veda a coleta automatizada, para qualquer finalidade. Nada desse arquivo entrou no repositório. A consequência é que a CNBC não tem série histórica: o gráfico de lucro × cotação da v3 vai precisar de outra fonte.
+
 ## Atualização confiável (cron-job.org)
 
 O agendamento do próprio GitHub (`schedule`) atrasa e às vezes descarta execuções. Por isso o gatilho principal é **externo**: o site gratuito [cron-job.org](https://cron-job.org) chama a API do GitHub a cada 15 minutos e manda rodar o workflow (`workflow_dispatch`).
@@ -285,7 +330,7 @@ Os testes usam o executor nativo do Node (`node:test`), sem dependências extras
 
 O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 24 e no 26. Ele não publica nada nem usa segredos.
 
-Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e as cotações da CNBC ficam no início de `scripts/update.mjs`.
+Os símbolos de cada aba ficam no início de `site/app.js` (`ABAS`). As fontes de notícias e os símbolos do placar ficam no início de `scripts/update.mjs`; a consulta à CNBC fica em `scripts/precos/cnbc.mjs`.
 
 ## Como contribuir
 

@@ -2,9 +2,10 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
   diaBR, horaMinBR, horaBR, decodificar, limpar, chave, numero, bilhoes, bolsa,
-  linkSeguro, itensDoFeed, selecionarNoticias, indexarCNBC, montarCotacoes, simbolosMapa, montarMapas,
+  linkSeguro, itensDoFeed, selecionarNoticias, montarCotacoes, simbolosMapa, montarMapas,
   montarAgenda, precisaResumo, fmtAtivo, montarPedido, vincularNoticias,
 } from "../scripts/logica.mjs";
+import { indexarCNBC } from "../scripts/precos/cnbc.mjs";
 
 // 12/11/2026 10:30 em Brasília (UTC-3)
 const AGORA = new Date("2026-11-12T13:30:00Z");

@@ -82,9 +82,7 @@ export function selecionarNoticias(novos, anterior, { agoraMs, palavrasMercado, 
 
 const MESES = { Jan: "jan", Feb: "fev", Mar: "mar", Apr: "abr", May: "mai", Jun: "jun", Jul: "jul", Aug: "ago", Sep: "set", Oct: "out", Nov: "nov", Dec: "dez" };
 
-// Indexa a resposta da CNBC por símbolo.
-export const indexarCNBC = (j) => Object.fromEntries((j?.FormattedQuoteResult?.FormattedQuote || []).map((q) => [q.symbol, q]));
-
+// A resposta da CNBC é indexada por símbolo em precos/cnbc.mjs (indexarCNBC); aqui chega já indexada.
 export function montarCotacoes(quotes, porSimbolo) {
   return quotes.map(({ grupo, s, nome, contrato }) => {
     const q = porSimbolo[s];
