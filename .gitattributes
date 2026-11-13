@@ -1,0 +1,2 @@
+# Fixtures da CVM ficam byte a byte como vêm do portal (latin1, ";" e CRLF).
+test/fixtures/cvm/** -text

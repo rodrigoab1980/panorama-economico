@@ -6,6 +6,9 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+### Adicionado
+- Spike dos dados abertos da CVM (#29): `docs/cvm.md` registra o que foi medido nos arquivos de DFP, ITR e FCA (URLs, formato, contas confirmadas, como o ITR acumula, reapresentações, volume e tempos para decidir entre JSON puro e SQLite) e os riscos para as próximas issues da v2.0. Três fixtures reais em `test/fixtures/cvm/` (WEG, Raia Drogasil e Hapvida), preservadas byte a byte pelo `.gitattributes`, com testes que confirmam esses fatos. As fixtures podem ser recriadas com `scripts/cvm/gerar-fixtures.mjs` (sem rede e sem ZIP), e as medições, com os scripts de `scripts/cvm/spike/` (seção "Como reproduzir").
+
 ## [1.0.0] - 2026-11-12
 
 Primeira versão estável: testes e CI, lógica própria (histórico diário, variação semanal e mensal, alertas), atualização confiável com gatilho externo e documentação das decisões de arquitetura.
