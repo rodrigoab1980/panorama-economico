@@ -56,6 +56,7 @@ Em 2024, entre cerca de 450 empresas com plano "comercial e industrial":
 
 - O plano é outro para **bancos** (10 empresas: 3.01 = "Receitas de Intermediação Financeira", 2.03 = "Provisões") e para **seguradoras** (17 empresas: 3.06 = IR/CS e a D&A em 7.05.01). Para eles a mesma conta tem outro significado. Isso ajuda: a descrição da 3.01 serve para detectar e excluir financeiras automaticamente.
 - A descrição das contas fixas varia pouco ("Caixa Líquido Atividades Operacionais" × "Caixa Líquido **das** Atividades Operacionais"). O código é o que vale.
+- **Contas usadas pelos indicadores (#34)**, além das da DRE, do ativo total e do PL: a D&A sai da DVA **7.04.01**, que vem negativa (o indicador troca o sinal, sem valor absoluto); a dívida bruta é BPP **2.01.04** + **2.02.01**, sem arrendamentos; o caixa é BPA **1.01.01** + **1.01.02**. As cinco são contas fixas. As fórmulas estão no README, seção "Indicadores fundamentalistas".
 
 ## DFC: capex, juros, dividendos e arrendamentos
 
