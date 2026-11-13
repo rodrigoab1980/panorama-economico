@@ -495,11 +495,12 @@ describe("São Martinho: exercício de abril a março", () => {
   test("valores do exercício (R$ mil)", () => {
     assert.equal(ind.receita.valor, 7_431_765);
     assert.equal(ind.lucroLiquido.valor, 836_177);
-    // A D&A vem da DFC ("Depreciação e amortização", 1.086.030). A DVA traz 2.371.247: a diferença é a
-    // exaustão do ativo biológico, que a São Martinho lança na DFC como "Ativos biológicos colhidos" e
-    // que a regra da D&A não reconhece. É o caso em que a DFC dá menos do que a DVA.
-    assert.deepEqual(ind.da, { valor: 1_086_030, motivo: null, origem: "DFC" });
-    assert.equal(ind.ebitda.valor, 1_394_801 + 1_086_030);
+    // A DFC traz "Depreciação e amortização" de 1.086.030 e a DVA, 2.371.247: a diferença é a exaustão
+    // do ativo biológico, que a São Martinho lança na DFC como "Ativos biológicos colhidos" e que a
+    // regra da D&A não reconhece. A DFC fica 54% abaixo da DVA, mais do que o limite de 15%: vale a DVA.
+    assert.deepEqual(ind.da, { valor: 2_371_247, motivo: null, origem: "DVA (DFC 15% menor)" });
+    assert.equal(ind.ebitda.valor, 3_766_048);
+    assert.equal(ind.ebitda.valor, 1_394_801 + 2_371_247);
   });
 
   test("o ROE usa o PL de 31/03/2026", () => {

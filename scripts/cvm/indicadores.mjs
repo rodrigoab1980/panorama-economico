@@ -65,6 +65,15 @@ export const DIVIDA_POR_DESCRICAO = {
 // passa do limite; fica null com o motivo, que é melhor do que um número que parece emissão.
 export const LIMITE_DILUICAO = 0.5;
 
+// Quando a D&A da DFC vem mais do que isto abaixo da D&A da DVA, vale a da DVA. A D&A da DFC é achada
+// pela descrição das linhas, e a regra pode deixar de fora um pedaço que a companhia lança com outro
+// nome: a São Martinho põe a exaustão do canavial em "Ativos biológicos colhidos", a DFC dá 1.086.030
+// e a DVA, 2.371.247 (54% abaixo). Por que 15%: na DFP de 2025 as duas fontes ficam dentro de 15% em 59
+// das 64 companhias da página, e nas outras cinco a DFC é a maior; uma DFC tão abaixo da DVA é sinal de
+// linha que faltou, não de diferença de critério. A comparação é estrita: 15% exatos ainda valem a DFC.
+export const LIMITE_DA_DFC_ABAIXO_DA_DVA = 0.15;
+export const ORIGEM_DVA_POR_DFC_MENOR = `DVA (DFC ${LIMITE_DA_DFC_ABAIXO_DA_DVA * 100}% menor)`;
+
 // Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
 // do ativo total. Por que 0,5%: quem não tem dívida ainda paga tarifas, IOF e ajustes a valor presente,
 // mas isso fica em poucos décimos de ponto do ativo; já uma dívida de 10% do ativo a 10% ao ano custa
@@ -104,7 +113,7 @@ export const INDICADORES = [
   { id: "ebit", nome: "EBIT", unidade: "R$ mil", formula: "Resultado antes do resultado financeiro e dos tributos (DRE, conta 3.05)" },
   {
     id: "da", nome: "Depreciação e amortização", unidade: "R$ mil",
-    formula: "Depreciação, amortização e exaustão dos ajustes do lucro na DFC, achadas pela descrição das linhas. Quando não são identificadas, vale a da DVA (conta 7.04.01), com o sinal trocado",
+    formula: "Depreciação, amortização e exaustão dos ajustes do lucro na DFC, achadas pela descrição das linhas. Quando não são identificadas, ou quando ficam mais de 15% abaixo da D&A da DVA, vale a da DVA (conta 7.04.01), com o sinal trocado",
   },
   { id: "ebitda", nome: "EBITDA", unidade: "R$ mil", formula: "EBIT + depreciação e amortização" },
   { id: "margemEbitda", nome: "Margem EBITDA", unidade: "razão", formula: "EBITDA ÷ receita líquida" },
@@ -443,13 +452,16 @@ export function depreciacaoEAmortizacao(periodo, classes) {
   const p = adaptarPeriodo(periodo);
   if (p.tipo === "indisponivel") return { ...nulo(p.motivo), origem: null };
   const daDfc = (classes ?? fluxosClassificados(p)).daDfc;
-  if (daDfc.valor != null) return { ...ok(daDfc.valor), origem: "DFC" };
   const daDva = combinar([fluxo(p, "7.04.01")], (v) => 0 - v);
+  if (daDfc.valor != null) {
+    const faltouLinha = daDva.valor != null && daDva.valor > 0 && daDfc.valor < daDva.valor * (1 - LIMITE_DA_DFC_ABAIXO_DA_DVA);
+    return faltouLinha ? { ...ok(daDva.valor), origem: ORIGEM_DVA_POR_DFC_MENOR } : { ...ok(daDfc.valor), origem: "DFC" };
+  }
   return { ...daDva, origem: daDva.valor == null ? null : "DVA" };
 }
 
 // Indicadores de um período. Devolve { [id]: { valor, motivo } }, com um item para cada id de INDICADORES.
-// A D&A (`da`) traz também `origem`, "DFC" ou "DVA", dizendo de onde saiu.
+// A D&A (`da`) traz também `origem`, dizendo de onde saiu: "DFC", "DVA" ou "DVA (DFC 15% menor)".
 // `contexto` traz o que não está no período:
 //   composicao          composição do capital do fim do período, JÁ EM UNIDADES de ação ({ acoesCirculacao, ... })
 //   composicaoAnterior  a do exercício anterior, para a diluição (só na série anual)

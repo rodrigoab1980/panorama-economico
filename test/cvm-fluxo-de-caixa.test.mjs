@@ -10,7 +10,7 @@ import {
 } from "../scripts/cvm/classificador-dfc.mjs";
 import { LIMITE_ACOES_EM_MIL, composicaoNaData, emUnidades, escalaDasAcoes, lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
 import {
-  INDICADORES, LIMITE_DILUICAO, calcularIndicadores, calcularIndicadoresDaSerie, depreciacaoEAmortizacao, fluxosClassificados, lucroDaControladora,
+  INDICADORES, LIMITE_DA_DFC_ABAIXO_DA_DVA, LIMITE_DILUICAO, ORIGEM_DVA_POR_DFC_MENOR, calcularIndicadores, calcularIndicadoresDaSerie, depreciacaoEAmortizacao, fluxosClassificados, lucroDaControladora,
 } from "../scripts/cvm/indicadores.mjs";
 
 // ---------- fixtures reais ----------
@@ -1252,6 +1252,37 @@ describe("D&A do EBITDA: a da DFC quando identificada, a da DVA de reserva", () 
     assert.equal(ind.fcoSobreEbitda.valor, 300 / 250);
   });
 
+  test("D&A da DFC mais de 15% abaixo da DVA: vale a DVA, e a origem diz por quê", () => {
+    // DFC 50 (sintético); DVA 60: a DFC está 16,7% abaixo
+    const ind = calcularIndicadores(anual({ mudancas: { DVA: { "7.04.01": -60 } } }));
+    assert.deepEqual(ind.da, { valor: 60, motivo: null, origem: "DVA (DFC 15% menor)" });
+    assert.deepEqual(ind.ebitda, { valor: 260, motivo: null });
+  });
+
+  test("o limite é estrito: 15% exatos abaixo, ou menos, ainda vale a DFC", () => {
+    const da = (dfc, dva) => calcularIndicadores(anual({ dfc: trocar(DFC, "6.01.01.02", { valor: dfc }), mudancas: { DVA: { "7.04.01": -dva } } })).da;
+    assert.equal(LIMITE_DA_DFC_ABAIXO_DA_DVA, 0.15);
+    assert.equal(ORIGEM_DVA_POR_DFC_MENOR, "DVA (DFC 15% menor)");
+    assert.deepEqual(da(85, 100), { valor: 85, motivo: null, origem: "DFC" });
+    assert.deepEqual(da(84, 100), { valor: 100, motivo: null, origem: "DVA (DFC 15% menor)" });
+    assert.deepEqual(da(100, 100), { valor: 100, motivo: null, origem: "DFC" });
+  });
+
+  test("DVA zero ou com o sinal trocado não derruba a D&A da DFC", () => {
+    const da = (dva) => calcularIndicadores(anual({ mudancas: { DVA: { "7.04.01": dva } } })).da;
+    assert.deepEqual(da(0), { valor: 50, motivo: null, origem: "DFC" });
+    assert.deepEqual(da(60), { valor: 50, motivo: null, origem: "DFC" }); // 7.04.01 positiva: D&A da DVA negativa
+  });
+
+  test("12 meses: D&A da DFC mais de 15% abaixo da DVA dos 12 meses, vale a DVA", () => {
+    // DFC dos 12 meses = 62,5; DVA dos 12 meses trocada para 80 (21,9% abaixo)
+    const p = doze12();
+    p.fluxos["7.04.01"] = { ...p.fluxos["7.04.01"], valor: -80 };
+    const ind = calcularIndicadores(p);
+    assert.deepEqual(ind.da, { valor: 80, motivo: null, origem: "DVA (DFC 15% menor)" });
+    assert.equal(ind.ebitda.valor, 280);
+  });
+
   test("sem linha de D&A na DFC, vale a da DVA, com o sinal trocado", () => {
     const p = anual({ dfc: trocar(DFC, "6.01.01.02", null), mudancas: { DVA: { "7.04.01": -30 } } });
     const ind = calcularIndicadores(p);
@@ -1312,6 +1343,6 @@ describe("D&A do EBITDA: a da DFC quando identificada, a da DVA de reserva", () 
   test("a fórmula da D&A diz as duas fontes e a ordem", () => {
     const { formula } = INDICADORES.find((i) => i.id === "da");
     assert.match(formula, /DFC/);
-    assert.match(formula, /Quando não são identificadas, vale a da DVA \(conta 7\.04\.01\)/);
+    assert.match(formula, /Quando não são identificadas, ou quando ficam mais de 15% abaixo da D&A da DVA, vale a da DVA \(conta 7\.04\.01\)/);
   });
 });

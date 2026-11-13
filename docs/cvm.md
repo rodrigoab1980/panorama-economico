@@ -199,7 +199,9 @@ Casos que a regra deixa de fora de propósito, para decisão: "Aquisições de a
 
 **O EBITDA usa a D&A da DFC** quando ela é identificada, e a da DVA (7.04.01) de reserva (decisão da revisão da #36). Na DFP de 2025 as 64 companhias têm a linha na DFC. O EBITDA muda em 14 delas e mais de 5% em quatro: Hapvida (+29,8%), C&A (+27,0%), Cogna (+11,9%) e Auren (+9,6%). Nos 12 meses muda mais de 5% em cinco: Hapvida (+34,3%), C&A (+25,2%), Rumo (+10,4%), Auren (+10,2%) e Cogna (+9,0%). Nos 12 meses a D&A da DFC só vale se a linha foi identificada nas três parcelas; senão, vale a DVA.
 
-O caso contrário aparece na fixture da São Martinho (que não está nas 64): a DFC traz "Depreciação e amortização" de 1.086.030 e, à parte, "Ativos biológicos colhidos", que a regra não reconhece; a DVA traz 2.371.247. O EBITDA dela cai de 3.766.048 para 2.480.831 (R$ mil, exercício de 03/2026).
+O caso contrário aparece na fixture da São Martinho (que não está nas 64): a DFC traz "Depreciação e amortização" de 1.086.030 e, à parte, "Ativos biológicos colhidos", que a regra não reconhece; a DVA traz 2.371.247. Só com a DFC, o EBITDA dela cairia de 3.766.048 para 2.480.831 (R$ mil, exercício de 03/2026).
+
+**Quando a D&A da DFC vem mais de 15% abaixo da D&A da DVA, vale a da DVA**, com a origem "DVA (DFC 15% menor)" (`LIMITE_DA_DFC_ABAIXO_DA_DVA`). Uma DFC tão abaixo é sinal de linha que a regra não achou. Na São Martinho a DFC fica 54% abaixo, vale a DVA e o EBITDA continua 3.766.048. "Ativos biológicos colhidos" não entrou no classificador. Nas 64 companhias da página a regra não muda nada, nem na DFP de 2025 nem nos 12 meses. Quem chega mais perto do limite é a Tenda: a DFC fica 4,6% abaixo da DVA na DFP de 2025 (64.473 contra 67.552) e 11,6% abaixo nos 12 meses (70.280 contra 79.483). Depois dela vem a Cyrela nos 12 meses, 4,6% abaixo.
 
 ### Composição do capital: número de ações e escala
 

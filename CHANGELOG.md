@@ -20,7 +20,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - A dívida bruta dos indicadores (#34) somava as contas 2.01.04 e 2.02.01 inteiras e, com isso, incluía o "Financiamento por Arrendamento" (2.01.04.03 e 2.02.01.03) das companhias que lançam os arrendamentos ali. Agora as duas subcontas são subtraídas, e o ROIC usa a dívida corrigida. Na DFP de 2025, isso muda o ROIC de 17 das 64 companhias da página (#35).
 
 ### Alterado
-- A D&A do EBITDA (#34) passa a ser a da DFC (linhas de depreciação, amortização e exaustão nos ajustes do lucro), com a da DVA (conta 7.04.01) de reserva. O indicador `da` diz a `origem` ("DFC" ou "DVA"). Em algumas companhias a DVA não traz a amortização toda: na DFP de 2025 o EBITDA muda em 14 das 64 companhias da página, e mais de 5% em quatro (Hapvida, C&A, Cogna e Auren) (#36).
+- A D&A do EBITDA (#34) passa a ser a da DFC (linhas de depreciação, amortização e exaustão nos ajustes do lucro), com a da DVA (conta 7.04.01) de reserva. O indicador `da` diz a `origem` ("DFC" ou "DVA"). Quando a D&A da DFC vem mais de 15% abaixo da D&A da DVA, vale a da DVA, com a origem "DVA (DFC 15% menor)" (`LIMITE_DA_DFC_ABAIXO_DA_DVA`): é o caso da São Martinho, que lança a exaustão do canavial numa linha que a regra não reconhece. Em algumas companhias a DVA não traz a amortização toda: na DFP de 2025 o EBITDA muda em 14 das 64 companhias da página, e mais de 5% em quatro (Hapvida, C&A, Cogna e Auren) (#36).
 - O workflow de atualização publica `dist/` em vez de `site/`, com o build depois da coleta e da gravação do histórico; se o build falhar, nada é publicado. O CI também roda `npm run build`, e `npm run serve` passa a servir `dist/` (#30).
 
 ## [1.0.0] - 2026-11-12
