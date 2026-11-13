@@ -34,6 +34,19 @@ export const ARRENDAMENTOS = {
   excecoes: [],
 };
 
+// Dívida financeira lançada fora de Empréstimos e Financiamentos (caso da Allos, que registra
+// "Empréstimos, financiamentos e debêntures" em Outras Obrigações e deixa a 2.01.04 e a 2.02.01 zeradas).
+//   grupos:    "Outras Obrigações"; o de curto prazo soma na dívida de curto prazo e o de longo, na de longo.
+//   descricao: a subconta não fixa entra quando a descrição bate com TODAS estas expressões. Exigir as duas
+//              ("empréstimo" e "financiamento ou debênture") deixa de fora linhas que só citam uma das
+//              palavras, como "Ajuste a valor justo das debêntures" ou "Financiamento por Arrendamento".
+//   excecoes:  o empréstimo compulsório (Axia) é passivo com consumidores, não dívida financeira.
+export const DIVIDA_POR_DESCRICAO = {
+  grupos: { curto: "2.01.05", longo: "2.02.02" },
+  descricao: [/empr[ée]stimo/i, /financiament|deb[êe]nture/i],
+  excecoes: [/compuls/i],
+};
+
 // Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
 // do ativo total. Por que 0,5%: quem não tem dívida ainda paga tarifas, IOF e ajustes a valor presente,
 // mas isso fica em poucos décimos de ponto do ativo; já uma dívida de 10% do ativo a 10% ao ano custa
@@ -84,7 +97,7 @@ export const INDICADORES = [
   { id: "caixa", nome: "Caixa", unidade: "R$ mil", formula: "Caixa e equivalentes + aplicações financeiras do ativo circulante (balanço, contas 1.01.01 e 1.01.02)" },
   {
     id: "dividaBruta", nome: "Dívida bruta", unidade: "R$ mil",
-    formula: "Empréstimos, financiamentos e debêntures de curto e de longo prazo (balanço, contas 2.01.04 e 2.02.01), sem os arrendamentos",
+    formula: "Empréstimos, financiamentos e debêntures de curto e de longo prazo (balanço, contas 2.01.04 e 2.02.01, mais as linhas de empréstimos, financiamentos e debêntures em outras obrigações), sem os arrendamentos",
   },
   {
     id: "arrendamentos", nome: "Arrendamentos", unidade: "R$ mil",
@@ -118,7 +131,7 @@ const VAZIO = { fluxo: () => null, estoque: () => null, passivo: () => [] };
 //   tipo "12-meses"      base de 12 meses (pelo ITR ou ano fechado); o balanço é o da data mais recente
 //   tipo "indisponivel"  não há o que calcular; `motivo` diz por quê
 // fluxo() e estoque() devolvem o valor em R$ mil, ou null quando a conta não está no período.
-// passivo() devolve todas as contas do passivo no fim do período, fixas e não fixas: [{ conta, descricao, valor }].
+// passivo() devolve todas as contas do passivo no fim do período, fixas e não fixas: [{ conta, descricao, valor, contaFixa }].
 export function adaptarPeriodo(origem) {
   if (origem == null) return { tipo: "indisponivel", meses: null, motivo: "sem dados do período", ...VAZIO };
   if (typeof origem.fluxo === "function" && typeof origem.estoque === "function") return origem; // já adaptado
@@ -134,8 +147,8 @@ export function adaptarPeriodo(origem) {
       fluxo: (conta) => origem.fluxos[conta]?.valor ?? null,
       estoque: (conta) => origem.estoques?.contas[conta]?.valor ?? null,
       passivo: () => [
-        ...Object.entries(origem.estoques?.contas ?? {}).filter(([, c]) => doBpp(c)).map(([conta, c]) => ({ conta, descricao: c.descricao, valor: c.valor })),
-        ...(origem.estoques?.naoFixas ?? []).filter(doBpp).map(({ conta, descricao, valor }) => ({ conta, descricao, valor })),
+        ...Object.entries(origem.estoques?.contas ?? {}).filter(([, c]) => doBpp(c)).map(([conta, c]) => ({ conta, descricao: c.descricao, valor: c.valor, contaFixa: true })),
+        ...(origem.estoques?.naoFixas ?? []).filter(doBpp).map(({ conta, descricao, valor }) => ({ conta, descricao, valor, contaFixa: false })),
       ],
     };
   }
@@ -149,7 +162,10 @@ export function adaptarPeriodo(origem) {
   return {
     tipo: origem.tipo, meses: origem.meses, motivo: null, fluxo: ler, estoque: ler,
     passivo: () => [...new Set((bpp?.contas ?? []).map((c) => c.conta))]
-      .map((conta) => ({ conta, descricao: bpp.contas.find((c) => c.conta === conta).descricao, valor: valorDaConta(bpp, conta) })),
+      .map((conta) => {
+        const { descricao, contaFixa } = bpp.contas.find((c) => c.conta === conta);
+        return { conta, descricao, valor: valorDaConta(bpp, conta), contaFixa };
+      }),
   };
 }
 
@@ -196,17 +212,41 @@ export function despesasFinanceiras(periodo) {
   return combinar([despesas], (v) => 0 - v);
 }
 
-// Empréstimos e financiamentos sem o "Financiamento por Arrendamento". A subconta do arrendamento é fixa
-// e quase sempre vem zerada; se não vier no período, conta como 0.
-const semArrendamento = (p, conta, arrendamento) => combinar([estoque(p, conta)], (v) => v - (p.estoque(arrendamento) ?? 0));
-const dividaDeCurtoPrazo = (p) => semArrendamento(p, "2.01.04", "2.01.04.03");
-const dividaDeLongoPrazo = (p) => semArrendamento(p, "2.02.01", "2.02.01.03");
+// Subcontas NÃO fixas de um grupo cuja descrição passa no teste, sem dupla contagem: se uma conta passa
+// e um ancestral dela também passa, fica só o ancestral.
+function subcontasPorDescricao(passivo, grupos, passa) {
+  const fixas = new Set(passivo.filter((c) => c.contaFixa).map((c) => c.conta));
+  const achadas = passivo.filter((c) => !fixas.has(c.conta) && grupos.some((g) => c.conta.startsWith(`${g}.`)) && passa(c.descricao));
+  return achadas.filter((c) => !achadas.some((pai) => c.conta.startsWith(`${pai.conta}.`)));
+}
+
+// Contas de dívida financeira em "Outras Obrigações", pela descrição: { curto: [...], longo: [...] }.
+export function contasDeDividaPorDescricao(passivo, regra = DIVIDA_POR_DESCRICAO) {
+  const passa = (d) => regra.descricao.every((e) => e.test(d)) && !regra.excecoes.some((e) => e.test(d));
+  return {
+    curto: subcontasPorDescricao(passivo, [regra.grupos.curto], passa),
+    longo: subcontasPorDescricao(passivo, [regra.grupos.longo], passa),
+  };
+}
+
+// Dívida de um prazo = empréstimos e financiamentos − "Financiamento por Arrendamento" + linhas de dívida
+// em outras obrigações. A subconta do arrendamento é fixa e quase sempre vem zerada; se não vier no
+// período, conta como 0.
+function dividaDoPrazo(p, conta, arrendamento, prazo) {
+  const linhas = contasDeDividaPorDescricao(p.passivo?.() ?? [])[prazo];
+  const semValor = linhas.find((c) => c.valor == null);
+  if (semValor) return nulo(`a conta ${semValor.conta} (${semValor.descricao}) veio sem valor único`);
+  const porDescricao = linhas.reduce((soma, c) => soma + c.valor, 0);
+  return combinar([estoque(p, conta)], (v) => v - (p.estoque(arrendamento) ?? 0) + porDescricao);
+}
+const dividaDeCurtoPrazo = (p) => dividaDoPrazo(p, "2.01.04", "2.01.04.03", "curto");
+const dividaDeLongoPrazo = (p) => dividaDoPrazo(p, "2.02.01", "2.02.01.03", "longo");
 
 // Dívida bruta = empréstimos, financiamentos e debêntures de curto e de longo prazo, no fim do período:
-// (2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03). Sem arrendamentos (IFRS 16).
+// (2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03) + as linhas de DIVIDA_POR_DESCRICAO. Sem arrendamentos (IFRS 16).
 // Alerta: se a soma dá 0 e a despesa financeira passa de LIMITE_DESPESA_SEM_DIVIDA do ativo total, a dívida
-// deve estar em outra linha do passivo (caso da Allos). Aí o resultado é null com o motivo, e tudo o que
-// depende da dívida fica null junto: melhor um null explicado do que um ROIC inflado.
+// deve estar em outra linha do passivo, com uma descrição que a regra não reconhece. Aí o resultado é null
+// com o motivo, e tudo o que depende da dívida fica null junto: melhor um null explicado do que um ROIC inflado.
 export function dividaBruta(periodo) {
   const p = adaptarPeriodo(periodo);
   if (p.tipo === "indisponivel") return nulo(p.motivo);
@@ -224,15 +264,15 @@ export function dividaBruta(periodo) {
 // Entram as duas contas fixas e, nos grupos de "Outras Obrigações", as subcontas cuja descrição bate
 // com a regra. Se uma conta bate e um ancestral dela também bate, fica só o ancestral.
 export function contasDeArrendamento(passivo, regra = ARRENDAMENTOS) {
-  const noGrupo = (conta) => regra.grupos.some((g) => conta.startsWith(`${g}.`));
-  const bate = (c) => noGrupo(c.conta) && regra.descricao.test(c.descricao) && !regra.excecoes.some((e) => e.test(c.descricao));
-  const porDescricao = passivo.filter(bate);
-  const semFilhas = porDescricao.filter((c) => !porDescricao.some((pai) => c.conta.startsWith(`${pai.conta}.`)));
-  return [...passivo.filter((c) => regra.fixas.includes(c.conta)), ...semFilhas];
+  const passa = (d) => regra.descricao.test(d) && !regra.excecoes.some((e) => e.test(d));
+  return [...passivo.filter((c) => regra.fixas.includes(c.conta)), ...subcontasPorDescricao(passivo, regra.grupos, passa)];
 }
 
 // Arrendamentos = passivo de arrendamento de curto e de longo prazo, no fim do período.
-// Sem nenhuma linha de arrendamento no passivo, o valor é 0: a companhia não informa arrendamento.
+// As contas fixas vêm zeradas em quase todas as companhias, então o zero delas não informa nada. Se nenhuma
+// subconta bate com a regra e as fixas são 0 ou ausentes, o resultado é null: não dá para dizer que a
+// companhia não tem arrendamento, só que nenhuma linha foi identificada. Zero só quando uma linha de
+// arrendamento identificada informa zero.
 export function arrendamentos(periodo) {
   const p = adaptarPeriodo(periodo);
   if (p.tipo === "indisponivel") return nulo(p.motivo);
@@ -241,6 +281,8 @@ export function arrendamentos(periodo) {
   const linhas = contasDeArrendamento(passivo);
   const semValor = linhas.find((c) => c.valor == null);
   if (semValor) return nulo(`a conta ${semValor.conta} (${semValor.descricao}) veio sem valor único`);
+  const identificada = linhas.some((c) => !ARRENDAMENTOS.fixas.includes(c.conta) || c.valor !== 0);
+  if (!identificada) return nulo("nenhuma linha de arrendamento identificada no passivo");
   return ok(linhas.reduce((soma, c) => soma + c.valor, 0));
 }
 

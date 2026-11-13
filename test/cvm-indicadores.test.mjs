@@ -4,8 +4,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { interpretarArquivo, lerArquivos } from "../scripts/cvm/leitor.mjs";
 import { montarSeries } from "../scripts/cvm/series.mjs";
 import {
-  ALIQUOTA_ROIC, ARRENDAMENTOS, INDICADORES, LIMITE_DESPESA_SEM_DIVIDA, adaptarPeriodo, arrendamentos, caixa,
-  calcularIndicadores, capitalInvestido, contasDeArrendamento, despesasFinanceiras, dividaBruta,
+  ALIQUOTA_ROIC, ARRENDAMENTOS, DIVIDA_POR_DESCRICAO, INDICADORES, LIMITE_DESPESA_SEM_DIVIDA, adaptarPeriodo, arrendamentos, caixa,
+  calcularIndicadores, capitalInvestido, contasDeArrendamento, contasDeDividaPorDescricao, despesasFinanceiras, dividaBruta,
 } from "../scripts/cvm/indicadores.mjs";
 
 // ---------- fixtures reais (test/fixtures/cvm), lidas pelo leitor da #31 e pela série da #33 ----------
@@ -570,9 +570,41 @@ describe("arrendamentos (IFRS 16): onde procurar, sem contar duas vezes", () => 
     assert.deepEqual(contasDeArrendamento(passivo, regra).map((c) => c.conta), ["2.01.05.02.02"]);
   });
 
-  test("sem nenhuma linha de arrendamento, o valor é 0; sem o passivo, é null", () => {
-    const sem = anual({ BPP: { "2.01.05.02.07": undefined, "2.02.02.02.05": undefined } });
-    assert.deepEqual(arrendamentos(sem), { valor: 0, motivo: null });
+  test("sem nenhuma linha de arrendamento (fixas zeradas ou ausentes): null com motivo, nunca 0", () => {
+    const motivo = "nenhuma linha de arrendamento identificada no passivo";
+    const fixasZeradas = anual({ BPP: { "2.01.05.02.07": undefined, "2.02.02.02.05": undefined } });
+    assert.deepEqual(arrendamentos(fixasZeradas), { valor: null, motivo });
+    const fixasAusentes = anual({ BPP: { "2.01.05.02.07": undefined, "2.02.02.02.05": undefined, "2.01.04.03": undefined, "2.02.01.03": undefined } });
+    assert.deepEqual(arrendamentos(fixasAusentes), { valor: null, motivo });
+
+    // As duas versões "com arrendamentos" ficam null junto; a dívida sem arrendamentos não muda.
+    const ind = calcularIndicadores(fixasZeradas);
+    assert.deepEqual(ind.arrendamentos, { valor: null, motivo });
+    assert.deepEqual(ind.dividaBrutaComArrendamentos, { valor: null, motivo });
+    assert.deepEqual(ind.dividaLiquidaComArrendamentos, { valor: null, motivo });
+    assert.deepEqual(ind.dividaBruta, { valor: 500, motivo: null });
+    assert.deepEqual(ind.dividaLiquida, { valor: 350, motivo: null });
+    assert.equal(ind.dividaLiquidaSobreEbitda.valor, 350 / 250);
+    assert.equal(ind.roic.valor, (200 * (1 - 0.34)) / 1150);
+  });
+
+  test("com a conta fixa de arrendamento preenchida e nenhuma subconta: sai o valor", () => {
+    const p = anual({ BPP: { "2.01.05.02.07": undefined, "2.02.02.02.05": undefined, "2.01.04.03": 40, "2.02.01.03": 110 } });
+    const ind = calcularIndicadores(p);
+    assert.deepEqual(ind.arrendamentos, { valor: 150, motivo: null });
+    assert.deepEqual(ind.dividaBruta, { valor: (300 - 40) + (200 - 110), motivo: null });
+    assert.deepEqual(ind.dividaBrutaComArrendamentos, { valor: 500, motivo: null });
+    // Só uma das duas fixas preenchida também basta.
+    const soCurto = anual({ BPP: { "2.01.05.02.07": undefined, "2.02.02.02.05": undefined, "2.01.04.03": 40 } });
+    assert.deepEqual(arrendamentos(soCurto), { valor: 40, motivo: null });
+  });
+
+  test("zero só quando uma linha de arrendamento identificada informa zero", () => {
+    const p = anual({ BPP: { "2.01.05.02.07": [0, "Arrendamentos"], "2.02.02.02.05": undefined } });
+    assert.deepEqual(arrendamentos(p), { valor: 0, motivo: null });
+  });
+
+  test("sem o passivo, é null com outro motivo", () => {
     assert.deepEqual(arrendamentos(anual({ BPP: null })), { valor: null, motivo: "falta o passivo do balanço" });
   });
 
@@ -880,5 +912,141 @@ describe("São Martinho: arrendamento lançado dentro de empréstimos e financia
 
   test("a parte de curto prazo também é sem arrendamento", () => {
     assert.equal(ind.dividaCurtoPrazo.valor, 930_399 / 9_240_663);
+  });
+});
+
+describe("dívida por descrição: empréstimos, financiamentos e debêntures em outras obrigações", () => {
+  const conta = (codigo, descricao, valor = 10) => ({ conta: codigo, descricao, valor, contaFixa: false });
+
+  test("a regra fica numa constante: grupos de curto e de longo prazo, as duas expressões e a exceção", () => {
+    assert.deepEqual(DIVIDA_POR_DESCRICAO.grupos, { curto: "2.01.05", longo: "2.02.02" });
+    assert.deepEqual(DIVIDA_POR_DESCRICAO.descricao.map(String), ["/empr[ée]stimo/i", "/financiament|deb[êe]nture/i"]);
+    assert.deepEqual(DIVIDA_POR_DESCRICAO.excecoes.map(String), ["/compuls/i"]);
+  });
+
+  test("a descrição tem de bater com as duas expressões", () => {
+    const passivo = [
+      conta("2.01.05.02.01", "Empréstimos, financiamentos e debêntures"),
+      conta("2.01.05.02.02", "Emprestimos e Financiamentos"),
+      conta("2.01.05.02.03", "Empréstimos e debêntures"),
+      conta("2.01.05.02.04", "Empréstimos"), // só uma das duas
+      conta("2.01.05.02.05", "Financiamento por Arrendamento"), // C&A: é arrendamento
+      conta("2.01.05.02.06", "Ajuste a valor justo das debêntures  a apropriar"), // Eneva
+      conta("2.01.05.02.07", "Debêntures"),
+    ];
+    assert.deepEqual(contasDeDividaPorDescricao(passivo).curto.map((c) => c.conta), ["2.01.05.02.01", "2.01.05.02.02", "2.01.05.02.03"]);
+  });
+
+  test("o empréstimo compulsório fica de fora, mesmo com as duas palavras na descrição", () => {
+    const passivo = [conta("2.01.05.02.05", "Empréstimo compulsório"), conta("2.01.05.02.06", "Empréstimo compulsório - Acordos"),
+      conta("2.01.05.02.08", "Empréstimo compulsório - financiamento de acordos")];
+    assert.deepEqual(contasDeDividaPorDescricao(passivo), { curto: [], longo: [] });
+  });
+
+  test("curto e longo prazo são separados pelo grupo; fora dos dois grupos não entra", () => {
+    const passivo = [
+      conta("2.01.05.02.05", "Empréstimos, financiamentos e debêntures", 30),
+      conta("2.02.02.02.07", "Empréstimos, financiamentos e debêntures", 70),
+      conta("2.02.04.02.01", "Empréstimos e financiamentos", 99),
+    ];
+    const { curto, longo } = contasDeDividaPorDescricao(passivo);
+    assert.deepEqual([curto.map((c) => c.valor), longo.map((c) => c.valor)], [[30], [70]]);
+  });
+
+  test("conta e ancestral batendo: fica só o ancestral", () => {
+    const passivo = [
+      conta("2.02.02.02.07", "Empréstimos, financiamentos e debêntures", 100),
+      conta("2.02.02.02.07.01", "Empréstimos e financiamentos", 60),
+      conta("2.02.02.02.07.02", "Empréstimos e debêntures", 40),
+    ];
+    assert.deepEqual(contasDeDividaPorDescricao(passivo).longo.map((c) => c.conta), ["2.02.02.02.07"]);
+    const p = anual({ BPP: { "2.02.02.02.07": [100, "Empréstimos, financiamentos e debêntures"], "2.02.02.02.07.01": [60, "Empréstimos e financiamentos"], "2.02.02.02.07.02": [40, "Empréstimos e debêntures"] } });
+    assert.equal(dividaBruta(p).valor, 500 + 100);
+  });
+
+  test("só subconta não fixa entra: uma conta fixa com a mesma descrição não é somada", () => {
+    const passivo = [{ conta: "2.01.05.02.09", descricao: "Empréstimos e Financiamentos", valor: 10, contaFixa: true }];
+    assert.deepEqual(contasDeDividaPorDescricao(passivo).curto, []);
+  });
+
+  test("a dívida por descrição soma na dívida bruta, no curto prazo, na líquida e no capital investido", () => {
+    const p = anual({ BPP: { "2.01.05.02.05": [30, "Empréstimos, financiamentos e debêntures"], "2.02.02.02.07": [70, "Empréstimos, financiamentos e debêntures"] } });
+    const ind = calcularIndicadores(p);
+    assert.equal(ind.dividaBruta.valor, 500 + 30 + 70);
+    assert.equal(ind.dividaCurtoPrazo.valor, (300 + 30) / 600);
+    assert.equal(ind.dividaLiquida.valor, 600 - 150);
+    assert.equal(ind.dividaBrutaComArrendamentos.valor, 600 + 80);
+    assert.equal(ind.roic.valor, (200 * (1 - 0.34)) / (800 + 600 - 150));
+    assert.equal(ind.arrendamentos.valor, 80); // a linha de dívida não vira arrendamento
+  });
+
+  test("nos 12 meses a regra lê as subcontas não fixas do balanço do ITR", () => {
+    const d = doze12();
+    d.estoques.naoFixas.push({ demonstrativo: "BPP", conta: "2.02.02.02.07", descricao: "Empréstimos, financiamentos e debêntures", valor: 70 });
+    assert.equal(dividaBruta(d).valor, 570);
+  });
+
+  test("a fórmula da dívida bruta cita as linhas de outras obrigações", () => {
+    assert.match(INDICADORES.find((i) => i.id === "dividaBruta").formula, /mais as linhas de empréstimos, financiamentos e debêntures em outras obrigações/);
+  });
+
+  test("WEG, Raia e São Martinho não têm linha que bata: a dívida delas não muda", () => {
+    for (const [serie, fim] of [[WEG, "2025-12-31"], [RAIA, "2025-12-31"], [SAO_MARTINHO, "2026-03-31"]]) {
+      assert.deepEqual(contasDeDividaPorDescricao(adaptarPeriodo(ano(serie, fim)).passivo()), { curto: [], longo: [] });
+    }
+  });
+});
+
+describe("Allos: a dívida está em outras obrigações (linhas da DFP de 31/12/2025, R$ mil)", () => {
+  // Contas, descrições e valores como estão no dfp_cia_aberta_BPP_con_2025.csv da CVM (varredura da #35).
+  // A 2.01.04 e a 2.02.01 vêm zeradas. O resto do período é o exercício sintético.
+  const allos = (extra = {}) => anual({
+    BPA: { "1": 26_006_000 },
+    DRE: { "3.06.02": -1_010_822 },
+    BPP: {
+      "2.01.04": 0, "2.02.01": 0, "2.03": 13_899_006,
+      "2.01.05.02.05": [325_357, "Empréstimos, financiamentos e debêntures"],
+      "2.01.05.02.07": [27_042, "Passivo de arrendamento"],
+      "2.02.02.02.07": [5_553_953, "Empréstimos, financiamentos e debêntures"],
+      "2.02.02.02.05": undefined,
+      "2.02.02.02.08": [193_326, "Passivo de arrendamento"],
+      ...extra,
+    },
+  });
+
+  test("dívida bruta = 325.357 + 5.553.953 = 5.879.310, e o alerta não dispara mais", () => {
+    assert.deepEqual(dividaBruta(allos()), { valor: 5_879_310, motivo: null });
+  });
+
+  test("curto prazo, arrendamentos e ROIC saem com valor", () => {
+    const ind = calcularIndicadores(allos());
+    assert.equal(ind.dividaCurtoPrazo.valor, 325_357 / 5_879_310);
+    assert.equal(ind.arrendamentos.valor, 27_042 + 193_326);
+    assert.equal(ind.dividaBrutaComArrendamentos.valor, 5_879_310 + 220_368);
+    assert.equal(ind.roic.valor, (200 * (1 - 0.34)) / (13_899_006 + 5_879_310 - 150));
+    assert.equal(ind.custoDivida.valor, 1_010_822 / 5_879_310);
+  });
+
+  test("sem as duas linhas, o mesmo período dispara o alerta de dívida fora das contas padrão", () => {
+    const p = allos({ "2.01.05.02.05": undefined, "2.02.02.02.07": undefined });
+    assert.deepEqual(dividaBruta(p), {
+      valor: null, motivo: "a dívida pode estar fora das contas padrão (despesa financeira de R$ 1.010.822 mil sem empréstimos no balanço)",
+    });
+  });
+});
+
+describe("Axia: o empréstimo compulsório não entra na dívida (linhas da DFP de 31/12/2025, R$ mil)", () => {
+  // Contas, descrições e valores das duas linhas como estão no arquivo da CVM. A dívida das contas fixas é sintética.
+  const axia = anual({
+    BPP: {
+      "2.01.05.02.05": [1_406_460, "Empréstimo compulsório"],
+      "2.01.05.02.06": [1_073_452, "Empréstimo compulsório - Acordos"],
+    },
+  });
+
+  test("a dívida bruta fica só com as contas fixas", () => {
+    assert.deepEqual(contasDeDividaPorDescricao(adaptarPeriodo(axia).passivo()), { curto: [], longo: [] });
+    assert.deepEqual(dividaBruta(axia), { valor: 500, motivo: null });
+    assert.equal(calcularIndicadores(axia).dividaCurtoPrazo.valor, 300 / 500);
   });
 });
