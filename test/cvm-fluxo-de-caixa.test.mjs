@@ -1218,13 +1218,14 @@ describe("diluição: variação grande demais sugere desdobramento ou grupament
     assert.ok(Math.abs(x.indicadores.diluicao.valor - 0.0559) < 0.0001, String(x.indicadores.diluicao.valor));
   });
 
-  test("dentro do limite sai o valor; fora dele, ou no −50% de um grupamento de 2 para 1, null", () => {
+  test("o intervalo é fechado: −50% e +50% exatos saem como valor; fora dele, null", () => {
     assert.deepEqual(diluicao(1000, 1490), { valor: 0.49, motivo: null });
     assert.deepEqual(diluicao(1000, 1500), { valor: 0.5, motivo: null });
     assert.deepEqual(diluicao(1000, 1501), { valor: null, motivo: "variação de +50% sugere desdobramento ou grupamento" });
     assert.deepEqual(diluicao(1000, 2000), { valor: null, motivo: "variação de +100% sugere desdobramento ou grupamento" });
     assert.deepEqual(diluicao(1000, 510), { valor: -0.49, motivo: null });
-    assert.deepEqual(diluicao(1000, 500), { valor: null, motivo: "variação de -50% sugere desdobramento ou grupamento" });
+    assert.deepEqual(diluicao(1000, 500), { valor: -0.5, motivo: null });
+    assert.deepEqual(diluicao(1000, 499), { valor: null, motivo: "variação de -50% sugere desdobramento ou grupamento" });
     assert.deepEqual(diluicao(1000, 100), { valor: null, motivo: "variação de -90% sugere desdobramento ou grupamento" });
   });
 

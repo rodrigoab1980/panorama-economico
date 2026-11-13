@@ -60,9 +60,9 @@ export const DIVIDA_POR_DESCRICAO = {
 // Diluição acima deste tamanho, para cima ou para baixo, não é mostrada. O arquivo da CVM não traz os
 // desdobramentos e grupamentos: um desdobramento de 1 para 3 aparece como +200% e um grupamento de 15
 // para 1, como −93%, e nenhum dos dois muda a fatia do acionista. Por que 50%: emissão e recompra de
-// verdade raramente passam disso num ano, e o menor desdobramento comum (1 para 2) dá +100% e o menor
-// grupamento comum (2 para 1), −50%. Uma incorporação grande paga em ações também cai aqui; fica null
-// com o motivo, que é melhor do que um número que parece emissão.
+// verdade raramente passam disso num ano, e o menor desdobramento comum (1 para 2) dá +100%. O intervalo
+// é fechado: −50% e +50% exatos ainda saem como valor. Uma incorporação grande paga em ações também
+// passa do limite; fica null com o motivo, que é melhor do que um número que parece emissão.
 export const LIMITE_DILUICAO = 0.5;
 
 // Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
@@ -433,8 +433,8 @@ export function fluxosClassificados(periodo, { excecoes = [] } = {}) {
 
 // D&A do período, a que entra no EBITDA: { valor, motivo, origem }.
 //   1. A da DFC (depreciação, amortização e exaustão nos ajustes do lucro, achadas pela descrição), quando
-//      identificada: `origem` "DFC". É a mais completa: em algumas companhias a DVA não traz toda a
-//      amortização (direito de uso, mais-valia) e o EBITDA sai menor do que deveria.
+//      identificada: `origem` "DFC". Em algumas companhias a DVA traz bem menos amortização do que a
+//      DFC (na Hapvida de 2025, 870 milhões contra 1.562 milhões), e o EBITDA sai menor do que deveria.
 //   2. Senão, a da DVA (conta 7.04.01), que vem negativa: `origem` "DVA". O sinal é só trocado, sem
 //      Math.abs, para um valor positivo na origem aparecer como D&A negativa, e não ser escondido.
 // Nos 12 meses, a da DFC só vale se foi identificada nas três parcelas; se faltar em alguma, vale a DVA.
@@ -523,7 +523,7 @@ export function calcularIndicadores(periodo, contexto = {}) {
     const antes = contexto.composicaoAnterior?.acoesCirculacao;
     if (antes == null || antes <= 0) return nulo("falta a composição do capital do exercício anterior");
     const variacao = acoes.valor / antes - 1;
-    if (Math.abs(variacao) > LIMITE_DILUICAO || variacao === -LIMITE_DILUICAO) {
+    if (Math.abs(variacao) > LIMITE_DILUICAO) {
       const n = Math.round(Math.abs(variacao) * 100);
       return nulo(`variação de ${variacao > 0 ? "+" : "-"}${n}% sugere desdobramento ou grupamento`);
     }
