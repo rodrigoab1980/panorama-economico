@@ -87,7 +87,7 @@ Exemplos reais (2024):
 Para detectar capex numa linha de 6.02 com valor negativo:
 
 - Regex ingênua (`aquisição|adições … imobilizado|intangível`): achou capex em 64 de 76 empresas (84%).
-- Regex ampliada, que também cobre singular, "aplicações em", "aumento de", "investimentos em", "no/em imobilizado", "acréscimo", ativo de contrato e "ativo não circulante", excluindo venda/baixa/recebimento: 95% a 100% conforme o ano (2011: 55/58; 2017: 65/66; 2019–2025: 100%). Sobram casos pontuais: Taesa e Dexco em 2011–2013, Petrobras em 2011 e uma empresa em 2017.
+- Regex ampliada, que também cobre singular, "aplicações em", "aumento de", "investimentos em", "no/em imobilizado", "acréscimo", ativo de contrato e "ativo não circulante", excluindo venda/baixa/recebimento: 95% a 100% conforme o ano (2011: 55/58; 2017: 65/66; 2019–2025: 100%). Sobram casos pontuais: Taesa e Dexco em 2011–2013, Petrobras em 2011 e Bradespar em 2017.
 - Pontos que pedem uma decisão de regra na #36:
   - **Ativo biológico** (Klabin: "Adição de plantio e compras de madeira em pé"; Dexco, BRF/Marfrig: "Aplicações em ativo biológico"). Entra no capex ou não?
   - **Ativo de contrato** de concessões (Sabesp: "Aquisição de Ativos de Contrato e Intangíveis"; Cemig: "Em ativos de contrato - infraestrutura de distribuição e gás"): na prática é o capex dessas empresas.
@@ -180,6 +180,83 @@ Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; pre
 | `hapvida/` | Hapvida | DFP 2022 + DFP 2023 | lucro de 2022 reapresentado (−0,78 bi → −1,72 bi) |
 
 O teste `test/cvm-fixtures.test.mjs` confirma nessas fixtures os principais fatos deste documento: formato, contas fixas, subcontas sem código fixo, base de 12 meses, reapresentação e IFRS 16.
+
+### Gerar as fixtures de novo
+
+As fixtures saem de `scripts/cvm/gerar-fixtures.mjs`, que recebe a pasta com os CSVs já extraídos e os `CD_CVM` desejados. Ele não acessa a rede nem abre ZIP: acha o CNPJ pelo `CD_CVM` no arquivo de índice, recorta o cabeçalho e as linhas da empresa e grava copiando os bytes originais (latin1, CRLF). Quais documentos entram em cada fixture está em `FIXTURES`, em `scripts/cvm/fixtures.mjs` (lógica pura, testada em `test/cvm-recorte.test.mjs`).
+
+```bash
+# extrair só os anos usados (DFP 2022, 2023 e 2025; ITR 2026) para uma pasta qualquer
+mkdir -p ~/cvm/csv && cd ~/cvm/csv
+for z in dfp_cia_aberta_2022 dfp_cia_aberta_2023 dfp_cia_aberta_2025 itr_cia_aberta_2026; do unzip -oq ~/cvm/zip/$z.zip; done
+cd -
+
+# WEG = 005410, Raia Drogasil = 005258, Hapvida = 024392 (sem CD_CVM, gera as três)
+node scripts/cvm/gerar-fixtures.mjs ~/cvm/csv 005410 005258 024392
+git status --short test/fixtures   # vazio: os recortes saem idênticos aos commitados
+```
+
+`--saida <pasta>` grava em outro lugar. Um `CD_CVM` fora de `FIXTURES` dá erro: para criar uma fixture nova, acrescente a entrada lá primeiro. Como a CVM regrava os ZIPs dos anos recentes, um download futuro pode trazer uma versão mais nova do documento e mudar os recortes. Nesse caso, o `git diff` mostra exatamente o quê.
+
+## Como reproduzir
+
+Os números deste documento saem dos comandos abaixo (Git Bash ou Linux, Node 24+ e `unzip`). Os scripts de `scripts/cvm/spike/` são ferramentas do spike, ficam fora do site e não têm testes. As pastas `~/cvm/...` são só exemplo: use qualquer pasta fora do repositório, porque são ~600 MB de ZIP e ~1,2 GB de saída.
+
+```bash
+# 1. Download de todos os ZIPs (DFP 2010–2026, ITR 2011–2026, FCA 2010–2026), 6 em paralelo, com tempo
+mkdir -p ~/cvm/zip && cd ~/cvm/zip
+base=https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC
+time (for y in $(seq 2010 2026); do
+  echo "$base/DFP/DADOS/dfp_cia_aberta_$y.zip"; echo "$base/FCA/DADOS/fca_cia_aberta_$y.zip"
+  [ $y -ge 2011 ] && echo "$base/ITR/DADOS/itr_cia_aberta_$y.zip"
+done | xargs -P 6 -n 1 curl -sS -O)
+du -ch dfp* | tail -1; du -ch itr* | tail -1; du -ch fca* | tail -1
+cd -
+
+# 2. Datas de modificação e tamanhos no portal; conteúdo de um ZIP
+curl -s $base/DFP/DADOS/ | grep '\.zip"'
+unzip -l ~/cvm/zip/dfp_cia_aberta_2024.zip
+
+# 3. Volume: filtra a amostra direto dos ZIPs (≈ 4 min) → linhas.ndjson + stats.json
+node scripts/cvm/spike/medir-volume.mjs ~/cvm/zip ~/cvm/out
+
+# 4. node:sqlite: carga, índice, consulta de base 12m da WEG e tamanho do JSON por empresa
+node scripts/cvm/spike/medir-sqlite.mjs ~/cvm/out/linhas.ndjson ~/cvm/out/spike.sqlite
+
+# 5. DFC (descrições, cobertura do capex por ano), reapresentações e exercício fora de dezembro
+node scripts/cvm/spike/medir-contas.mjs ~/cvm/out/spike.sqlite ~/cvm/out/stats.json
+```
+
+Verificações pontuais, sobre os CSVs de 2023 e 2024 extraídos na pasta atual (`unzip -oq ~/cvm/zip/dfp_cia_aberta_2024.zip` etc.):
+
+```bash
+# encoding, CRLF e cabeçalho (o BP não tem DT_INI_EXERC)
+file dfp_cia_aberta_DRE_con_2024.csv; head -1 dfp_cia_aberta_BPA_con_2024.csv
+
+# contas fixas da DRE: descrição e quantas empresas usam cada uma (planos industrial, banco e seguradora)
+iconv -f latin1 -t utf-8 dfp_cia_aberta_DRE_con_2024.csv | awk -F';' '$9=="ÚLTIMO" && $12 ~ /^3\.(0[1-9]|1[01])$/ {print $12" | "$13}' | sort | uniq -c
+
+# escala da moeda
+cut -d';' -f7,8 dfp_cia_aberta_DRE_con_2024.csv | sort | uniq -c
+
+# versões: o índice lista todas; os dados trazem uma só por documento
+cut -d';' -f1,2 dfp_cia_aberta_2024.csv | sort | uniq -c | awk '$1>1' | wc -l
+cut -d';' -f1,2,3 dfp_cia_aberta_DRE_con_2024.csv | sort -u | cut -d';' -f1,2 | uniq -c | awk '$1>1' | wc -l
+
+# consolidado × individual
+cut -d';' -f1 dfp_cia_aberta_DRE_con_2024.csv | sort -u | wc -l; cut -d';' -f1 dfp_cia_aberta_DRE_ind_2024.csv | sort -u | wc -l
+
+# reapresentação no mercado todo: lucro de 2023 na DFP 2023 × PENÚLTIMO da DFP 2024 (comparadas, diferentes)
+awk -F';' 'FNR==1{next} FILENAME~/2023/ && $9!~/^PEN/ && $12=="3.11" {a[$1]=$14}
+  FILENAME~/2024/ && $9~/^PEN/ && $12=="3.11" {b[$1]=$14}
+  END{for(k in a) if(k in b){t++; if(a[k]!=b[k]) d++} print t, d}' dfp_cia_aberta_DRE_con_2023.csv dfp_cia_aberta_DRE_con_2024.csv
+
+# FCA: códigos de negociação inválidos em ações listadas em bolsa (linhas, inválidas)
+unzip -p ~/cvm/zip/fca_cia_aberta_2026.zip fca_cia_aberta_valor_mobiliario_2026.csv | iconv -f latin1 -t utf-8 |
+  awk -F';' 'NR>1 && $11=="Bolsa" && $6 ~ /^Ações|^Units|^Certificado/ {t++; if ($9 !~ /^[A-Z0-9]{4}(3|4|5|6|7|8|11)$/) b++} END{print t, b}'
+```
+
+Os tempos variam com a máquina e a rede. Os números deste documento foram medidos em 12/11/2026, numa máquina Windows com Node 26.
 
 ## Riscos que mudam o plano
 
