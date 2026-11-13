@@ -5,7 +5,9 @@
 // na hora de montar o site. Entram:
 //   - os fundamentos dos 12 meses (saída de calcularIndicadoresDaSerie, de indicadores.mjs);
 //   - a composição do capital, em unidades de ação e separada em ordinárias e preferenciais;
-//   - as cotações: { data: "AAAA-MM-DD" do pregão, precos: { TICKER: preço em R$ } }.
+//   - as cotações, no formato do contrato de precos/fonte.mjs:
+//     { coletadoEm, fonte, precos: { TICKER: { preco em R$, dataHora do último negócio } } }.
+//     Este módulo não sabe de onde o preço vem.
 //
 // Este módulo só faz contas e mostra a regra de cada uma. Não classifica o resultado nem diz o que
 // fazer com ele.
@@ -25,7 +27,7 @@ export const LIMITE_DIAS_UTEIS_COTACAO = 5;
 export const MULTIPLOS = [
   {
     id: "valorMercado", nome: "Valor de mercado", unidade: "R$ mil",
-    formula: "Soma, classe por classe, das ações em circulação (total menos tesouraria) vezes o preço de fechamento do ticker da classe: ordinárias pelo ticker de final 3 e preferenciais pelo de final 4, 5 ou 6. A unit não entra, para não contar a mesma ação duas vezes. Classe sem cotação usa o preço da outra classe, e o resultado sai marcado como aproximado",
+    formula: "Soma, classe por classe, das ações em circulação (total menos tesouraria) vezes o último preço do ticker da classe: ordinárias pelo ticker de final 3 e preferenciais pelo de final 4, 5 ou 6. A unit não entra, para não contar a mesma ação duas vezes. Classe sem cotação usa o preço da outra classe, e o resultado sai marcado como aproximado",
   },
   {
     id: "pl", nome: "P/L", unidade: "razão",
@@ -86,6 +88,9 @@ export function diasUteisEntre(de, ate) {
   return uteis;
 }
 
+// Dia ("AAAA-MM-DD") de uma `dataHora` do contrato de preço, no fuso em que ela veio escrita.
+export const diaDaCotacao = (dataHora) => (/^\d{4}-\d{2}-\d{2}/.test(String(dataHora ?? "")) ? String(dataHora).slice(0, 10) : null);
+
 // A cotação está desatualizada? `dataPregao` e `hoje` em "AAAA-MM-DD".
 // Devolve { desatualizado, diasUteis }. Sem a data do pregão ou sem a de hoje, não dá para saber: null.
 export function atrasoDaCotacao(dataPregao, hoje, limite = LIMITE_DIAS_UTEIS_COTACAO) {
@@ -96,7 +101,8 @@ export function atrasoDaCotacao(dataPregao, hoje, limite = LIMITE_DIAS_UTEIS_COT
 // ---------- tickers e classes ----------
 
 const FINAL_ON = ["3"];
-const FINAL_PN = ["4", "5", "6", "7", "8"]; // PN, PNA, PNB, PNC e PND
+const FINAL_PN = ["4", "5", "6"]; // PN, PNA e PNB; outras classes só entram se estiverem no universo (AXIA7)
+const OUTRAS_PN = ["7", "8"]; // PNC e PND
 const FINAL_UNIT = "11";
 const raiz = (ticker) => String(ticker).slice(0, 4);
 const final = (ticker) => String(ticker).slice(4);
@@ -109,41 +115,32 @@ const final = (ticker) => String(ticker).slice(4);
 export function tickersDasClasses(tickers) {
   const lista = (tickers ?? []).map((t) => (typeof t === "string" ? { ticker: t, ibovespa: false } : t));
   const raizes = [...new Set(lista.map((t) => raiz(t.ticker)))];
-  const daClasse = (finais) => {
-    const montados = raizes.flatMap((r) => finais.map((f) => r + f));
+  const daClasse = (finais, outros = []) => {
+    const doUniversoComOutroFinal = lista.map((t) => t.ticker).filter((t) => outros.includes(final(t)));
+    const montados = [...new Set([...raizes.flatMap((r) => finais.map((f) => r + f)), ...doUniversoComOutroFinal])];
     const peso = (ticker) => {
       const doUniverso = lista.find((t) => t.ticker === ticker);
       return doUniverso?.ibovespa ? 0 : doUniverso ? 1 : 2;
     };
     return montados.map((ticker, i) => ({ ticker, i })).sort((a, b) => peso(a.ticker) - peso(b.ticker) || a.i - b.i).map((x) => x.ticker);
   };
-  return { on: daClasse(FINAL_ON), pn: daClasse(FINAL_PN), units: raizes.map((r) => r + FINAL_UNIT) };
+  return { on: daClasse(FINAL_ON), pn: daClasse(FINAL_PN, OUTRAS_PN), units: raizes.map((r) => r + FINAL_UNIT) };
 }
 
-// Todos os tickers que a coleta de preço precisa guardar, para a lista de companhias do universo
-// ([{ tickers: [{ ticker }] }]): os do universo e os das classes de cada uma. Em ordem alfabética.
-export function tickersNecessarios(companhias) {
-  const todos = new Set();
-  for (const c of companhias ?? []) {
-    for (const t of c.tickers ?? []) todos.add(t.ticker);
-    const { on, pn, units } = tickersDasClasses(c.tickers);
-    for (const t of [...on, ...pn, ...units]) todos.add(t);
-  }
-  return [...todos].sort();
-}
-
-const precoDe = (precos, ticker) => {
-  const p = precos?.[ticker];
-  return typeof p === "number" && Number.isFinite(p) && p > 0 ? p : null;
+// Cotação de um ticker, { preco, dataHora }, ou null quando não há ou não serve.
+const cotacaoDe = (precos, ticker) => {
+  const c = precos?.[ticker];
+  return c != null && typeof c.preco === "number" && Number.isFinite(c.preco) && c.preco > 0 ? c : null;
 };
+const precoDe = (precos, ticker) => cotacaoDe(precos, ticker)?.preco ?? null;
 
 // ---------- valor de mercado ----------
 
 // Valor de mercado da companhia, em R$ mil.
 //   composicao  composição do capital em unidades de ação, com `classes` (ver composicao-capital.mjs)
 //   tickers     tickers da companhia no universo: [{ ticker, ibovespa }]
-//   precos      { TICKER: preço de fechamento em R$ }
-// Devolve { valor, motivo, aproximado, classes: [{ classe, acoes, ticker, preco, aproximado, origem }] }.
+//   precos      { TICKER: { preco em R$, dataHora do último negócio } }
+// Devolve { valor, motivo, aproximado, classes: [{ classe, acoes, ticker, preco, dataHora, aproximado, origem }] }.
 //   - Cada classe com ações em circulação é multiplicada pelo preço do primeiro ticker dela que tem cotação.
 //   - Classe sem cotação usa o preço da outra classe: `aproximado: true`, e a `origem` diz qual preço entrou.
 //   - Nenhuma classe com cotação: null. A unit nunca entra na conta.
@@ -155,7 +152,10 @@ export function valorDeMercado({ composicao, tickers, precos }) {
   const classes = [["on", "ordinárias"], ["pn", "preferenciais"]].map(([classe, rotulo]) => {
     const acoes = composicao.classes[classe]?.circulacao ?? null;
     const ticker = candidatos[classe].find((t) => precoDe(precos, t) != null) ?? null;
-    return { classe, rotulo, acoes, ticker, preco: ticker ? precoDe(precos, ticker) : null, aproximado: false, origem: ticker ? `fechamento de ${ticker}` : null };
+    return {
+      classe, rotulo, acoes, ticker, preco: ticker ? precoDe(precos, ticker) : null, dataHora: ticker ? cotacaoDe(precos, ticker).dataHora ?? null : null,
+      aproximado: false, origem: ticker ? `preço de ${ticker}` : null,
+    };
   });
   const semNumero = classes.find((k) => k.acoes == null);
   if (semNumero) return vazio(`a composição do capital não informa o número de ações ${semNumero.rotulo}`);
@@ -171,14 +171,15 @@ export function valorDeMercado({ composicao, tickers, precos }) {
     const outra = comPreco[0];
     k.ticker = outra.ticker;
     k.preco = outra.preco;
+    k.dataHora = outra.dataHora;
     k.aproximado = true;
-    k.origem = `sem cotação das ${k.rotulo}; usado o fechamento de ${outra.ticker} (${outra.rotulo})`;
+    k.origem = `sem cotação das ${k.rotulo}; usado o preço de ${outra.ticker} (${outra.rotulo})`;
   }
   const valor = comAcoes.reduce((soma, k) => soma + (k.acoes * k.preco) / 1000, 0);
   return {
     ...ok(valor),
     aproximado: comAcoes.some((k) => k.aproximado),
-    classes: comAcoes.map(({ classe, acoes, ticker, preco, aproximado, origem }) => ({ classe, acoes, ticker, preco, aproximado, origem })),
+    classes: comAcoes.map(({ classe, acoes, ticker, preco, dataHora, aproximado, origem }) => ({ classe, acoes, ticker, preco, dataHora, aproximado, origem })),
   };
 }
 
@@ -216,14 +217,14 @@ export function fundamentosParaMultiplos(periodo, indicadores) {
 //   fundamentos  saída de fundamentosParaMultiplos
 //   composicao   composição do capital, em unidades de ação (a dos 12 meses)
 //   tickers      tickers da companhia no universo
-//   cotacoes     { data, precos } (o arquivo de cotações coletado)
+//   cotacoes     o arquivo de cotações coletado: { coletadoEm, fonte, precos }
 //   hoje         "AAAA-MM-DD" do dia em que o site é montado, para a marca de desatualizado
-// Devolve { dataPregao, desatualizado, diasUteis, aproximado, valorMercado, multiplos }:
+// Devolve { dataPregao, desatualizado, diasUteis, aproximado, fonte, valorMercado, multiplos }:
+//   dataPregao    dia do preço usado; com mais de uma classe, o do preço mais antigo
 //   valorMercado  a saída de valorDeMercado (com as classes e de onde veio cada preço)
 //   multiplos     { [id]: { valor, motivo } }, um item para cada id de MULTIPLOS
 // Cotação desatualizada não apaga nada: os múltiplos saem, e quem mostra põe a data do pregão ao lado.
 export function calcularMultiplos({ fundamentos, composicao, tickers, cotacoes, hoje }) {
-  const dataPregao = cotacoes?.data ?? null;
   const vm = cotacoes?.precos == null
     ? { ...nulo("sem arquivo de cotações"), aproximado: false, classes: [] }
     : valorDeMercado({ composicao, tickers, precos: cotacoes.precos });
@@ -267,5 +268,7 @@ export function calcularMultiplos({ fundamentos, composicao, tickers, cotacoes, 
     precoSobreFcl: precoSobre(f("fcl"), "FCL"),
     precoSobreFclAposArrendamentos: precoSobre(f("fclAposArrendamentos"), "FCL"),
   };
-  return { dataPregao, ...atrasoDaCotacao(dataPregao, hoje), aproximado: vm.aproximado, valorMercado: vm, multiplos };
+  const dias = vm.classes.map((k) => diaDaCotacao(k.dataHora));
+  const dataPregao = dias.length === 0 || dias.includes(null) ? null : [...dias].sort()[0];
+  return { dataPregao, ...atrasoDaCotacao(dataPregao, hoje), aproximado: vm.aproximado, fonte: cotacoes?.fonte ?? null, valorMercado: vm, multiplos };
 }

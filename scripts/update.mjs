@@ -6,10 +6,14 @@ import { fileURLToPath } from "node:url";
 import { XMLParser } from "fast-xml-parser";
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  diaBR, horaBR as horaDe, indexarCNBC, itensDoFeed, selecionarNoticias, montarCotacoes,
+  diaBR, horaBR as horaDe, itensDoFeed, selecionarNoticias, montarCotacoes,
   simbolosMapa, montarMapas, montarAgenda, precisaResumo as decidirResumo, montarPedido, vincularNoticias,
   normalizarHistorico, registrarFechamento, serializarHistorico, variacoesPeriodo, configAlerta, detectarAlertas,
 } from "./logica.mjs";
+// A CNBC fica atrás de precos/cnbc.mjs. O Diário usa as funções dela direto; o preço das ações do
+// universo passa pelo contrato de precos/fonte.mjs, que não diz qual é a fonte.
+import { cotarCNBC, indexarCNBC, urlCNBC } from "./precos/cnbc.mjs";
+import { ARQUIVO_COTACOES, FONTE as FONTE_DE_PRECO, cotar, juntarCotacoes, precisaColetar, resumoDaColeta, tickersParaCotar } from "./precos/fonte.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(ROOT, "site", "data");
@@ -18,6 +22,9 @@ const DATA_DIR = path.join(ROOT, "site", "data");
 const DADOS_DIR = path.resolve(process.env.DADOS_DIR || path.join(ROOT, "dados"));
 const HISTORICO = path.join(DADOS_DIR, "historico.json");
 const ARCHIVE_DIR = path.join(DADOS_DIR, "arquivo");
+// Preço das ações do universo, para os múltiplos da página Fundamentalista (#51).
+const COTACOES_FUNDAMENTOS = path.join(DADOS_DIR, ARQUIVO_COTACOES);
+const UNIVERSO = path.join(ROOT, "scripts", "cvm", "universo.json");
 // A partir desta hora (Brasília) a coleta conta como fechamento do dia e o resumo vai para o arquivo.
 const HORA_FECHAMENTO = 19;
 // Alertas de movimento fora do padrão (variáveis ALERTA_DESVIOS, ALERTA_PCT, ALERTA_BPS do Actions).
@@ -180,8 +187,7 @@ async function coletarNoticias() {
 // ---------- cotações ----------
 
 async function coletarCotacoes() {
-  const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(QUOTES.map((q) => q.s).join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
-  const j = await get(url, { json: true });
+  const j = await get(urlCNBC(QUOTES.map((q) => q.s)), { json: true });
   const ativos = variacoesPeriodo(montarCotacoes(QUOTES, indexarCNBC(j)), historico, hojeBR);
   const alertas = detectarAlertas(ativos, historico, hojeBR, ALERTA);
   if (alertas.length) console.log(`alertas: ${alertas.map((a) => a.simbolo).join(", ")}`);
@@ -191,23 +197,42 @@ async function coletarCotacoes() {
 
 // ---------- mapa de ações ----------
 
-async function cotarCNBC(simbolos) {
-  const porSimbolo = {};
-  for (let i = 0; i < simbolos.length; i += 40) {
-    const lote = simbolos.slice(i, i + 40);
-    const url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(lote.join("|"))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
-    const j = await get(url, { json: true });
-    Object.assign(porSimbolo, indexarCNBC(j));
-  }
-  return porSimbolo;
-}
-
 async function coletarMapa() {
   const cot = await cotarCNBC(simbolosMapa(MAPAS, SUFIXO_MAPA));
   const mapas = montarMapas(MAPAS, SUFIXO_MAPA, cot, PESO_IBOV);
   const total = Object.values(mapas).reduce((s, l) => s + l.length, 0);
   if (!total) throw new Error("nenhuma ação retornada");
   return { atualizado: agora.toISOString(), fonte: "CNBC", mapas };
+}
+
+// ---------- preço das ações do universo (múltiplos) ----------
+
+// Uma vez por dia, depois do fechamento (e na primeira execução): grava o preço de cada ação do
+// universo na branch `dados`. Falha total: não toca no arquivo, fica valendo o último gravado.
+// Falha parcial: quem não veio continua com o último preço conhecido e com a data dele.
+async function coletarPrecosDasAcoes() {
+  let anterior = null;
+  try { anterior = JSON.parse(await fs.readFile(COTACOES_FUNDAMENTOS, "utf8")); }
+  catch (e) { if (e.code !== "ENOENT") console.warn(`preços das ações: arquivo anterior ilegível: ${e.message}`); }
+  if (!precisaColetar(anterior, agora)) {
+    console.log(`preços das ações: mantida a coleta de ${anterior.coletadoEm}`);
+    return;
+  }
+  try {
+    const { mapeadas } = JSON.parse(await fs.readFile(UNIVERSO, "utf8"));
+    const obrigatorios = mapeadas.flatMap((c) => c.tickers.map((t) => t.ticker));
+    const novas = await cotar(tickersParaCotar(mapeadas));
+    const arquivo = juntarCotacoes(anterior, novas, { agora, fonte: FONTE_DE_PRECO });
+    if (!arquivo) throw new Error("nenhuma cotação veio");
+    await fs.mkdir(DADOS_DIR, { recursive: true });
+    await fs.writeFile(COTACOES_FUNDAMENTOS, JSON.stringify(arquivo, null, 1));
+    const r = resumoDaColeta(arquivo, novas, obrigatorios);
+    console.log(`ok: preços das ações: ${r.novos} cotações novas, ${r.total} tickers no arquivo`);
+    if (r.mantidos.length) console.warn(`aviso: preços das ações: mantido o último preço de ${r.mantidos.join(", ")}`);
+    if (r.semPreco.length) console.warn(`aviso: preços das ações: sem cotação para ${r.semPreco.join(", ")}`);
+  } catch (e) {
+    console.warn(`aviso: preços das ações falhou, mantido o arquivo anterior${anterior?.coletadoEm ? ` (coleta de ${anterior.coletadoEm})` : " (nenhum)"}: ${e.message}`);
+  }
 }
 
 // ---------- agenda ----------
@@ -354,6 +379,9 @@ if (horaBR >= HORA_FECHAMENTO && cotacoes?.atualizado === agora.toISOString()) {
   await fs.writeFile(HISTORICO, serializarHistorico(registrarFechamento(historico, hojeBR, cotacoes.ativos)));
   console.log(`histórico: fechamento de ${hojeBR} gravado`);
 }
+
+// Preço das ações do universo: uma vez por dia, depois do fechamento (e na primeira execução).
+await coletarPrecosDasAcoes();
 
 // Arquivo diário (a partir das 19h): guarda o último resumo do dia na branch `dados`.
 if (resumo?.gerado_em && horaBR >= HORA_FECHAMENTO && diaBR(new Date(resumo.gerado_em)) === hojeBR) {

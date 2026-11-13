@@ -8,7 +8,7 @@ import { lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
 import { calcularIndicadoresDaSerie } from "../scripts/cvm/indicadores.mjs";
 import {
   LIMITE_DIAS_UTEIS_COTACAO, MULTIPLOS, atrasoDaCotacao, calcularMultiplos, diasUteisEntre, fundamentosParaMultiplos,
-  tickersDasClasses, tickersNecessarios, valorDeMercado,
+  diaDaCotacao, tickersDasClasses, valorDeMercado,
 } from "../scripts/cvm/multiplos.mjs";
 
 const IDS = MULTIPLOS.map((m) => m.id);
@@ -21,8 +21,11 @@ const composicao = ({ on = 900, pn = 100 } = {}) => ({
   classes: { on: { total: on, tesouraria: 0, circulacao: on }, pn: { total: pn, tesouraria: 0, circulacao: pn } },
 });
 const TICKERS = [{ ticker: "ABCD3", ibovespa: false }, { ticker: "ABCD4", ibovespa: true }];
+// Preços no formato do contrato de precos/fonte.mjs: { TICKER: { preco, dataHora } }.
+const QUINTA = "2026-11-12T18:05:00.000-0300";
+const P = (precos, dataHora = QUINTA) => Object.fromEntries(Object.entries(precos).map(([t, preco]) => [t, { preco, dataHora }]));
 // ON a R$ 10,00 e PN a R$ 20,00: valor de mercado = (900 × 10 + 100 × 20) ÷ 1000 = R$ 11 mil.
-const COTACOES = { data: "2026-11-12", precos: { ABCD3: 10, ABCD4: 20 } };
+const COTACOES = { coletadoEm: "2026-11-12T22:07:00.000Z", fonte: "fonte de teste", precos: P({ ABCD3: 10, ABCD4: 20 }) };
 const v = (valor) => ({ valor, motivo: null });
 // Fundamentos em R$ mil: lucro 2, PL da controladora 5, não controladores 1, EBITDA 4, EBIT 3,
 // dívida líquida 8, proventos 1, FCL 2 e FCL depois dos arrendamentos 1.
@@ -87,10 +90,10 @@ describe("múltiplos: cada conta, num caso sintético", () => {
   }
 
   test("o resultado diz o pregão, se a cotação está em dia e de onde saiu cada preço", () => {
-    assert.deepEqual([r.dataPregao, r.desatualizado, r.diasUteis, r.aproximado], ["2026-11-12", false, 1, false]);
+    assert.deepEqual([r.dataPregao, r.desatualizado, r.diasUteis, r.aproximado, r.fonte], ["2026-11-12", false, 1, false, "fonte de teste"]);
     assert.deepEqual(r.valorMercado.classes, [
-      { classe: "on", acoes: 900, ticker: "ABCD3", preco: 10, aproximado: false, origem: "fechamento de ABCD3" },
-      { classe: "pn", acoes: 100, ticker: "ABCD4", preco: 20, aproximado: false, origem: "fechamento de ABCD4" },
+      { classe: "on", acoes: 900, ticker: "ABCD3", preco: 10, dataHora: QUINTA, aproximado: false, origem: "preço de ABCD3" },
+      { classe: "pn", acoes: 100, ticker: "ABCD4", preco: 20, dataHora: QUINTA, aproximado: false, origem: "preço de ABCD4" },
     ]);
   });
 
@@ -188,52 +191,55 @@ describe("valor de mercado: classes, units e classe sem cotação", () => {
   });
 
   test("companhia só com ordinárias: a classe PN não entra nem pede cotação", () => {
-    const r = valorDeMercado({ composicao: composicao({ on: 1000, pn: 0 }), tickers: [{ ticker: "ABCD3", ibovespa: true }], precos: { ABCD3: 10 } });
+    const r = valorDeMercado({ composicao: composicao({ on: 1000, pn: 0 }), tickers: [{ ticker: "ABCD3", ibovespa: true }], precos: P({ ABCD3: 10 }) });
     assert.deepEqual([r.valor, r.aproximado, r.classes.length, r.classes[0].classe], [10, false, 1, "on"]);
   });
 
   test("classe sem cotação: usa o preço da outra, com a marca de aproximado e o motivo na origem", () => {
     // a PN existe na composição, mas não negociou
-    const r = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: { ABCD3: 10 } });
+    const r = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: P({ ABCD3: 10 }) });
     assert.equal(r.valor, (900 * 10 + 100 * 10) / 1000);
     assert.equal(r.aproximado, true);
-    assert.deepEqual(r.classes[1], { classe: "pn", acoes: 100, ticker: "ABCD3", preco: 10, aproximado: true, origem: "sem cotação das preferenciais; usado o fechamento de ABCD3 (ordinárias)" });
+    assert.deepEqual(r.classes[1], { classe: "pn", acoes: 100, ticker: "ABCD3", preco: 10, dataHora: QUINTA, aproximado: true, origem: "sem cotação das preferenciais; usado o preço de ABCD3 (ordinárias)" });
     assert.equal(r.classes[0].aproximado, false);
     // o contrário: só a PN negocia
-    const soPn = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: { ABCD4: 20 } });
-    assert.deepEqual([soPn.valor, soPn.aproximado, soPn.classes[0].origem], [20, true, "sem cotação das ordinárias; usado o fechamento de ABCD4 (preferenciais)"]);
+    const soPn = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: P({ ABCD4: 20 }) });
+    assert.deepEqual([soPn.valor, soPn.aproximado, soPn.classes[0].origem], [20, true, "sem cotação das ordinárias; usado o preço de ABCD4 (preferenciais)"]);
     // e a marca chega ao resultado dos múltiplos
-    assert.equal(calcular({ cotacoes: { data: "2026-11-12", precos: { ABCD3: 10 } } }).aproximado, true);
+    assert.equal(calcular({ cotacoes: { precos: P({ ABCD3: 10 }) } }).aproximado, true);
   });
 
   test("nenhuma classe com cotação: null, mesmo que a unit tenha preço", () => {
-    const r = valorDeMercado({ composicao: composicao(), tickers: [{ ticker: "ABCD11", ibovespa: true }], precos: { ABCD11: 50 } });
+    const r = valorDeMercado({ composicao: composicao(), tickers: [{ ticker: "ABCD11", ibovespa: true }], precos: P({ ABCD11: 50 }) });
     assert.deepEqual([r.valor, r.aproximado, r.classes], [null, false, []]);
-    assert.equal(r.motivo, "sem cotação para nenhuma classe de ação (procurados: ABCD3, ABCD4, ABCD5, ABCD6, ABCD7, ABCD8)");
+    assert.equal(r.motivo, "sem cotação para nenhuma classe de ação (procurados: ABCD3, ABCD4, ABCD5, ABCD6)");
   });
 
   test("unit: o valor de mercado sai das classes 3 e 4, achadas pela raiz do ticker, e nunca da unit", () => {
     // unit = 1 ON + 4 PN; ON a 3,60, PN a 3,50, unit a 17,60. 400 ON e 1.600 PN em circulação.
     const args = { composicao: composicao({ on: 400, pn: 1600 }), tickers: [{ ticker: "KLBN11", ibovespa: true }] };
-    const r = valorDeMercado({ ...args, precos: { KLBN11: 17.6, KLBN3: 3.6, KLBN4: 3.5 } });
+    const r = valorDeMercado({ ...args, precos: P({ KLBN11: 17.6, KLBN3: 3.6, KLBN4: 3.5 }) });
     perto(r.valor, (400 * 3.6 + 1600 * 3.5) / 1000);
     assert.deepEqual(r.classes.map((k) => k.ticker), ["KLBN3", "KLBN4"]);
     // mudar o preço da unit não muda nada
-    assert.equal(valorDeMercado({ ...args, precos: { KLBN11: 999, KLBN3: 3.6, KLBN4: 3.5 } }).valor, r.valor);
+    assert.equal(valorDeMercado({ ...args, precos: P({ KLBN11: 999, KLBN3: 3.6, KLBN4: 3.5 }) }).valor, r.valor);
   });
 
   test("mais de uma classe de preferencial: vale a do Ibovespa; sem ela, a de final menor com cotação", () => {
     const tickers = [{ ticker: "USIM3", ibovespa: false }, { ticker: "USIM5", ibovespa: true }, { ticker: "USIM6", ibovespa: false }];
-    assert.deepEqual(tickersDasClasses(tickers), { on: ["USIM3"], pn: ["USIM5", "USIM6", "USIM4", "USIM7", "USIM8"], units: ["USIM11"] });
-    const r = valorDeMercado({ composicao: composicao(), tickers, precos: { USIM3: 10, USIM5: 20, USIM6: 99 } });
+    assert.deepEqual(tickersDasClasses(tickers), { on: ["USIM3"], pn: ["USIM5", "USIM6", "USIM4"], units: ["USIM11"] });
+    const r = valorDeMercado({ composicao: composicao(), tickers, precos: P({ USIM3: 10, USIM5: 20, USIM6: 99 }) });
     assert.equal(r.classes[1].ticker, "USIM5");
-    const semA5 = valorDeMercado({ composicao: composicao(), tickers, precos: { USIM3: 10, USIM6: 99 } });
+    // classe PNC (final 7) só entra quando está no universo, como a AXIA7
+    assert.deepEqual(tickersDasClasses([{ ticker: "AXIA3", ibovespa: true }, { ticker: "AXIA7", ibovespa: false }]).pn, ["AXIA7", "AXIA4", "AXIA5", "AXIA6"]);
+    const semA5 = valorDeMercado({ composicao: composicao(), tickers, precos: P({ USIM3: 10, USIM6: 99 }) });
     assert.deepEqual([semA5.classes[1].ticker, semA5.aproximado], ["USIM6", false]);
   });
 
   test("preço zero, negativo ou que não é número conta como sem cotação", () => {
+    assert.equal(valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: { ABCD3: { preco: 10, dataHora: QUINTA }, ABCD4: 20 } }).aproximado, true); // número solto não é do contrato
     for (const ruim of [0, -1, null, "10", NaN]) {
-      const r = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: { ABCD3: 10, ABCD4: ruim } });
+      const r = valorDeMercado({ composicao: composicao(), tickers: TICKERS, precos: P({ ABCD3: 10, ABCD4: ruim }) });
       assert.deepEqual([r.valor, r.aproximado], [10, true], String(ruim));
     }
   });
@@ -246,26 +252,6 @@ describe("valor de mercado: classes, units e classe sem cotação", () => {
     semPn.classes.pn = { total: null, tesouraria: 0, circulacao: null };
     assert.equal(valorDeMercado({ ...args, composicao: semPn }).motivo, "a composição do capital não informa o número de ações preferenciais");
     assert.equal(valorDeMercado({ ...args, composicao: composicao({ on: 0, pn: 0 }) }).motivo, "a composição do capital não tem ações em circulação");
-  });
-
-  test("tickersNecessarios: os do universo e os das classes de cada companhia, sem repetir", () => {
-    const universo = [{ tickers: [{ ticker: "KLBN11" }] }, { tickers: [{ ticker: "WEGE3" }] }, { tickers: [{ ticker: "PETR3" }, { ticker: "PETR4" }] }];
-    const r = tickersNecessarios(universo);
-    for (const t of ["KLBN11", "KLBN3", "KLBN4", "WEGE3", "WEGE4", "WEGE11", "PETR3", "PETR4"]) assert.ok(r.includes(t), t);
-    assert.equal(new Set(r).size, r.length);
-    assert.deepEqual(r, [...r].sort());
-    assert.deepEqual(tickersNecessarios(null), []);
-  });
-
-  test("o universo do repositório: 74 companhias, e todas têm ticker de ON ou de PN para procurar", () => {
-    const { mapeadas } = JSON.parse(readFileSync(new URL("../scripts/cvm/universo.json", import.meta.url), "utf8"));
-    assert.equal(mapeadas.length, 74);
-    const necessarios = tickersNecessarios(mapeadas);
-    for (const c of mapeadas) {
-      for (const t of c.tickers) assert.ok(necessarios.includes(t.ticker), t.ticker);
-      assert.ok(tickersDasClasses(c.tickers).on.length > 0, c.nome);
-    }
-    assert.ok(necessarios.includes("KLBN3") && necessarios.includes("KLBN4"));
   });
 });
 
@@ -295,6 +281,24 @@ describe("cotação desatualizada: mais de 5 dias úteis entre o pregão e o dia
     assert.deepEqual(atrasoDaCotacao("2026-11-12", "2026-11-20"), { desatualizado: true, diasUteis: 6 });
     assert.deepEqual(atrasoDaCotacao("2026-11-12", "2026-11-21"), { desatualizado: true, diasUteis: 6 }); // sábado não soma
     assert.deepEqual(atrasoDaCotacao(null, "2026-11-20"), { desatualizado: null, diasUteis: null });
+  });
+
+  test("cada preço tem a sua data: vale a do preço mais antigo entre as classes usadas", () => {
+    // a PN não negocia desde 03/11; a ON é de 12/11. Em 13/11 são 8 dias úteis desde a PN.
+    const precos = { ...P({ ABCD3: 10 }), ...P({ ABCD4: 20 }, "2026-11-03T17:55:00.000-0300") };
+    const r = calcular({ cotacoes: { ...COTACOES, precos } });
+    assert.deepEqual([r.dataPregao, r.desatualizado, r.diasUteis], ["2026-11-03", true, 8]);
+    assert.equal(r.multiplos.valorMercado.valor, 11);
+    // ticker que não entra na conta (a unit) não interfere na data
+    const comUnit = calcular({ cotacoes: { ...COTACOES, precos: { ...COTACOES.precos, ...P({ ABCD11: 99 }, "2026-01-02T10:00:00.000-0300") } } });
+    assert.deepEqual([comUnit.dataPregao, comUnit.desatualizado], ["2026-11-12", false]);
+  });
+
+  test("diaDaCotacao: o dia como veio escrito na dataHora; sem dataHora, null, e não dá para dizer se está em dia", () => {
+    assert.equal(diaDaCotacao("2026-11-13T18:05:49.000-0300"), "2026-11-13");
+    assert.equal(diaDaCotacao(null), null);
+    const r = calcular({ cotacoes: { precos: { ABCD3: { preco: 10 }, ABCD4: { preco: 20 } } } });
+    assert.deepEqual([r.multiplos.valorMercado.valor, r.dataPregao, r.desatualizado, r.fonte], [11, null, null, null]);
   });
 
   test("o múltiplo continua saindo com a cotação desatualizada, com a marca e a data do pregão", () => {
@@ -338,7 +342,7 @@ describe("WEG, exercício de 2025, com WEGE3 a R$ 50,00: conta à mão", () => {
   const anual = WEG.indicadores.anual.find((p) => p.fim === "2025-12-31");
   const periodo = WEG.series.anual.find((p) => p.fim === "2025-12-31");
   const fundamentos = fundamentosParaMultiplos(periodo, anual.indicadores);
-  const r = calcularMultiplos({ fundamentos, composicao: anual.composicao, tickers: TICKERS_WEG, cotacoes: { data: "2026-11-12", precos: { WEGE3: 50 } }, hoje: "2026-11-13" });
+  const r = calcularMultiplos({ fundamentos, composicao: anual.composicao, tickers: TICKERS_WEG, cotacoes: { precos: P({ WEGE3: 50 }) }, hoje: "2026-11-13" });
   const m = r.multiplos;
 
   test("os fundamentos que entram na conta", () => {
@@ -350,7 +354,7 @@ describe("WEG, exercício de 2025, com WEGE3 a R$ 50,00: conta à mão", () => {
 
   test("valor de mercado = 4.195.695.973 × 50 ÷ 1.000 = 209.784.798,65 (R$ mil)", () => {
     perto(m.valorMercado.valor, 209_784_798.65);
-    assert.deepEqual(r.valorMercado.classes, [{ classe: "on", acoes: 4_195_695_973, ticker: "WEGE3", preco: 50, aproximado: false, origem: "fechamento de WEGE3" }]);
+    assert.deepEqual(r.valorMercado.classes, [{ classe: "on", acoes: 4_195_695_973, ticker: "WEGE3", preco: 50, dataHora: QUINTA, aproximado: false, origem: "preço de WEGE3" }]);
     assert.equal(r.aproximado, false);
   });
 
@@ -389,7 +393,7 @@ describe("WEG, exercício de 2025, com WEGE3 a R$ 50,00: conta à mão", () => {
 describe("WEG, 12 meses até 30/09/2026: é a base que a página usa", () => {
   const { doze } = WEG.indicadores;
   const fundamentos = fundamentosParaMultiplos(WEG.series.doze, doze.indicadores);
-  const r = calcularMultiplos({ fundamentos, composicao: doze.composicao, tickers: TICKERS_WEG, cotacoes: { data: "2026-11-12", precos: { WEGE3: 50 } }, hoje: "2026-11-13" });
+  const r = calcularMultiplos({ fundamentos, composicao: doze.composicao, tickers: TICKERS_WEG, cotacoes: { precos: P({ WEGE3: 50 }) }, hoje: "2026-11-13" });
 
   test("usa a composição do ITR de 30/09/2026 e o balanço da mesma data", () => {
     assert.equal(doze.composicao.dtRefer, "2026-09-30");
