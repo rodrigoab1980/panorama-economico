@@ -169,6 +169,12 @@ Leitura para o checkpoint "JSON puro × SQLite":
 - Em JSON puro, guardar em memória só o período `ÚLTIMO` das contas do plano dá algumas centenas de milhares de objetos, sem problema de memória.
 - O SQLite facilita consultas variadas (reapresentação, 12 meses, comparação com o setor), mas custa ~500 MB de disco no runner e o aviso de experimental.
 
+## Decisão do checkpoint (13/11/2026)
+
+A v2 usa **JSON puro**. O leitor gera um formato intermediário normalizado, com uma linha por valor: `cnpj`, `conta`, `início`, `fim`, `valor` e `versão`. Com isso, dá para trocar para SQLite depois sem reescrever a lógica.
+
+Motivo: o gargalo é ler os ZIPs, não armazenar (ver Volume acima). E as regras difíceis (classificador de contas, IFRS 16, exercício fora de dezembro) ficam em JS testado.
+
 ## Fixtures
 
 Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; preservados pelo `.gitattributes`), com o índice, DRE, BPA, BPP, DFC_MI e DVA consolidados e, na DFP, a composição do capital:
