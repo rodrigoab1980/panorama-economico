@@ -1,0 +1,4 @@
+{
+  "obs": "Exceções do classificador da DFC (scripts/cvm/classificador-dfc.mjs), por companhia. Cada uma diz que a linha com aquela descrição é de uma categoria (ou de nenhuma, com categoria null) e precisa de motivo. A exceção vence a regra. Campos: cnpj, descricao, categoria, motivo e, se quiser, conta.",
+  "excecoes": []
+}

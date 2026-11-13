@@ -1,5 +1,6 @@
 // Indicadores de UM período: um item da série anual ou a base de 12 meses, os dois na forma que sai
-// de montarSeries (scripts/cvm/series.mjs). Resultado e retorno (#34); caixa, dívida e liquidez (#35).
+// de montarSeries (scripts/cvm/series.mjs). Resultado e retorno (#34); caixa, dívida e liquidez (#35);
+// fluxo de caixa, capex, FCL, proventos e valores por ação (#36).
 // Lógica pura: sem disco, sem rede e sem relógio.
 //
 // Regras (briefings da #34 e da #35, resumidas no README, seção "Indicadores fundamentalistas"):
@@ -8,11 +9,20 @@
 // 3. Ausência é null com motivo. Nunca 0 no lugar de "não deu".
 // 4. Período de transição (menos de 12 meses) tem fluxos, margens e saldos, mas não tem retorno nem as
 //    razões que misturam fluxo com saldo: nada é anualizado.
-// 5. Nada aqui usa 3.99 (lucro por ação).
+// 5. Nenhum indicador é calculado com o 3.99 (lucro por ação informado). Ele só serve de evidência para
+//    descobrir se a composição do capital está em unidades ou em milhares de ações (composicao-capital.mjs).
 // 6. A dívida bruta é sem arrendamentos (IFRS 16). Os arrendamentos saem à parte, e há sempre as duas versões.
 // 7. Dívida líquida negativa (caixa líquido) é valor válido, não null.
+// 8. Capex, juros pagos, arrendamentos pagos e proventos não têm código fixo na DFC: saem do classificador
+//    (classificador-dfc.mjs). Categoria não identificada é null com motivo, nunca zero.
+// 8b. A D&A do EBITDA é a da DFC quando identificada; a da DVA (7.04.01) fica de reserva.
+// 9. Há sempre dois FCL: FCO − capex, e o mesmo depois dos pagamentos de arrendamento (IFRS 16).
+// 10. Os valores por ação usam as ações em circulação (total − tesouraria) do fim do período e saem em R$.
+//     O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado.
 
-import { valorDaConta } from "./series.mjs";
+import { doze as dozeMeses, valorDaConta } from "./series.mjs";
+import { CATEGORIAS, NAO_IDENTIFICADO, ORDEM, classificarLinhas, excecoesDaCompanhia } from "./classificador-dfc.mjs";
+import { composicaoNaData, emUnidades, escalaDasAcoes } from "./composicao-capital.mjs";
 
 // Alíquota nominal de IR + CSLL usada no ROIC. É fixa de propósito: a efetiva oscila com JCP,
 // incentivos e prejuízo fiscal, e deixaria o ROIC instável sem motivo operacional.
@@ -47,6 +57,23 @@ export const DIVIDA_POR_DESCRICAO = {
   excecoes: [/compuls/i],
 };
 
+// Diluição acima deste tamanho, para cima ou para baixo, não é mostrada. O arquivo da CVM não traz os
+// desdobramentos e grupamentos: um desdobramento de 1 para 3 aparece como +200% e um grupamento de 15
+// para 1, como −93%, e nenhum dos dois muda a fatia do acionista. Por que 50%: emissão e recompra de
+// verdade raramente passam disso num ano, e o menor desdobramento comum (1 para 2) dá +100%. O intervalo
+// é fechado: −50% e +50% exatos ainda saem como valor. Uma incorporação grande paga em ações também
+// passa do limite; fica null com o motivo, que é melhor do que um número que parece emissão.
+export const LIMITE_DILUICAO = 0.5;
+
+// Quando a D&A da DFC vem mais do que isto abaixo da D&A da DVA, vale a da DVA. A D&A da DFC é achada
+// pela descrição das linhas, e a regra pode deixar de fora um pedaço que a companhia lança com outro
+// nome: a São Martinho põe a exaustão do canavial em "Ativos biológicos colhidos", a DFC dá 1.086.030
+// e a DVA, 2.371.247 (54% abaixo). Por que 15%: na DFP de 2025 as duas fontes ficam dentro de 15% em 59
+// das 64 companhias da página, e nas outras cinco a DFC é a maior; uma DFC tão abaixo da DVA é sinal de
+// linha que faltou, não de diferença de critério. A comparação é estrita: 15% exatos ainda valem a DFC.
+export const LIMITE_DA_DFC_ABAIXO_DA_DVA = 0.15;
+export const ORIGEM_DVA_POR_DFC_MENOR = `DVA (DFC ${LIMITE_DA_DFC_ABAIXO_DA_DVA * 100}% menor)`;
+
 // Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
 // do ativo total. Por que 0,5%: quem não tem dívida ainda paga tarifas, IOF e ajustes a valor presente,
 // mas isso fica em poucos décimos de ponto do ativo; já uma dívida de 10% do ativo a 10% ao ano custa
@@ -61,6 +88,10 @@ const CONTAS = {
   "3.06": "resultado financeiro",
   "3.06.02": "despesas financeiras",
   "3.11": "lucro líquido",
+  "3.11.01": "lucro atribuído aos sócios da controladora",
+  "6.01": "caixa das atividades operacionais",
+  "6.02": "caixa das atividades de investimento",
+  "6.03": "caixa das atividades de financiamento",
   "7.04.01": "depreciação e amortização, na DVA",
   "1": "ativo total",
   "1.01": "ativo circulante",
@@ -80,7 +111,10 @@ export const INDICADORES = [
   { id: "lucroBruto", nome: "Lucro bruto", unidade: "R$ mil", formula: "Lucro bruto, como a companhia informa (DRE, conta 3.03)" },
   { id: "margemBruta", nome: "Margem bruta", unidade: "razão", formula: "Lucro bruto ÷ receita líquida" },
   { id: "ebit", nome: "EBIT", unidade: "R$ mil", formula: "Resultado antes do resultado financeiro e dos tributos (DRE, conta 3.05)" },
-  { id: "da", nome: "Depreciação e amortização", unidade: "R$ mil", formula: "Depreciação, amortização e exaustão da DVA (conta 7.04.01), com o sinal trocado" },
+  {
+    id: "da", nome: "Depreciação e amortização", unidade: "R$ mil",
+    formula: "Depreciação, amortização e exaustão dos ajustes do lucro na DFC, achadas pela descrição das linhas. Quando não são identificadas, ou quando ficam mais de 15% abaixo da D&A da DVA, vale a da DVA (conta 7.04.01), com o sinal trocado",
+  },
   { id: "ebitda", nome: "EBITDA", unidade: "R$ mil", formula: "EBIT + depreciação e amortização" },
   { id: "margemEbitda", nome: "Margem EBITDA", unidade: "razão", formula: "EBITDA ÷ receita líquida" },
   { id: "resultadoFinanceiro", nome: "Resultado financeiro", unidade: "R$ mil", formula: "Receitas financeiras menos despesas financeiras (DRE, conta 3.06)" },
@@ -114,6 +148,42 @@ export const INDICADORES = [
   { id: "custoDivida", nome: "Custo aproximado da dívida", unidade: "razão", formula: `Despesas financeiras do período ÷ dívida bruta no fim do período. ${APROXIMACAO}` },
   { id: "liquidezCorrente", nome: "Liquidez corrente", unidade: "razão", formula: "Ativo circulante ÷ passivo circulante" },
   { id: "liquidezImediata", nome: "Liquidez imediata", unidade: "razão", formula: "Caixa ÷ passivo circulante" },
+  // Fluxo de caixa, capex, FCL, proventos e valores por ação (#36)
+  { id: "fco", nome: "Fluxo de caixa operacional (FCO)", unidade: "R$ mil", formula: "Caixa líquido das atividades operacionais (DFC, conta 6.01)" },
+  { id: "fci", nome: "Fluxo de caixa de investimento (FCI)", unidade: "R$ mil", formula: "Caixa líquido das atividades de investimento (DFC, conta 6.02)" },
+  { id: "fcf", nome: "Fluxo de caixa de financiamento (FCF)", unidade: "R$ mil", formula: "Caixa líquido das atividades de financiamento (DFC, conta 6.03)" },
+  {
+    id: "capex", nome: "Capex", unidade: "R$ mil",
+    formula: "Pagamentos por imobilizado, intangível, ativo de contrato e ativo biológico, achados pela descrição das linhas do investimento na DFC. Aquisição de empresas não entra",
+  },
+  { id: "fcl", nome: "Fluxo de caixa livre (FCL)", unidade: "R$ mil", formula: "FCO − capex" },
+  {
+    id: "fclAposArrendamentos", nome: "FCL depois dos arrendamentos", unidade: "R$ mil",
+    formula: "FCO − capex − pagamentos de arrendamento que estão no financiamento (principal e juros). Os juros de arrendamento que estão no FCO já foram descontados",
+  },
+  { id: "fcoSobreEbitda", nome: "FCO ÷ EBITDA", unidade: "razão", formula: "FCO ÷ EBITDA: quanto do EBITDA virou caixa" },
+  { id: "capexSobreFco", nome: "Capex ÷ FCO", unidade: "razão", formula: "Capex ÷ FCO: quanto do caixa operacional foi reinvestido" },
+  {
+    id: "jurosPagos", nome: "Juros pagos", unidade: "R$ mil",
+    formula: "Juros de empréstimos, financiamentos e debêntures pagos no período, achados pela descrição das linhas da DFC (no operacional ou no financiamento). Sem os juros de arrendamento",
+  },
+  { id: "coberturaJurosPagos", nome: "Cobertura dos juros pagos", unidade: "razão", formula: "EBIT ÷ juros pagos, em número de vezes" },
+  { id: "custoDividaJurosPagos", nome: "Custo da dívida pelos juros pagos", unidade: "razão", formula: "Juros pagos no período ÷ dívida bruta no fim do período" },
+  {
+    id: "proventosPagos", nome: "Proventos pagos", unidade: "R$ mil",
+    formula: "Dividendos e juros sobre o capital próprio pagos aos acionistas da companhia, achados pela descrição das linhas do financiamento na DFC. Os pagos a não controladores ficam de fora",
+  },
+  { id: "acoesCirculacao", nome: "Ações em circulação", unidade: "ações", formula: "Ações do capital integralizado − ações em tesouraria, no fim do período (composição do capital)" },
+  {
+    id: "diluicao", nome: "Diluição", unidade: "razão",
+    formula: "Ações em circulação ÷ ações em circulação do exercício anterior − 1. Positiva quando o número de ações cresce. Variação acima de 50%, para cima ou para baixo, não é mostrada: sugere desdobramento ou grupamento",
+  },
+  {
+    id: "lucroPorAcao", nome: "Lucro por ação", unidade: "R$ por ação",
+    formula: "Lucro atribuído aos sócios da controladora (DRE, conta 3.11.01) ÷ ações em circulação. Usa o lucro da controladora, e não o consolidado, porque a parte dos minoritários não pertence ao acionista da companhia",
+  },
+  { id: "fcoPorAcao", nome: "FCO por ação", unidade: "R$ por ação", formula: "FCO ÷ ações em circulação" },
+  { id: "fclPorAcao", nome: "FCL por ação", unidade: "R$ por ação", formula: "FCL (FCO − capex) ÷ ações em circulação" },
 ];
 
 const ok = (valor) => ({ valor, motivo: null });
@@ -122,7 +192,8 @@ const milhar = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."
 
 // Demonstrativo de cada conta na série anual, pelo primeiro dígito do código.
 const DEMONSTRATIVO = { 1: "BPA", 2: "BPP", 3: "DRE", 6: "DFC", 7: "DVA" };
-const VAZIO = { fluxo: () => null, estoque: () => null, passivo: () => [] };
+const VAZIO = { fluxo: () => null, estoque: () => null, passivo: () => [], dfc: () => [] };
+const dataBr = (iso) => String(iso).split("-").reverse().join("/");
 
 // Adaptador: a mesma leitura para um período da série anual e para a base de 12 meses.
 // Devolve { tipo, meses, motivo, fluxo(conta), estoque(conta), passivo() }:
@@ -132,6 +203,9 @@ const VAZIO = { fluxo: () => null, estoque: () => null, passivo: () => [] };
 //   tipo "indisponivel"  não há o que calcular; `motivo` diz por quê
 // fluxo() e estoque() devolvem o valor em R$ mil, ou null quando a conta não está no período.
 // passivo() devolve todas as contas do passivo no fim do período, fixas e não fixas: [{ conta, descricao, valor, contaFixa }].
+// dfc() devolve as parcelas da DFC do período, cada uma com as suas linhas: [{ parcela, onde, linhas }].
+//   No anual há uma parcela só. Nos 12 meses pelo ITR há três (anual, acumuladoAtual, acumuladoAnterior),
+//   para classificar cada uma e só então somar. `onde` diz o documento, para o motivo de um null.
 export function adaptarPeriodo(origem) {
   if (origem == null) return { tipo: "indisponivel", meses: null, motivo: "sem dados do período", ...VAZIO };
   if (typeof origem.fluxo === "function" && typeof origem.estoque === "function") return origem; // já adaptado
@@ -150,6 +224,13 @@ export function adaptarPeriodo(origem) {
         ...Object.entries(origem.estoques?.contas ?? {}).filter(([, c]) => doBpp(c)).map(([conta, c]) => ({ conta, descricao: c.descricao, valor: c.valor, contaFixa: true })),
         ...(origem.estoques?.naoFixas ?? []).filter(doBpp).map(({ conta, descricao, valor }) => ({ conta, descricao, valor, contaFixa: false })),
       ],
+      dfc: () => ["anual", "acumuladoAtual", "acumuladoAnterior"]
+        .filter((parcela) => origem.linhasDfc?.[parcela] != null)
+        .map((parcela) => {
+          const de = origem.parcelas?.[parcela];
+          const onde = de?.dtRefer ? `${de.documento === "dfp" ? "na DFP" : "no ITR"} de ${dataBr(de.dtRefer)}` : "no documento";
+          return { parcela, onde, linhas: origem.linhasDfc[parcela] };
+        }),
     };
   }
 
@@ -166,6 +247,15 @@ export function adaptarPeriodo(origem) {
         const { descricao, contaFixa } = bpp.contas.find((c) => c.conta === conta);
         return { conta, descricao, valor: valorDaConta(bpp, conta), contaFixa };
       }),
+    dfc: () => {
+      const bloco = origem.demonstrativos?.DFC;
+      if (!bloco) return [];
+      const linhas = [...new Set(bloco.contas.map((c) => c.conta))].map((conta) => {
+        const { descricao, contaFixa } = bloco.contas.find((c) => c.conta === conta);
+        return { conta, descricao, valor: valorDaConta(bloco, conta), contaFixa };
+      });
+      return [{ parcela: "anual", onde: `na DFP de ${dataBr(origem.fim)}`, linhas }];
+    },
   };
 }
 
@@ -286,6 +376,22 @@ export function arrendamentos(periodo) {
   return ok(linhas.reduce((soma, c) => soma + c.valor, 0));
 }
 
+// Lucro que pertence ao acionista da companhia: o atribuído aos sócios da controladora (DRE 3.11.01).
+//   - Demonstração individual não tem a conta (não há minoritários): vale o lucro do período (3.11).
+//   - Há companhias que deixam 3.11.01 e 3.11.02 zeradas e informam só o 3.11. Aí o zero é "não
+//     informado", e o resultado é null: usar o 3.11 daria aos acionistas o lucro dos minoritários.
+export function lucroDaControladora(periodo) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return nulo(p.motivo);
+  const controladora = p.fluxo("3.11.01");
+  const total = fluxo(p, "3.11");
+  if (controladora == null) return total;
+  if (controladora === 0 && (p.fluxo("3.11.02") ?? 0) === 0 && total.valor != null && total.valor !== 0) {
+    return nulo("a companhia não abre o lucro entre a controladora e os não controladores");
+  }
+  return ok(controladora);
+}
+
 // Capital investido = patrimônio líquido + dívida bruta − caixa, no fim do período.
 export function capitalInvestido(periodo) {
   const p = adaptarPeriodo(periodo);
@@ -293,18 +399,86 @@ export function capitalInvestido(periodo) {
   return combinar([estoque(p, "2.03"), dividaBruta(p), caixa(p)], (pl, divida, cx) => pl + divida - cx);
 }
 
-// Indicadores de um período. Devolve { [id]: { valor, motivo } }, com um item para cada id de INDICADORES.
-export function calcularIndicadores(periodo) {
+// Linhas da DFC classificadas e somadas no período: { [categoria]: { valor, motivo } }, com a soma como veio
+// (pagamento é negativo). Traz também `jurosArrendamentoNoFcf`, a parte dos juros de arrendamento que está
+// no financiamento (6.03): é a que ainda não foi descontada do FCO.
+//   - No anual, é a soma das linhas da categoria.
+//   - Nos 12 meses pelo ITR, cada parcela é classificada à parte e a categoria passa por doze():
+//     anual + acumulado atual − acumulado anterior. Se a categoria aparece numa parcela e não em outra
+//     (a descrição mudou entre o ITR e a DFP), o resultado é null com o motivo.
+// `excecoes` é a lista de exceções da companhia (excecoes-dfc.json, já filtrada).
+export function fluxosClassificados(periodo, { excecoes = [] } = {}) {
   const p = adaptarPeriodo(periodo);
-  if (p.tipo === "indisponivel") return Object.fromEntries(INDICADORES.map(({ id }) => [id, nulo(p.motivo)]));
+  const categorias = [...ORDEM, "jurosArrendamentoNoFcf"];
+  if (p.tipo === "indisponivel") return Object.fromEntries(categorias.map((c) => [c, nulo(p.motivo)]));
+  const parcelas = (p.dfc?.() ?? []).map((x) => ({ ...x, classes: classificarLinhas(x.linhas, { excecoes }) }));
+  if (parcelas.length === 0) return Object.fromEntries(categorias.map((c) => [c, nulo("falta a DFC do período")]));
+
+  const somar = (categoria, somaDaParcela) => {
+    const classes = parcelas.map((x) => x.classes[categoria]);
+    const misturada = classes.find((c) => c.misturadas);
+    if (misturada) return nulo(misturada.motivo);
+    const outro = classes.find((c) => c.soma == null && c.motivo !== NAO_IDENTIFICADO);
+    if (outro) return nulo(outro.motivo);
+    const achadas = classes.filter((c) => c.soma != null).length;
+    if (achadas === 0) return nulo(NAO_IDENTIFICADO);
+    if (achadas < parcelas.length) {
+      const falta = parcelas.find((x) => x.classes[categoria].soma == null);
+      return nulo(`a linha de ${CATEGORIAS[categoria].nome} não foi identificada ${falta.onde}`);
+    }
+    const somas = Object.fromEntries(parcelas.map((x) => [x.parcela, somaDaParcela(x.classes[categoria])]));
+    return ok(parcelas.length === 1 ? somas.anual : dozeMeses(somas.anual, somas.acumuladoAtual, somas.acumuladoAnterior));
+  };
+
+  const resultado = Object.fromEntries(ORDEM.map((c) => [c, somar(c, (classe) => classe.soma)]));
+  // Juros de arrendamento no financiamento. Sem linha de juros de arrendamento, a parte é 0: ou eles
+  // estão no FCO, ou vêm dentro da linha do principal.
+  const juros = resultado.jurosArrendamento;
+  resultado.jurosArrendamentoNoFcf = juros.valor == null
+    ? (juros.motivo === NAO_IDENTIFICADO ? ok(0) : nulo(juros.motivo))
+    : somar("jurosArrendamento", (classe) => classe.linhas.filter((l) => l.conta.startsWith("6.03.")).reduce((soma, l) => soma + l.valor, 0));
+  return resultado;
+}
+
+// D&A do período, a que entra no EBITDA: { valor, motivo, origem }.
+//   1. A da DFC (depreciação, amortização e exaustão nos ajustes do lucro, achadas pela descrição), quando
+//      identificada: `origem` "DFC". Em algumas companhias a DVA traz bem menos amortização do que a
+//      DFC (na Hapvida de 2025, 870 milhões contra 1.562 milhões), e o EBITDA sai menor do que deveria.
+//   2. Senão, a da DVA (conta 7.04.01), que vem negativa: `origem` "DVA". O sinal é só trocado, sem
+//      Math.abs, para um valor positivo na origem aparecer como D&A negativa, e não ser escondido.
+// Nos 12 meses, a da DFC só vale se foi identificada nas três parcelas; se faltar em alguma, vale a DVA.
+// `classes` é a saída de fluxosClassificados para o mesmo período.
+export function depreciacaoEAmortizacao(periodo, classes) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return { ...nulo(p.motivo), origem: null };
+  const daDfc = (classes ?? fluxosClassificados(p)).daDfc;
+  const daDva = combinar([fluxo(p, "7.04.01")], (v) => 0 - v);
+  if (daDfc.valor != null) {
+    const faltouLinha = daDva.valor != null && daDva.valor > 0 && daDfc.valor < daDva.valor * (1 - LIMITE_DA_DFC_ABAIXO_DA_DVA);
+    return faltouLinha ? { ...ok(daDva.valor), origem: ORIGEM_DVA_POR_DFC_MENOR } : { ...ok(daDfc.valor), origem: "DFC" };
+  }
+  return { ...daDva, origem: daDva.valor == null ? null : "DVA" };
+}
+
+// Indicadores de um período. Devolve { [id]: { valor, motivo } }, com um item para cada id de INDICADORES.
+// A D&A (`da`) traz também `origem`, dizendo de onde saiu: "DFC", "DVA" ou "DVA (DFC 15% menor)".
+// `contexto` traz o que não está no período:
+//   composicao          composição do capital do fim do período, JÁ EM UNIDADES de ação ({ acoesCirculacao, ... })
+//   composicaoAnterior  a do exercício anterior, para a diluição (só na série anual)
+//   primeiroAno         true quando o período é o primeiro da série (a diluição não existe)
+//   excecoesDfc         exceções do classificador da DFC para a companhia
+// calcularIndicadoresDaSerie() monta o contexto de cada período.
+export function calcularIndicadores(periodo, contexto = {}) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return Object.fromEntries(INDICADORES.map(({ id }) => [id, id === "da" ? { ...nulo(p.motivo), origem: null } : nulo(p.motivo)]));
 
   const receita = fluxo(p, "3.01");
   const lucroBruto = fluxo(p, "3.03");
   const ebit = fluxo(p, "3.05");
-  // A DVA traz a depreciação negativa. O sinal é só trocado: sem Math.abs, para um valor positivo
-  // na origem aparecer como D&A negativa, e não ser escondido.
-  const da = combinar([fluxo(p, "7.04.01")], (v) => 0 - v);
-  const ebitda = combinar([ebit, da], (a, b) => a + b);
+  // As linhas da DFC achadas pela descrição (#36). As somas vêm com o sinal da DFC (pagamento negativo).
+  const classes = fluxosClassificados(p, { excecoes: contexto.excecoesDfc });
+  const da = depreciacaoEAmortizacao(p, classes);
+  const ebitda = combinar([ebit, da], (a, b) => a + b); // combinar devolve só { valor, motivo }
   const resultadoFinanceiro = fluxo(p, "3.06");
   const lucroLiquido = fluxo(p, "3.11");
 
@@ -329,6 +503,44 @@ export function calcularIndicadores(periodo) {
     return dividir(numerador, divida, "sem dívida financeira");
   };
   const liquidez = (numerador) => dividir(numerador, passivoCirculante, "passivo circulante zero ou negativo");
+
+  // Fluxo de caixa (#36). As somas do classificador vêm com o sinal da DFC (pagamento negativo).
+  const fco = fluxo(p, "6.01");
+  // Categoria da DFC como valor positivo. Quando não foi identificada, o motivo diz qual.
+  const pago = (categoria, rotulo) => {
+    const c = classes[categoria];
+    if (c.valor != null) return ok(0 - c.valor);
+    return nulo(c.motivo === NAO_IDENTIFICADO && rotulo ? `${rotulo} ${NAO_IDENTIFICADO} na DFC` : c.motivo);
+  };
+  const capex = pago("capex");
+  const fcl = combinar([fco, pago("capex", "capex")], (a, b) => a - b);
+  const fclAposArrendamentos = combinar(
+    [fcl, pago("principalArrendamento", "pagamento de arrendamento"), pago("jurosArrendamentoNoFcf")],
+    (livre, principal, juros) => livre - principal - juros,
+  );
+  const jurosPagos = pago("jurosPagos");
+  const jurosParaRazao = pago("jurosPagos", "juros pagos");
+  const semJuros = () => (jurosParaRazao.valor != null && jurosParaRazao.valor <= 0 ? nulo("juros pagos zero ou negativos") : null);
+
+  // Ações em circulação e valores por ação, em R$ (os fluxos estão em R$ mil).
+  const composicao = contexto.composicao;
+  const acoes = composicao == null
+    ? nulo("falta a composição do capital do período")
+    : (composicao.acoesCirculacao == null || composicao.acoesCirculacao <= 0 ? nulo("composição do capital sem o número de ações") : ok(composicao.acoesCirculacao));
+  const porAcao = (emMil) => combinar([emMil, acoes], (v, n) => (v * 1000) / n);
+  const diluicao = () => {
+    if (p.tipo === "12-meses") return nulo("a diluição só existe na série anual");
+    if (acoes.valor == null) return nulo(acoes.motivo);
+    if (contexto.primeiroAno) return nulo("primeiro ano da série");
+    const antes = contexto.composicaoAnterior?.acoesCirculacao;
+    if (antes == null || antes <= 0) return nulo("falta a composição do capital do exercício anterior");
+    const variacao = acoes.valor / antes - 1;
+    if (Math.abs(variacao) > LIMITE_DILUICAO) {
+      const n = Math.round(Math.abs(variacao) * 100);
+      return nulo(`variação de ${variacao > 0 ? "+" : "-"}${n}% sugere desdobramento ou grupamento`);
+    }
+    return ok(variacao);
+  };
 
   return {
     receita,
@@ -360,5 +572,67 @@ export function calcularIndicadores(periodo) {
     custoDivida: comFluxo(() => (despesas.valor != null && despesas.valor <= 0 ? nulo("despesas financeiras zero ou negativas") : sobreDivida(despesas))),
     liquidezCorrente: liquidez(estoque(p, "1.01")),
     liquidezImediata: liquidez(cx),
+
+    fco,
+    fci: fluxo(p, "6.02"),
+    fcf: fluxo(p, "6.03"),
+    capex,
+    fcl,
+    fclAposArrendamentos,
+    fcoSobreEbitda: dividir(fco, ebitda, "EBITDA zero ou negativo"),
+    capexSobreFco: dividir(pago("capex", "capex"), fco, "FCO zero ou negativo"),
+    jurosPagos,
+    coberturaJurosPagos: comFluxo(() => semJuros() ?? dividir(ebit, jurosParaRazao, "juros pagos zero ou negativos")),
+    custoDividaJurosPagos: comFluxo(() => semJuros() ?? sobreDivida(jurosParaRazao)),
+    proventosPagos: pago("proventos"),
+    acoesCirculacao: acoes,
+    diluicao: diluicao(),
+    lucroPorAcao: porAcao(lucroDaControladora(p)),
+    fcoPorAcao: porAcao(fco),
+    fclPorAcao: porAcao(fcl),
+  };
+}
+
+// Indicadores de todos os períodos de uma companhia: recebe a saída de montarSeries e monta o contexto
+// de cada período (composição do capital da data, a do exercício anterior e as exceções da companhia).
+//   composicoes   saída de lerComposicaoCapital, de DFP e de ITR juntas (só as da companhia são usadas)
+//   excecoesDfc   conteúdo de excecoes-dfc.json (`excecoes`)
+// Devolve { anual: [{ inicio, fim, tipo, composicao, indicadores }], doze: { fim, tipo, composicao, indicadores } }.
+// A `composicao` devolvida está em unidades de ação e diz a `escala` em que veio e como ela foi descoberta.
+//   - No anual, a escala sai do lucro por ação informado na DRE do próprio exercício (ou da ordem de grandeza).
+//   - Nos 12 meses, a composição é a da data do ITR mais recente; se o ITR não a trouxer, vale a mais
+//     recente anterior, e a `dtRefer` dela mostra de onde veio. A escala é a do último exercício anual,
+//     desde que o total do ITR seja da mesma ordem; senão, vale a ordem de grandeza.
+export function calcularIndicadoresDaSerie(series, { composicoes = [], excecoesDfc = [] } = {}) {
+  const daCompanhia = composicoes.filter((c) => c.cnpj === series.cnpj);
+  const excecoes = excecoesDaCompanhia(excecoesDfc, series.cnpj);
+  const composicaoDoAno = (periodo) => {
+    const bruta = composicaoNaData(daCompanhia, periodo.fim);
+    if (!bruta) return { bruta: null, composicao: null };
+    const informado = periodo.demonstrativos?.DRE?.contas.find((c) => c.conta.startsWith("3.99.01.") && c.valor)?.valor ?? null;
+    const lucro = lucroDaControladora(periodo).valor;
+    return { bruta, composicao: emUnidades(bruta, escalaDasAcoes({ acoesTotal: bruta.acoesTotal, lucro, lucroPorAcaoInformado: informado })) };
+  };
+  const dosAnos = series.anual.map(composicaoDoAno);
+  const anual = series.anual.map((periodo, i) => {
+    const { composicao } = dosAnos[i];
+    const composicaoAnterior = i > 0 ? dosAnos[i - 1].composicao : null;
+    return {
+      inicio: periodo.inicio, fim: periodo.fim, tipo: periodo.tipo, composicao,
+      indicadores: calcularIndicadores(periodo, { composicao, composicaoAnterior, primeiroAno: i === 0, excecoesDfc: excecoes }),
+    };
+  });
+  const fim = series.doze?.fim ?? null;
+  const bruta = fim ? composicaoNaData(daCompanhia, fim, { aceitarAnterior: true }) : null;
+  const ultimoAno = dosAnos.findLast((x) => x.composicao != null);
+  const mesmaOrdem = bruta?.acoesTotal > 0 && ultimoAno?.bruta.acoesTotal > 0
+    && bruta.acoesTotal / ultimoAno.bruta.acoesTotal > 0.01 && bruta.acoesTotal / ultimoAno.bruta.acoesTotal < 100;
+  const escala = !bruta ? null
+    : mesmaOrdem ? { escala: ultimoAno.composicao.escala, por: `escala do exercício de ${dataBr(ultimoAno.bruta.dtRefer)}` }
+      : escalaDasAcoes({ acoesTotal: bruta.acoesTotal });
+  const composicao = emUnidades(bruta, escala);
+  return {
+    anual,
+    doze: { fim, tipo: series.doze?.tipo ?? null, composicao, indicadores: calcularIndicadores(series.doze, { composicao, excecoesDfc: excecoes }) },
   };
 }
