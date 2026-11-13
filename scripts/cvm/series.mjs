@@ -186,24 +186,33 @@ const dataBr = (iso) => iso.split("-").reverse().join("/");
 
 function estoquesDe(blocos, data) {
   const contas = {};
+  const naoFixas = [];
   let origem = null;
   for (const fam of ESTOQUES) {
     const bloco = blocos.find((b) => b.familia === fam && b.fim === data);
     if (!bloco) continue;
     origem ??= { documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem, consolidado: bloco.consolidado };
     for (const [conta, descricao] of contasFixas(bloco)) contas[conta] = { demonstrativo: fam, descricao, valor: valorDaConta(bloco, conta) };
+    // Subcontas sem código fixo (ex.: "Arrendamentos" em 2.01.05.02.07), na ordem do arquivo, uma vez cada.
+    const vistas = new Set();
+    for (const c of bloco.contas) {
+      if (c.contaFixa || vistas.has(c.conta)) continue;
+      vistas.add(c.conta);
+      naoFixas.push({ demonstrativo: fam, conta: c.conta, descricao: c.descricao, valor: valorDaConta(bloco, c.conta) });
+    }
   }
-  return origem ? { data, origem, contas } : null;
+  return origem ? { data, origem, contas, naoFixas } : null;
 }
 
-// Base de 12 meses, só para contas fixas.
+// Base de 12 meses. Os fluxos são só de contas fixas; os estoques trazem também as não fixas, à parte.
 // Devolve { tipo, motivo, fim, parcelas, fluxos, estoques }:
 //   tipo "itr":          anual + acumulado atual − acumulado anterior; `parcelas` traz as datas e a origem das três
 //                        (o acumulado anterior é o ÚLTIMO do ITR do ano anterior, na mesma base das outras duas)
 //   tipo "ano-fechado":  o documento mais recente é a DFP; os 12 meses são o próprio exercício
 //   tipo "indisponivel": não deu para calcular; `motivo` diz por quê e `fluxos` é null (os estoques saem, se houver)
 // fluxos:   { conta: { demonstrativo, descricao, valor, anual, acumuladoAtual, acumuladoAnterior } }
-// estoques: { data, origem, contas: { conta: { demonstrativo, descricao, valor } } }, a posição mais recente, sem soma
+// estoques: { data, origem, contas: { conta: { demonstrativo, descricao, valor } }, naoFixas: [{ demonstrativo, conta, descricao, valor }] },
+//           a posição mais recente, sem soma. `contas` só tem contas fixas; `naoFixas` lista as subcontas sem código fixo (#35)
 export function base12Meses(fatos) {
   const docs = documentosDe(fatos);
   const indisponivel = (motivo, extra = {}) => ({ tipo: "indisponivel", motivo, fim: null, parcelas: null, fluxos: null, estoques: null, ...extra });
