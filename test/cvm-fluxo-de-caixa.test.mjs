@@ -518,6 +518,10 @@ describe("composição do capital", () => {
     assert.deepEqual(lerComposicaoCapital(texto("weg", "dfp_cia_aberta_composicao_capital_2025.csv")), [{
       cnpj: "84.429.695/0001-11", dtRefer: "2025-12-31", versao: 1,
       acoesTotal: 4_197_317_998, acoesTesouraria: 1_622_025, acoesCirculacao: 4_197_317_998 - 1_622_025,
+      classes: {
+        on: { total: 4_197_317_998, tesouraria: 1_622_025, circulacao: 4_197_317_998 - 1_622_025 },
+        pn: { total: 0, tesouraria: 0, circulacao: 0 },
+      },
     }]);
   });
 
@@ -541,6 +545,18 @@ describe("composição do capital", () => {
     assert.deepEqual(r.map((c) => [c.acoesTesouraria, c.acoesCirculacao]), [[0, 1000], [0, 1000]]);
   });
 
+  test("ordinárias e preferenciais em separado, cada uma com a sua tesouraria (#51)", () => {
+    const [c, vazia] = lerComposicaoCapital([CAB, "00.000.000/0001-00;2025-12-31;1;X;900;100;1000;30;10;40", "00.000.000/0001-00;2026-12-31;1;X;;;1000;;;"].join("\r\n"));
+    assert.deepEqual(c.classes, { on: { total: 900, tesouraria: 30, circulacao: 870 }, pn: { total: 100, tesouraria: 10, circulacao: 90 } });
+    assert.equal(c.classes.on.circulacao + c.classes.pn.circulacao, c.acoesCirculacao);
+    // campo vazio no total da classe: null, não zero
+    assert.deepEqual(vazia.classes, { on: { total: null, tesouraria: 0, circulacao: null }, pn: { total: null, tesouraria: 0, circulacao: null } });
+    // emUnidades leva as classes junto
+    const emMil = emUnidades(c, { escala: "mil", por: "ordem de grandeza" });
+    assert.deepEqual(emMil.classes, { on: { total: 900_000, tesouraria: 30_000, circulacao: 870_000 }, pn: { total: 100_000, tesouraria: 10_000, circulacao: 90_000 } });
+    assert.deepEqual(emUnidades(vazia, { escala: "mil", por: "x" }).classes.on, { total: null, tesouraria: 0, circulacao: null });
+  });
+
   test("total zerado ou vazio: circulação null, não zero", () => {
     const r = lerComposicaoCapital([CAB, "00.000.000/0001-00;2025-12-31;1;X;0;0;0;0;0;0", "00.000.000/0001-00;2024-12-31;1;X;;;;;;"].join("\n"));
     assert.deepEqual(r.map((c) => c.acoesCirculacao), [null, null]);
@@ -549,7 +565,7 @@ describe("composição do capital", () => {
   test("arquivo vazio dá lista vazia; coluna faltando, quantidade não numérica e linha torta dão erro", () => {
     assert.deepEqual(lerComposicaoCapital(""), []);
     assert.deepEqual(lerComposicaoCapital(`${CAB}\r\n`), []);
-    assert.throws(() => lerComposicaoCapital("CNPJ_CIA;DT_REFER;VERSAO\r\nx;y;1"), /sem a coluna QT_ACAO_TOTAL_CAP_INTEGR/);
+    assert.throws(() => lerComposicaoCapital("CNPJ_CIA;DT_REFER;VERSAO\r\nx;y;1"), /sem a coluna QT_ACAO_ORDIN_CAP_INTEGR/);
     assert.throws(() => lerComposicaoCapital(`${CAB}\r\n00.000.000/0001-00;2025-12-31;1;X;900;100;mil;0;0;0`), /linha 2: QT_ACAO_TOTAL_CAP_INTEGR não é um inteiro/);
     assert.throws(() => lerComposicaoCapital(`${CAB}\r\n00.000.000/0001-00;2025-12-31;1`), /linha 2: 3 colunas, esperava 10/);
   });
@@ -735,7 +751,7 @@ describe("fluxo de caixa: regras de null", () => {
   });
 
   test("composição sem tesouraria: as ações em circulação são o total", () => {
-    const [c] = lerComposicaoCapital("CNPJ_CIA;DT_REFER;VERSAO;QT_ACAO_TOTAL_CAP_INTEGR;QT_ACAO_TOTAL_TESOURO\r\n00.000.000/0001-00;2025-12-31;1;1000;");
+    const [c] = lerComposicaoCapital("CNPJ_CIA;DT_REFER;VERSAO;QT_ACAO_ORDIN_CAP_INTEGR;QT_ACAO_PREF_CAP_INTEGR;QT_ACAO_TOTAL_CAP_INTEGR;QT_ACAO_ORDIN_TESOURO;QT_ACAO_PREF_TESOURO;QT_ACAO_TOTAL_TESOURO\r\n00.000.000/0001-00;2025-12-31;1;1000;0;1000;;;");
     const r = calcularIndicadores(anual(), { composicao: c });
     assert.deepEqual(r.acoesCirculacao, { valor: 1000, motivo: null });
     assert.equal(r.fcoPorAcao.valor, 300);

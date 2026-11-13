@@ -11,7 +11,11 @@
 // tem 4,5 bilhões de ações). lerComposicaoCapital devolve o número como veio; escalaDasAcoes descobre a
 // escala e emUnidades converte.
 
-const COLUNAS = ["CNPJ_CIA", "DT_REFER", "VERSAO", "QT_ACAO_TOTAL_CAP_INTEGR", "QT_ACAO_TOTAL_TESOURO"];
+const COLUNAS = [
+  "CNPJ_CIA", "DT_REFER", "VERSAO",
+  "QT_ACAO_ORDIN_CAP_INTEGR", "QT_ACAO_PREF_CAP_INTEGR", "QT_ACAO_TOTAL_CAP_INTEGR",
+  "QT_ACAO_ORDIN_TESOURO", "QT_ACAO_PREF_TESOURO", "QT_ACAO_TOTAL_TESOURO",
+];
 
 function inteiro(texto, coluna, numeroDaLinha) {
   const limpo = String(texto ?? "").trim();
@@ -21,11 +25,14 @@ function inteiro(texto, coluna, numeroDaLinha) {
 }
 
 // Lê o texto de um CSV de composição do capital (já decodificado de latin1).
-// Devolve [{ cnpj, dtRefer, versao, acoesTotal, acoesTesouraria, acoesCirculacao }], uma entrada por
-// (companhia, data), a de maior versão, em ordem de companhia e de data.
+// Devolve [{ cnpj, dtRefer, versao, acoesTotal, acoesTesouraria, acoesCirculacao, classes }], uma entrada
+// por (companhia, data), a de maior versão, em ordem de companhia e de data.
 //   acoesTotal        ações do capital integralizado (ordinárias + preferenciais)
 //   acoesTesouraria   ações em tesouraria; campo vazio conta como 0
 //   acoesCirculacao   total − tesouraria; null quando o total não vem ou vem zero
+//   classes           { on, pn }, cada uma com { total, tesouraria, circulacao }: as ordinárias e as
+//                     preferenciais em separado, para o valor de mercado (#51). Classe que a companhia
+//                     não tem vem com total 0 e circulação 0; campo vazio no total da classe, null.
 export function lerComposicaoCapital(texto) {
   const linhas = String(texto ?? "").split(/\r?\n/).filter((l) => l.trim() !== "");
   if (linhas.length === 0) return [];
@@ -41,10 +48,16 @@ export function lerComposicaoCapital(texto) {
     const versao = inteiro(c[i.VERSAO], "VERSAO", n);
     const total = inteiro(c[i.QT_ACAO_TOTAL_CAP_INTEGR], "QT_ACAO_TOTAL_CAP_INTEGR", n);
     const tesouraria = inteiro(c[i.QT_ACAO_TOTAL_TESOURO], "QT_ACAO_TOTAL_TESOURO", n) ?? 0;
+    const classe = (colunaTotal, colunaTesouro) => {
+      const totalDaClasse = inteiro(c[i[colunaTotal]], colunaTotal, n);
+      const emTesouraria = inteiro(c[i[colunaTesouro]], colunaTesouro, n) ?? 0;
+      return { total: totalDaClasse, tesouraria: emTesouraria, circulacao: totalDaClasse == null ? null : totalDaClasse - emTesouraria };
+    };
     const item = {
       cnpj: c[i.CNPJ_CIA], dtRefer: c[i.DT_REFER], versao,
       acoesTotal: total, acoesTesouraria: tesouraria,
       acoesCirculacao: total == null || total === 0 ? null : total - tesouraria,
+      classes: { on: classe("QT_ACAO_ORDIN_CAP_INTEGR", "QT_ACAO_ORDIN_TESOURO"), pn: classe("QT_ACAO_PREF_CAP_INTEGR", "QT_ACAO_PREF_TESOURO") },
     };
     const chave = `${item.cnpj}|${item.dtRefer}`;
     const atual = porDocumento.get(chave);
@@ -82,9 +95,11 @@ export function emUnidades(composicao, escala) {
   if (composicao == null || escala == null) return composicao ?? null;
   const fator = escala.escala === "mil" ? 1000 : 1;
   const vezes = (n) => (n == null ? null : n * fator);
+  const classe = (k) => ({ total: vezes(k.total), tesouraria: vezes(k.tesouraria), circulacao: vezes(k.circulacao) });
   return {
     ...composicao,
     acoesTotal: vezes(composicao.acoesTotal), acoesTesouraria: vezes(composicao.acoesTesouraria), acoesCirculacao: vezes(composicao.acoesCirculacao),
+    ...(composicao.classes ? { classes: { on: classe(composicao.classes.on), pn: classe(composicao.classes.pn) } } : {}),
     escala: escala.escala, escalaPor: escala.por,
   };
 }
