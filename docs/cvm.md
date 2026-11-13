@@ -32,6 +32,7 @@ FCA: `geral`, `valor_mobiliario` (com o código de negociação), `endereco`, `d
   - `ORDEM_EXERC` só tem `ÚLTIMO` (período do documento) e `PENÚLTIMO` (mesmo período do ano anterior, como foi reapresentado).
   - `ESCALA_MOEDA`: `MIL` na grande maioria, mas há `UNIDADE`: 21.620 linhas de 3 empresas da amostra. **É preciso normalizar.**
   - `ST_CONTA_FIXA = S` marca as contas do plano padrão da CVM; `N` marca as contas abertas pela própria empresa.
+  - **Lucro por ação (DRE 3.99 e filhas) está em R$ por ação**, com casas decimais de verdade (ex.: `0.1300000000`), mesmo quando `ESCALA_MOEDA` é `MIL`. É a única família de contas fora da escala do documento (medido na #31: 30 mil das 2,94 milhões de linhas da amostra). Fora dela, valor com fração em `MIL` é raríssimo (59 linhas), e em `UNIDADE` mais da metade dos valores não é múltiplo de 1.000. O leitor (`scripts/cvm/leitor.mjs`) arredonda ao inteiro em R$ mil e deixa a 3.99 como vem.
 - FCA usa outro estilo de nome de coluna: `CNPJ_Companhia; Data_Referencia; Versao; ... Codigo_Negociacao; ... Mercado; ...`.
 
 ## Contas confirmadas
