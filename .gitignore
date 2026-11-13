@@ -1,4 +1,5 @@
 node_modules/
 site/data/
+dist/
 .env
 dados/
