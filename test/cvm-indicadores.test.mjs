@@ -18,6 +18,10 @@ const RAIA = seriesDe("raia-drogasil");
 const SAO_MARTINHO = seriesDe("sao-martinho");
 
 const ano = (serie, fim) => serie.anual.find((p) => p.fim === fim);
+// Os indicadores de resultado, retorno, caixa e dívida (#34 e #35) são os 28 primeiros da lista.
+// Os de fluxo de caixa e por ação (#36) vêm depois e têm os testes em cvm-fluxo-de-caixa.test.mjs.
+const ATE_35 = INDICADORES.slice(0, 28).map((i) => i.id);
+const ate35 = (ind) => Object.fromEntries(ATE_35.map((id) => [id, ind[id]]));
 const valores = (ind) => Object.fromEntries(Object.entries(ind).map(([id, r]) => [id, r.valor]));
 // Compara em R$ milhões, com tolerância de 0,5 (os números de referência são arredondados).
 const emMilhoes = (emMil, esperado, rotulo) =>
@@ -71,13 +75,14 @@ describe("INDICADORES: a lista que a página vai mostrar", () => {
   test("cada item tem id, nome, unidade conhecida e fórmula não vazia", () => {
     for (const i of INDICADORES) {
       assert.ok(i.id && i.nome, JSON.stringify(i));
-      assert.ok(["R$ mil", "razão"].includes(i.unidade), i.id);
+      assert.ok(["R$ mil", "razão", "ações", "R$ por ação"].includes(i.unidade), i.id);
       assert.ok(typeof i.formula === "string" && i.formula.trim().length > 10, i.id);
     }
   });
 
   test("os 13 indicadores da #34 e os 15 da #35, na ordem, sem id repetido", () => {
-    assert.deepEqual(INDICADORES.map((i) => i.id), [
+    assert.equal(new Set(INDICADORES.map((i) => i.id)).size, INDICADORES.length);
+    assert.deepEqual(ATE_35, [
       "receita", "lucroBruto", "margemBruta", "ebit", "da", "ebitda", "margemEbitda",
       "resultadoFinanceiro", "lucroLiquido", "margemLiquida", "roe", "roa", "roic",
       "patrimonioLiquido", "caixa", "dividaBruta", "arrendamentos", "dividaBrutaComArrendamentos",
@@ -87,7 +92,7 @@ describe("INDICADORES: a lista que a página vai mostrar", () => {
   });
 
   test("valores em R$ mil e razões estão marcados com a unidade certa", () => {
-    const razoes = INDICADORES.filter((i) => i.unidade === "razão").map((i) => i.id);
+    const razoes = INDICADORES.slice(0, 28).filter((i) => i.unidade === "razão").map((i) => i.id);
     assert.deepEqual(razoes, [
       "margemBruta", "margemEbitda", "margemLiquida", "roe", "roa", "roic",
       "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "coberturaJuros", "custoDivida",
@@ -164,7 +169,7 @@ describe("cada indicador, num exercício sintético", () => {
   }
 
   test("todo id de INDICADORES tem um caso aqui", () => {
-    assert.deepEqual(Object.keys(casos), INDICADORES.map((i) => i.id));
+    assert.deepEqual(Object.keys(casos), ATE_35);
   });
 
   test("o lucro bruto é o 3.03 lido direto, não 3.01 + 3.02", () => {
@@ -178,7 +183,7 @@ describe("cada indicador, num exercício sintético", () => {
   });
 
   test("a base de 12 meses é lida do mesmo jeito e dá os mesmos números", () => {
-    assert.deepEqual(calcularIndicadores(doze12()), ind);
+    assert.deepEqual(ate35(calcularIndicadores(doze12())), ate35(ind));
   });
 });
 
@@ -341,7 +346,7 @@ describe("adaptarPeriodo: a mesma leitura para o anual e para os 12 meses", () =
   test("12 meses de ano fechado (o documento mais recente é a DFP): iguais ao exercício", () => {
     assert.equal(RAIA.doze.tipo, "ano-fechado");
     assert.equal(adaptarPeriodo(RAIA.doze).tipo, "12-meses");
-    assert.deepEqual(calcularIndicadores(RAIA.doze), calcularIndicadores(ano(RAIA, "2025-12-31")));
+    assert.deepEqual(ate35(calcularIndicadores(RAIA.doze)), ate35(calcularIndicadores(ano(RAIA, "2025-12-31"))));
   });
 
   test("um período já adaptado passa direto", () => {
@@ -481,7 +486,7 @@ describe("São Martinho: exercício de abril a março", () => {
 
   test("o exercício de 01/04/2025 a 31/03/2026 é anual e tem todos os indicadores", () => {
     assert.deepEqual([p.inicio, p.fim, p.tipo], ["2025-04-01", "2026-03-31", "anual"]);
-    for (const [id, r] of Object.entries(ind)) assert.ok(r.valor != null && r.motivo === null, `${id}: ${r.motivo}`);
+    for (const [id, r] of Object.entries(ate35(ind))) assert.ok(r.valor != null && r.motivo === null, `${id}: ${r.motivo}`);
   });
 
   test("valores do exercício (R$ mil)", () => {
