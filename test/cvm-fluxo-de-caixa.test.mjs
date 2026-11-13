@@ -8,8 +8,8 @@ import { montarSeries } from "../scripts/cvm/series.mjs";
 import {
   CATEGORIAS, ORDEM, classificarLinha, classificarLinhas, excecoesDaCompanhia, normalizar, validarExcecoes,
 } from "../scripts/cvm/classificador-dfc.mjs";
-import { composicaoNaData, lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
-import { INDICADORES, calcularIndicadores, calcularIndicadoresDaSerie, fluxosClassificados } from "../scripts/cvm/indicadores.mjs";
+import { LIMITE_ACOES_EM_MIL, composicaoNaData, emUnidades, escalaDasAcoes, lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
+import { INDICADORES, calcularIndicadores, calcularIndicadoresDaSerie, fluxosClassificados, lucroDaControladora } from "../scripts/cvm/indicadores.mjs";
 
 // ---------- fixtures reais ----------
 const DIR = new URL("./fixtures/cvm/", import.meta.url);
@@ -1039,5 +1039,122 @@ describe("São Martinho e Hapvida", () => {
     const p = periodo(HAPVIDA, "2023-12-31");
     assert.equal(fluxosClassificados(p).daDfc.valor, 1_625_121);
     assert.equal(ano(HAPVIDA, "2023-12-31").indicadores.da.valor, 483_365);
+  });
+});
+
+describe("escala da composição do capital: unidades ou milhares de ações", () => {
+  // O arquivo não tem coluna de escala. Totais e lucros abaixo são os da DFP de 2025 (R$ mil e R$ por ação).
+  test("WEG informa em unidades: o lucro por ação informado fecha com o total", () => {
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 4_197_317_998, lucro: 6_376_219, lucroPorAcaoInformado: 1.51971 }), { escala: "unidade", por: "lucro por ação informado" });
+  });
+
+  test("Vale informa em milhares: 4.539.007 no arquivo, 4,5 bilhões de ações de verdade", () => {
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 4_539_007, lucro: 13_814_000, lucroPorAcaoInformado: 3.24 }), { escala: "mil", por: "lucro por ação informado" });
+  });
+
+  test("Ambev (15.761.639, em milhares) e Eneva (1.936.974, com o lucro por ação arredondado para 1)", () => {
+    assert.equal(escalaDasAcoes({ acoesTotal: 15_761_639, lucro: 15_503_400, lucroPorAcaoInformado: 0.9926913764 }).escala, "mil");
+    assert.equal(escalaDasAcoes({ acoesTotal: 1_936_974, lucro: 1_157_575, lucroPorAcaoInformado: 1 }).escala, "mil");
+  });
+
+  test("prejuízo: lucro e lucro por ação negativos também resolvem", () => {
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 562_827, lucro: -1_042_256, lucroPorAcaoInformado: -1.85183 }), { escala: "mil", por: "lucro por ação informado" }); // MRV
+    assert.equal(escalaDasAcoes({ acoesTotal: 1_253_079_108, lucro: -3_078_192, lucroPorAcaoInformado: -2.5 }).escala, "unidade"); // Usiminas
+  });
+
+  test("a média do período difere do total do fim: a comparação aceita até o dobro ou a metade", () => {
+    assert.equal(escalaDasAcoes({ acoesTotal: 3_966_570_932, lucro: -9_722_125, lucroPorAcaoInformado: -3.8919059245 }).por, "lucro por ação informado"); // Cosan, razão 0,63
+  });
+
+  test("sem lucro por ação informado, vale a ordem de grandeza: abaixo de 100 milhões está em milhares", () => {
+    assert.equal(LIMITE_ACOES_EM_MIL, 100_000_000);
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 3_226_546_622, lucro: 6_167_906, lucroPorAcaoInformado: null }), { escala: "unidade", por: "ordem de grandeza" }); // Vivo
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 380_253 }), { escala: "mil", por: "ordem de grandeza" });
+    assert.equal(escalaDasAcoes({ acoesTotal: 99_999_999 }).escala, "mil");
+    assert.equal(escalaDasAcoes({ acoesTotal: 100_000_000 }).escala, "unidade");
+  });
+
+  test("lucro por ação que não fecha com nenhuma das duas escalas (ou lucro zero): ordem de grandeza", () => {
+    assert.deepEqual(escalaDasAcoes({ acoesTotal: 703_773_869, lucro: 0, lucroPorAcaoInformado: 12.37 }), { escala: "unidade", por: "ordem de grandeza" }); // Sabesp: 3.11.01 zerado
+    assert.equal(escalaDasAcoes({ acoesTotal: 500_000_000, lucro: 1000, lucroPorAcaoInformado: 2000 }).por, "ordem de grandeza"); // lucro por lote de mil ações
+  });
+
+  test("sem total de ações não há escala", () => {
+    assert.equal(escalaDasAcoes({ acoesTotal: null, lucro: 1, lucroPorAcaoInformado: 1 }), null);
+    assert.equal(escalaDasAcoes({ acoesTotal: 0 }), null);
+  });
+
+  test("emUnidades multiplica total, tesouraria e circulação por mil e registra a escala", () => {
+    const bruta = { cnpj: "x", dtRefer: "2025-12-31", versao: 1, acoesTotal: 4_539_007, acoesTesouraria: 270_000, acoesCirculacao: 4_269_007 };
+    assert.deepEqual(emUnidades(bruta, { escala: "mil", por: "lucro por ação informado" }), {
+      cnpj: "x", dtRefer: "2025-12-31", versao: 1, acoesTotal: 4_539_007_000, acoesTesouraria: 270_000_000, acoesCirculacao: 4_269_007_000,
+      escala: "mil", escalaPor: "lucro por ação informado",
+    });
+    const unidade = emUnidades(bruta, { escala: "unidade", por: "ordem de grandeza" });
+    assert.deepEqual([unidade.acoesTotal, unidade.escala], [4_539_007, "unidade"]);
+    assert.equal(emUnidades(null, { escala: "mil" }), null);
+    assert.equal(emUnidades({ ...bruta, acoesCirculacao: null }, { escala: "mil", por: "x" }).acoesCirculacao, null);
+  });
+
+  test("na série, a composição sai em unidades e diz a escala e de onde ela veio", () => {
+    const c = ano(WEG, "2025-12-31").composicao;
+    assert.deepEqual([c.acoesTotal, c.escala, c.escalaPor], [4_197_317_998, "unidade", "lucro por ação informado"]);
+    const doze = WEG.indicadores.doze.composicao;
+    assert.deepEqual([doze.dtRefer, doze.escala, doze.escalaPor], ["2026-09-30", "unidade", "escala do exercício de 31/12/2025"]);
+  });
+
+  test("companhia que informa em milhares: ações, diluição e valores por ação saem na escala certa", () => {
+    // O exercício sintético com a composição em milhares: 1.000 = 1 milhão de ações. Lucro da controladora
+    // de 90 (R$ mil) e lucro por ação informado de 0,09: 90.000 ÷ 0,09 = 1 milhão de ações.
+    const comLpa = (p, fim) => {
+      p.fim = fim;
+      p.demonstrativos.DRE.contas.push({ conta: "3.99.01.01", descricao: "ON", contaFixa: true, valor: 0.09 });
+      return p;
+    };
+    const series = { cnpj: "00.000.000/0001-00", anual: [comLpa(anual(), "2024-12-31"), comLpa(anual(), "2025-12-31")], doze: doze12() };
+    const composicoes = [
+      { cnpj: "00.000.000/0001-00", dtRefer: "2024-12-31", versao: 1, acoesTotal: 1000, acoesTesouraria: 0, acoesCirculacao: 1000 },
+      { cnpj: "00.000.000/0001-00", dtRefer: "2025-12-31", versao: 1, acoesTotal: 1100, acoesTesouraria: 100, acoesCirculacao: 1000 },
+      { cnpj: "00.000.000/0001-00", dtRefer: "2026-06-30", versao: 1, acoesTotal: 1100, acoesTesouraria: 50, acoesCirculacao: 1050 },
+      { cnpj: "99.999.999/0001-99", dtRefer: "2025-12-31", versao: 1, acoesTotal: 5, acoesTesouraria: 0, acoesCirculacao: 5 }, // de outra companhia
+    ];
+    const r = calcularIndicadoresDaSerie(series, { composicoes });
+    assert.equal(r.anual[1].composicao.escala, "mil");
+    assert.equal(r.anual[1].indicadores.acoesCirculacao.valor, 1_000_000);
+    assert.equal(r.anual[1].indicadores.lucroPorAcao.valor, (90 * 1000) / 1_000_000);
+    assert.equal(r.anual[1].indicadores.diluicao.valor, 0);
+    assert.deepEqual(r.anual[0].indicadores.diluicao, { valor: null, motivo: "primeiro ano da série" });
+    assert.deepEqual([r.doze.composicao.escala, r.doze.composicao.escalaPor], ["mil", "escala do exercício de 31/12/2025"]);
+    assert.equal(r.doze.indicadores.acoesCirculacao.valor, 1_050_000);
+    assert.equal(r.doze.indicadores.fcoPorAcao.valor, (300 * 1000) / 1_050_000);
+  });
+});
+
+describe("lucro da controladora, para o lucro por ação", () => {
+  test("usa o 3.11.01", () => {
+    assert.deepEqual(lucroDaControladora(anual()), { valor: 90, motivo: null });
+    assert.deepEqual(lucroDaControladora(periodo(WEG, "2025-12-31")), { valor: 6_376_219, motivo: null });
+  });
+
+  test("demonstração individual não tem 3.11.01: vale o lucro do período (3.11)", () => {
+    const p = anual();
+    p.demonstrativos.DRE.contas = p.demonstrativos.DRE.contas.filter((c) => c.conta !== "3.11.01");
+    assert.deepEqual(lucroDaControladora(p), { valor: 100, motivo: null });
+    assert.equal(calcularIndicadores(p, { composicao: ACOES }).lucroPorAcao.valor, 100);
+  });
+
+  test("3.11.01 e 3.11.02 zeradas com lucro no 3.11: não informado, null com motivo (não zero, nem o lucro dos minoritários)", () => {
+    const p = anual({ mudancas: { DRE: { "3.11.01": 0, "3.11.02": 0 } } });
+    const motivo = "a companhia não abre o lucro entre a controladora e os não controladores";
+    assert.deepEqual(lucroDaControladora(p), { valor: null, motivo });
+    assert.deepEqual(calcularIndicadores(p, { composicao: ACOES }).lucroPorAcao, { valor: null, motivo });
+  });
+
+  test("lucro zero de verdade (3.11 também zero) é zero", () => {
+    assert.deepEqual(lucroDaControladora(anual({ mudancas: { DRE: { "3.11": 0, "3.11.01": 0, "3.11.02": 0 } } })), { valor: 0, motivo: null });
+  });
+
+  test("controladora zerada com o lucro todo nos não controladores é informação, não falta", () => {
+    assert.deepEqual(lucroDaControladora(anual({ mudancas: { DRE: { "3.11": 100, "3.11.01": 0, "3.11.02": 100 } } })), { valor: 0, motivo: null });
   });
 });

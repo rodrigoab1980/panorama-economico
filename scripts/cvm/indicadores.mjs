@@ -9,17 +9,19 @@
 // 3. Ausência é null com motivo. Nunca 0 no lugar de "não deu".
 // 4. Período de transição (menos de 12 meses) tem fluxos, margens e saldos, mas não tem retorno nem as
 //    razões que misturam fluxo com saldo: nada é anualizado.
-// 5. Nada aqui usa 3.99 (lucro por ação).
+// 5. Nenhum indicador é calculado com o 3.99 (lucro por ação informado). Ele só serve de evidência para
+//    descobrir se a composição do capital está em unidades ou em milhares de ações (composicao-capital.mjs).
 // 6. A dívida bruta é sem arrendamentos (IFRS 16). Os arrendamentos saem à parte, e há sempre as duas versões.
 // 7. Dívida líquida negativa (caixa líquido) é valor válido, não null.
 // 8. Capex, juros pagos, arrendamentos pagos e proventos não têm código fixo na DFC: saem do classificador
 //    (classificador-dfc.mjs). Categoria não identificada é null com motivo, nunca zero.
 // 9. Há sempre dois FCL: FCO − capex, e o mesmo depois dos pagamentos de arrendamento (IFRS 16).
 // 10. Os valores por ação usam as ações em circulação (total − tesouraria) do fim do período e saem em R$.
+//     O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado.
 
 import { doze as dozeMeses, valorDaConta } from "./series.mjs";
 import { CATEGORIAS, NAO_IDENTIFICADO, ORDEM, classificarLinhas, excecoesDaCompanhia } from "./classificador-dfc.mjs";
-import { composicaoNaData } from "./composicao-capital.mjs";
+import { composicaoNaData, emUnidades, escalaDasAcoes } from "./composicao-capital.mjs";
 
 // Alíquota nominal de IR + CSLL usada no ROIC. É fixa de propósito: a efetiva oscila com JCP,
 // incentivos e prejuízo fiscal, e deixaria o ROIC instável sem motivo operacional.
@@ -350,6 +352,22 @@ export function arrendamentos(periodo) {
   return ok(linhas.reduce((soma, c) => soma + c.valor, 0));
 }
 
+// Lucro que pertence ao acionista da companhia: o atribuído aos sócios da controladora (DRE 3.11.01).
+//   - Demonstração individual não tem a conta (não há minoritários): vale o lucro do período (3.11).
+//   - Há companhias que deixam 3.11.01 e 3.11.02 zeradas e informam só o 3.11. Aí o zero é "não
+//     informado", e o resultado é null: usar o 3.11 daria aos acionistas o lucro dos minoritários.
+export function lucroDaControladora(periodo) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return nulo(p.motivo);
+  const controladora = p.fluxo("3.11.01");
+  const total = fluxo(p, "3.11");
+  if (controladora == null) return total;
+  if (controladora === 0 && (p.fluxo("3.11.02") ?? 0) === 0 && total.valor != null && total.valor !== 0) {
+    return nulo("a companhia não abre o lucro entre a controladora e os não controladores");
+  }
+  return ok(controladora);
+}
+
 // Capital investido = patrimônio líquido + dívida bruta − caixa, no fim do período.
 export function capitalInvestido(periodo) {
   const p = adaptarPeriodo(periodo);
@@ -400,7 +418,7 @@ export function fluxosClassificados(periodo, { excecoes = [] } = {}) {
 
 // Indicadores de um período. Devolve { [id]: { valor, motivo } }, com um item para cada id de INDICADORES.
 // `contexto` traz o que não está no período:
-//   composicao          composição do capital do fim do período ({ acoesCirculacao, ... }), para os valores por ação
+//   composicao          composição do capital do fim do período, JÁ EM UNIDADES de ação ({ acoesCirculacao, ... })
 //   composicaoAnterior  a do exercício anterior, para a diluição (só na série anual)
 //   primeiroAno         true quando o período é o primeiro da série (a diluição não existe)
 //   excecoesDfc         exceções do classificador da DFC para a companhia
@@ -520,7 +538,7 @@ export function calcularIndicadores(periodo, contexto = {}) {
     proventosPagos: pago("proventos"),
     acoesCirculacao: acoes,
     diluicao: diluicao(),
-    lucroPorAcao: porAcao(fluxo(p, "3.11.01")),
+    lucroPorAcao: porAcao(lucroDaControladora(p)),
     fcoPorAcao: porAcao(fco),
     fclPorAcao: porAcao(fcl),
   };
@@ -531,21 +549,39 @@ export function calcularIndicadores(periodo, contexto = {}) {
 //   composicoes   saída de lerComposicaoCapital, de DFP e de ITR juntas (só as da companhia são usadas)
 //   excecoesDfc   conteúdo de excecoes-dfc.json (`excecoes`)
 // Devolve { anual: [{ inicio, fim, tipo, composicao, indicadores }], doze: { fim, tipo, composicao, indicadores } }.
-// Nos 12 meses, a composição é a da data do ITR mais recente; se o ITR não a trouxer, vale a mais recente
-// anterior, e a `dtRefer` dela mostra de onde veio.
+// A `composicao` devolvida está em unidades de ação e diz a `escala` em que veio e como ela foi descoberta.
+//   - No anual, a escala sai do lucro por ação informado na DRE do próprio exercício (ou da ordem de grandeza).
+//   - Nos 12 meses, a composição é a da data do ITR mais recente; se o ITR não a trouxer, vale a mais
+//     recente anterior, e a `dtRefer` dela mostra de onde veio. A escala é a do último exercício anual,
+//     desde que o total do ITR seja da mesma ordem; senão, vale a ordem de grandeza.
 export function calcularIndicadoresDaSerie(series, { composicoes = [], excecoesDfc = [] } = {}) {
   const daCompanhia = composicoes.filter((c) => c.cnpj === series.cnpj);
   const excecoes = excecoesDaCompanhia(excecoesDfc, series.cnpj);
+  const composicaoDoAno = (periodo) => {
+    const bruta = composicaoNaData(daCompanhia, periodo.fim);
+    if (!bruta) return { bruta: null, composicao: null };
+    const informado = periodo.demonstrativos?.DRE?.contas.find((c) => c.conta.startsWith("3.99.01.") && c.valor)?.valor ?? null;
+    const lucro = lucroDaControladora(periodo).valor;
+    return { bruta, composicao: emUnidades(bruta, escalaDasAcoes({ acoesTotal: bruta.acoesTotal, lucro, lucroPorAcaoInformado: informado })) };
+  };
+  const dosAnos = series.anual.map(composicaoDoAno);
   const anual = series.anual.map((periodo, i) => {
-    const composicao = composicaoNaData(daCompanhia, periodo.fim);
-    const composicaoAnterior = i > 0 ? composicaoNaData(daCompanhia, series.anual[i - 1].fim) : null;
+    const { composicao } = dosAnos[i];
+    const composicaoAnterior = i > 0 ? dosAnos[i - 1].composicao : null;
     return {
       inicio: periodo.inicio, fim: periodo.fim, tipo: periodo.tipo, composicao,
       indicadores: calcularIndicadores(periodo, { composicao, composicaoAnterior, primeiroAno: i === 0, excecoesDfc: excecoes }),
     };
   });
   const fim = series.doze?.fim ?? null;
-  const composicao = fim ? composicaoNaData(daCompanhia, fim, { aceitarAnterior: true }) : null;
+  const bruta = fim ? composicaoNaData(daCompanhia, fim, { aceitarAnterior: true }) : null;
+  const ultimoAno = dosAnos.findLast((x) => x.composicao != null);
+  const mesmaOrdem = bruta?.acoesTotal > 0 && ultimoAno?.bruta.acoesTotal > 0
+    && bruta.acoesTotal / ultimoAno.bruta.acoesTotal > 0.01 && bruta.acoesTotal / ultimoAno.bruta.acoesTotal < 100;
+  const escala = !bruta ? null
+    : mesmaOrdem ? { escala: ultimoAno.composicao.escala, por: `escala do exercício de ${dataBr(ultimoAno.bruta.dtRefer)}` }
+      : escalaDasAcoes({ acoesTotal: bruta.acoesTotal });
+  const composicao = emUnidades(bruta, escala);
   return {
     anual,
     doze: { fim, tipo: series.doze?.tipo ?? null, composicao, indicadores: calcularIndicadores(series.doze, { composicao, excecoesDfc: excecoes }) },
