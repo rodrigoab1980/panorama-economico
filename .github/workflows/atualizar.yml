@@ -117,9 +117,14 @@ jobs:
             git push origin HEAD:dados
           fi
 
+      # Monta dist/ a partir de site/ (inclusive site/data/, recém-gerado pela coleta) e insere o menu comum.
+      # Sem continue-on-error: se o build falhar, nada é publicado e o Pages segue com a última versão.
+      - name: Montar o site (dist/)
+        run: npm run build
+
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: dist
       - id: deploy
         uses: actions/deploy-pages@v5
