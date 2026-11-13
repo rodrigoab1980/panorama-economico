@@ -184,6 +184,19 @@ const origemDe = (bloco) => ({
 const base = (consolidado) => (consolidado ? "consolidado" : "individual");
 const dataBr = (iso) => iso.split("-").reverse().join("/");
 
+// Linhas sem código fixo de um bloco, uma vez cada, na ordem do arquivo: [{ conta, descricao, valor, contaFixa: false }].
+function linhasNaoFixas(bloco) {
+  if (!bloco) return null;
+  const vistas = new Set();
+  const linhas = [];
+  for (const c of bloco.contas) {
+    if (c.contaFixa || vistas.has(c.conta)) continue;
+    vistas.add(c.conta);
+    linhas.push({ conta: c.conta, descricao: c.descricao, valor: valorDaConta(bloco, c.conta), contaFixa: false });
+  }
+  return linhas;
+}
+
 function estoquesDe(blocos, data) {
   const contas = {};
   const naoFixas = [];
@@ -211,6 +224,10 @@ function estoquesDe(blocos, data) {
 //   tipo "ano-fechado":  o documento mais recente é a DFP; os 12 meses são o próprio exercício
 //   tipo "indisponivel": não deu para calcular; `motivo` diz por quê e `fluxos` é null (os estoques saem, se houver)
 // fluxos:   { conta: { demonstrativo, descricao, valor, anual, acumuladoAtual, acumuladoAnterior } }
+// linhasDfc: { anual, acumuladoAtual, acumuladoAnterior }, as linhas SEM código fixo da DFC de cada parcela
+//           ([{ conta, descricao, valor, contaFixa: false }], ou null quando a parcela não existe). Capex, juros
+//           pagos, arrendamentos e proventos não têm código fixo: quem classifica as linhas pela descrição
+//           aplica doze() em cada categoria (#36). Só existe quando há fluxos.
 // estoques: { data, origem, contas: { conta: { demonstrativo, descricao, valor } }, naoFixas: [{ demonstrativo, conta, descricao, valor }] },
 //           a posição mais recente, sem soma. `contas` só tem contas fixas; `naoFixas` lista as subcontas sem código fixo (#35)
 export function base12Meses(fatos) {
@@ -246,6 +263,7 @@ export function base12Meses(fatos) {
         acumuladoAtual: null, acumuladoAnterior: null,
       },
       fluxos, estoques,
+      linhasDfc: { anual: linhasNaoFixas(anual.demonstrativos.DFC) ?? [], acumuladoAtual: null, acumuladoAnterior: null },
     };
   }
 
@@ -291,10 +309,13 @@ export function base12Meses(fatos) {
   }
 
   const fluxos = {};
+  const blocosDe = (fam) => ({
+    anual: anual.demonstrativos[fam],
+    atual: fluxosDoItr.find((b) => b.familia === fam && b.ordem === "ultimo" && b.inicio === atual.inicio && b.fim === atual.fim),
+    anterior: fluxosAnteriores.find((b) => b.familia === fam && b.inicio === anterior.inicio && b.fim === anterior.fim),
+  });
   for (const fam of FLUXOS) {
-    const blocoAnual = anual.demonstrativos[fam];
-    const blocoAtual = fluxosDoItr.find((b) => b.familia === fam && b.ordem === "ultimo" && b.inicio === atual.inicio && b.fim === atual.fim);
-    const blocoAnterior = fluxosAnteriores.find((b) => b.familia === fam && b.inicio === anterior.inicio && b.fim === anterior.fim);
+    const { anual: blocoAnual, atual: blocoAtual, anterior: blocoAnterior } = blocosDe(fam);
     const contas = new Map([...contasFixas(blocoAnual), ...contasFixas(blocoAtual), ...contasFixas(blocoAnterior)]);
     for (const [conta, descricao] of contas) {
       const parcelas = { anual: valorDaConta(blocoAnual, conta), acumuladoAtual: valorDaConta(blocoAtual, conta), acumuladoAnterior: valorDaConta(blocoAnterior, conta) };
@@ -309,6 +330,11 @@ export function base12Meses(fatos) {
       acumuladoAnterior: origemDe(anterior),
     },
     fluxos, estoques,
+    linhasDfc: {
+      anual: linhasNaoFixas(blocosDe("DFC").anual) ?? [],
+      acumuladoAtual: linhasNaoFixas(blocosDe("DFC").atual) ?? [],
+      acumuladoAnterior: linhasNaoFixas(blocosDe("DFC").anterior) ?? [],
+    },
   };
 }
 
