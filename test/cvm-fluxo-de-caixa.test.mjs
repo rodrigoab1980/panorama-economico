@@ -9,7 +9,9 @@ import {
   CATEGORIAS, ORDEM, classificarLinha, classificarLinhas, excecoesDaCompanhia, normalizar, validarExcecoes,
 } from "../scripts/cvm/classificador-dfc.mjs";
 import { LIMITE_ACOES_EM_MIL, composicaoNaData, emUnidades, escalaDasAcoes, lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
-import { INDICADORES, calcularIndicadores, calcularIndicadoresDaSerie, fluxosClassificados, lucroDaControladora } from "../scripts/cvm/indicadores.mjs";
+import {
+  INDICADORES, LIMITE_DILUICAO, calcularIndicadores, calcularIndicadoresDaSerie, depreciacaoEAmortizacao, fluxosClassificados, lucroDaControladora,
+} from "../scripts/cvm/indicadores.mjs";
 
 // ---------- fixtures reais ----------
 const DIR = new URL("./fixtures/cvm/", import.meta.url);
@@ -173,6 +175,11 @@ describe("variações do spike: capex", () => {
     ["Cury (digitação)", "6.02.01", "(Acréscimo) reduçãodo imobilizado"],
     ["Hypera (digitação)", "6.02.04", "Compra/desenvolvimento de Intangíves"],
     ["Tenda", "6.02.02", "Aquisição de ativo imobilizado e intangivel (Nota 9 e 10)"],
+    // propriedade para investimento: aquisição, adição ou construção (shoppings e terrenos)
+    ["Allos (propriedade para investimento)", "6.02.02", "Pagamentos para aquisição de propriedades para  investimentos (shopping centers)"],
+    ["Multiplan (propriedade para investimento)", "6.02.06", "Adições em Propriedades para investimento"],
+    ["MRV (propriedade para investimento)", "6.02.11", "Aquisição de Propriedades Para Investimento"],
+    ["CSN (com propriedade para investimento)", "6.02.02", "Aquisição de ativos imobilizados, intangível e propriedade para investimento"],
   ];
   for (const [empresa, conta, descricao] of casos) {
     test(`${empresa}: "${descricao}"`, () => assert.equal(categoriaDe(conta, descricao), "capex"));
@@ -180,7 +187,6 @@ describe("variações do spike: capex", () => {
 
   const mistas = [
     ["Rumo", "6.02.08", "Adições ao imobilizado, intangível e investimentos"],
-    ["CSN", "6.02.02", "Aquisição de ativos imobilizados, intangível e propriedade para investimento"],
     ["SmartFit", "6.02.01", "Adições do ativo imobilizado e arrendamento"],
   ];
   for (const [empresa, conta, descricao] of mistas) {
@@ -216,8 +222,10 @@ describe("fora do capex", () => {
     ["WEG", "6.02.01", "Investimentos"],
     ["Raia Drogasil", "6.02.08", "Aplicações Financeiras"],
     ["CSN Mineração", "6.02.03", "Aquisição de investimentos"],
-    // propriedade para investimento: não está na regra (ver a varredura no PR)
-    ["Multiplan", "6.02.06", "Adições em Propriedades para investimento"],
+    // propriedade para investimento só entra com aquisição, adição ou construção
+    ["B3", "6.02.05", "Alienação de Propriedade para Investimento"],
+    ["Multiplan", "6.02.08", "Baixas em Propriedade para investimento"],
+    ["Motiva (sem verbo)", "6.02.12", "Propriedade para investimentos"],
   ];
   for (const [empresa, conta, descricao] of fora) {
     test(`${empresa}: "${descricao}"`, () => assert.equal(categoriaDe(conta, descricao), null));
@@ -1035,10 +1043,13 @@ describe("São Martinho e Hapvida", () => {
     assert.ok(SAO_MARTINHO.indicadores.doze.indicadores.capex.valor > 0);
   });
 
-  test("Hapvida 2023: a D&A da DFC (1.625.121) é mais de três vezes a da DVA (483.365)", () => {
+  test("Hapvida 2023: a D&A da DFC (1.625.121) é mais de três vezes a da DVA (483.365), e é ela que entra no EBITDA", () => {
     const p = periodo(HAPVIDA, "2023-12-31");
     assert.equal(fluxosClassificados(p).daDfc.valor, 1_625_121);
-    assert.equal(ano(HAPVIDA, "2023-12-31").indicadores.da.valor, 483_365);
+    assert.equal(p.demonstrativos.DVA.contas.find((c) => c.conta === "7.04.01").valor, -483_365);
+    const ind = ano(HAPVIDA, "2023-12-31").indicadores;
+    assert.deepEqual(ind.da, { valor: 1_625_121, motivo: null, origem: "DFC" });
+    assert.equal(ind.ebitda.valor, 1_171_657 + 1_625_121);
   });
 });
 
@@ -1156,5 +1167,150 @@ describe("lucro da controladora, para o lucro por ação", () => {
 
   test("controladora zerada com o lucro todo nos não controladores é informação, não falta", () => {
     assert.deepEqual(lucroDaControladora(anual({ mudancas: { DRE: { "3.11": 100, "3.11.01": 0, "3.11.02": 100 } } })), { valor: 0, motivo: null });
+  });
+});
+
+describe("capex com propriedade para investimento: Allos e Multiplan (linhas da DFP de 2025, R$ mil)", () => {
+  // Contas, descrições e valores como estão no dfp_cia_aberta_DFC_MI_con_2025.csv (varredura da #36).
+  test("Allos: os shoppings entram no capex, junto do imobilizado e do intangível", () => {
+    const { capex } = classificarLinhas([
+      L("6.02.02", "Pagamentos para aquisição de propriedades para  investimentos (shopping centers)", -386_081),
+      L("6.02.03", "Pagamentos para aquisição de ativo imobilizado", -10),
+      L("6.02.04", "Pagamentos para aquisição de ativo intangível", -20),
+    ]);
+    assert.deepEqual(capex.linhas.map((l) => l.conta), ["6.02.02", "6.02.03", "6.02.04"]);
+    assert.equal(capex.soma, -386_081 - 30);
+    assert.ok(capex.linhas.every((l) => !("mista" in l)));
+  });
+
+  test("Multiplan: as adições entram; a baixa de propriedade para investimento e a baixa de intangível ficam de fora", () => {
+    const { capex } = classificarLinhas([
+      L("6.02.06", "Adições em Propriedades para investimento", -730_408),
+      L("6.02.08", "Baixas em Propriedade para investimento", 57_465),
+      L("6.02.16", "Baixa em intangível", 82),
+    ]);
+    assert.deepEqual(capex.linhas.map((l) => [l.conta, l.valor]), [["6.02.06", -730_408]]);
+  });
+
+  test("a linha da CSN, que antes era mista, agora é capex inteiro", () => {
+    const { capex } = classificarLinhas([L("6.02.02", "Aquisição de ativos imobilizados, intangível e propriedade para investimento", -5_935_897)]);
+    assert.deepEqual(capex.linhas, [{ conta: "6.02.02", descricao: "Aquisição de ativos imobilizados, intangível e propriedade para investimento", valor: -5_935_897 }]);
+  });
+});
+
+describe("diluição: variação grande demais sugere desdobramento ou grupamento", () => {
+  const diluicao = (antes, depois) => calcularIndicadores(anual(), { composicao: { acoesCirculacao: depois }, composicaoAnterior: { acoesCirculacao: antes } }).diluicao;
+
+  test("o limite é 50%, para cima e para baixo, numa constante", () => {
+    assert.equal(LIMITE_DILUICAO, 0.5);
+  });
+
+  test("Direcional 2025: de 173.500.000 − 508.138 para 520.500.000 − 1.538.328 ações (desdobramento de 1 para 3): null", () => {
+    assert.deepEqual(diluicao(173_500_000 - 508_138, 520_500_000 - 1_538_328), { valor: null, motivo: "variação de +200% sugere desdobramento ou grupamento" });
+  });
+
+  test("Hapvida 2025: de 7.539.463.263 − 119.673.213 para 502.630.884 − 27.905.027 ações (grupamento de 15 para 1): null", () => {
+    assert.deepEqual(diluicao(7_539_463_263 - 119_673_213, 502_630_884 - 27_905_027), { valor: null, motivo: "variação de -94% sugere desdobramento ou grupamento" });
+  });
+
+  test("Hapvida 2023 (fixture): +5,6% de emissão continua saindo", () => {
+    const x = ano(HAPVIDA, "2023-12-31");
+    assert.ok(Math.abs(x.indicadores.diluicao.valor - 0.0559) < 0.0001, String(x.indicadores.diluicao.valor));
+  });
+
+  test("dentro do limite sai o valor; fora dele, ou no −50% de um grupamento de 2 para 1, null", () => {
+    assert.deepEqual(diluicao(1000, 1490), { valor: 0.49, motivo: null });
+    assert.deepEqual(diluicao(1000, 1500), { valor: 0.5, motivo: null });
+    assert.deepEqual(diluicao(1000, 1501), { valor: null, motivo: "variação de +50% sugere desdobramento ou grupamento" });
+    assert.deepEqual(diluicao(1000, 2000), { valor: null, motivo: "variação de +100% sugere desdobramento ou grupamento" });
+    assert.deepEqual(diluicao(1000, 510), { valor: -0.49, motivo: null });
+    assert.deepEqual(diluicao(1000, 500), { valor: null, motivo: "variação de -50% sugere desdobramento ou grupamento" });
+    assert.deepEqual(diluicao(1000, 100), { valor: null, motivo: "variação de -90% sugere desdobramento ou grupamento" });
+  });
+
+  test("as ações em circulação e os valores por ação continuam saindo quando a diluição fica null", () => {
+    const r = calcularIndicadores(anual(), { composicao: { acoesCirculacao: 3000 }, composicaoAnterior: { acoesCirculacao: 1000 } });
+    assert.equal(r.diluicao.valor, null);
+    assert.equal(r.acoesCirculacao.valor, 3000);
+    assert.equal(r.fcoPorAcao.valor, 100);
+  });
+
+  test("a fórmula avisa que variação acima de 50% não é mostrada", () => {
+    assert.match(INDICADORES.find((i) => i.id === "diluicao").formula, /acima de 50%.*desdobramento ou grupamento/);
+  });
+});
+
+describe("D&A do EBITDA: a da DFC quando identificada, a da DVA de reserva", () => {
+  test("com D&A na DFC e na DVA, vale a da DFC, e a origem diz isso", () => {
+    // DFC 50 (sintético); DVA trocada para 30
+    const p = anual({ mudancas: { DVA: { "7.04.01": -30 } } });
+    const ind = calcularIndicadores(p);
+    assert.deepEqual(ind.da, { valor: 50, motivo: null, origem: "DFC" });
+    assert.deepEqual(ind.ebitda, { valor: 250, motivo: null });
+    assert.equal(ind.margemEbitda.valor, 0.25);
+    assert.equal(ind.fcoSobreEbitda.valor, 300 / 250);
+  });
+
+  test("sem linha de D&A na DFC, vale a da DVA, com o sinal trocado", () => {
+    const p = anual({ dfc: trocar(DFC, "6.01.01.02", null), mudancas: { DVA: { "7.04.01": -30 } } });
+    const ind = calcularIndicadores(p);
+    assert.deepEqual(ind.da, { valor: 30, motivo: null, origem: "DVA" });
+    assert.equal(ind.ebitda.valor, 230);
+  });
+
+  test("sem a DFC inteira, vale a DVA", () => {
+    const p = anual();
+    delete p.demonstrativos.DFC;
+    assert.deepEqual(calcularIndicadores(p).da, { valor: 50, motivo: null, origem: "DVA" });
+  });
+
+  test("a D&A da DFC entra como vem (é um ajuste positivo); a amortização de custo de transação não entra", () => {
+    const dfc = [...DFC, L("6.01.01.11", "Amortizações de Custos de Transação de Debêntures", 9)];
+    assert.deepEqual(calcularIndicadores(anual({ dfc })).da, { valor: 50, motivo: null, origem: "DFC" });
+  });
+
+  test("sem D&A em nenhuma das duas: null com o motivo da DVA, origem null", () => {
+    const p = anual({ dfc: trocar(DFC, "6.01.01.02", null) });
+    p.demonstrativos.DVA.contas = [];
+    assert.deepEqual(calcularIndicadores(p).da, { valor: null, motivo: "falta a conta 7.04.01 (depreciação e amortização, na DVA)", origem: null });
+    assert.equal(calcularIndicadores(p).ebitda.valor, null);
+  });
+
+  test("12 meses: D&A da DFC nas três parcelas passa por doze()", () => {
+    const ind = calcularIndicadores(doze12());
+    assert.deepEqual(ind.da, { valor: 50 * 1.25, motivo: null, origem: "DFC" });
+    assert.equal(ind.ebitda.valor, 200 + 62.5);
+  });
+
+  test("12 meses: se a D&A da DFC falta em alguma parcela, vale a da DVA", () => {
+    const semDa = DFC.filter((l) => !l.contaFixa && l.conta !== "6.01.01.02").map((l) => ({ ...l, valor: l.valor * 0.5 }));
+    const ind = calcularIndicadores(doze12({ atualDfc: semDa }));
+    assert.deepEqual(ind.da, { valor: 50, motivo: null, origem: "DVA" }); // 7.04.01 de 12 meses = −50
+    assert.equal(ind.ebitda.valor, 250);
+  });
+
+  test("depreciacaoEAmortizacao funciona sozinha, e diz null no período indisponível", () => {
+    assert.deepEqual(depreciacaoEAmortizacao(anual()), { valor: 50, motivo: null, origem: "DFC" });
+    assert.deepEqual(depreciacaoEAmortizacao({ tipo: "indisponivel", motivo: "m", fluxos: null }), { valor: null, motivo: "m", origem: null });
+  });
+
+  test("WEG 2025: a DFC e a DVA dão 1.001.296, e o EBITDA continua 9.000.037 (o do release, a menos de R$ 1 mil)", () => {
+    const ind = ano(WEG, "2025-12-31").indicadores;
+    assert.deepEqual(ind.da, { valor: 1_001_296, motivo: null, origem: "DFC" });
+    assert.equal(ind.ebitda.valor, 9_000_037);
+    assert.ok(Math.abs(ind.ebitda.valor - 9_000_038) <= 1);
+  });
+
+  test("Raia 2025: D&A de 2.074.779 pela DFC (2.013.044 na DVA); EBITDA de 4.818.346", () => {
+    const ind = ano(RAIA, "2025-12-31").indicadores;
+    assert.deepEqual(ind.da, { valor: 2_074_779, motivo: null, origem: "DFC" });
+    assert.equal(ind.ebitda.valor, 2_743_567 + 2_074_779);
+    assert.equal(periodo(RAIA, "2025-12-31").demonstrativos.DVA.contas.find((c) => c.conta === "7.04.01").valor, -2_013_044);
+  });
+
+  test("a fórmula da D&A diz as duas fontes e a ordem", () => {
+    const { formula } = INDICADORES.find((i) => i.id === "da");
+    assert.match(formula, /DFC/);
+    assert.match(formula, /Quando não são identificadas, vale a da DVA \(conta 7\.04\.01\)/);
   });
 });

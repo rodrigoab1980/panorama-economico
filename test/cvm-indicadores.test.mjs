@@ -117,7 +117,8 @@ describe("INDICADORES: a lista que a página vai mostrar", () => {
   test("calcularIndicadores devolve exatamente os ids da lista, cada um com valor e motivo", () => {
     const ind = calcularIndicadores(anual());
     assert.deepEqual(Object.keys(ind), INDICADORES.map((i) => i.id));
-    for (const r of Object.values(ind)) assert.deepEqual(Object.keys(r), ["valor", "motivo"]);
+    // A D&A diz também de onde saiu (DFC ou DVA).
+    for (const [id, r] of Object.entries(ind)) assert.deepEqual(Object.keys(r), id === "da" ? ["valor", "motivo", "origem"] : ["valor", "motivo"], id);
   });
 
   test("a fórmula do ROIC diz a alíquota usada no código e que arrendamento não entra", () => {
@@ -165,7 +166,8 @@ describe("cada indicador, num exercício sintético", () => {
     liquidezImediata: 150 / 400, // caixa ÷ 2.01
   };
   for (const [id, esperado] of Object.entries(casos)) {
-    test(`${id} = ${esperado}`, () => assert.deepEqual(ind[id], { valor: esperado, motivo: null }));
+    // Este exercício sintético não tem DFC: a D&A vem da DVA.
+    test(`${id} = ${esperado}`, () => assert.deepEqual(ind[id], id === "da" ? { valor: esperado, motivo: null, origem: "DVA" } : { valor: esperado, motivo: null }));
   }
 
   test("todo id de INDICADORES tem um caso aqui", () => {
@@ -261,10 +263,11 @@ describe("regras de null: nunca 0 no lugar de 'não deu'", () => {
     assert.deepEqual(calcularIndicadores(anual({ BPA: { "1": 0 } })).roa, { valor: null, motivo: "ativo total zero ou negativo" });
   });
 
-  test("DVA ausente: D&A, EBITDA e margem EBITDA null; o EBIT não vira EBITDA", () => {
+  test("sem D&A na DFC nem na DVA: D&A, EBITDA e margem EBITDA null; o EBIT não vira EBITDA", () => {
     const ind = calcularIndicadores(anual({ DVA: null }));
     const motivo = "falta a conta 7.04.01 (depreciação e amortização, na DVA)";
-    for (const id of ["da", "ebitda", "margemEbitda"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
+    assert.deepEqual(ind.da, { valor: null, motivo, origem: null });
+    for (const id of ["ebitda", "margemEbitda"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
     assert.equal(ind.ebit.valor, 200);
     assert.equal(ind.roic.valor, (200 * (1 - 0.34)) / 1150);
   });
@@ -305,13 +308,13 @@ describe("regras de null: nunca 0 no lugar de 'não deu'", () => {
     const motivo = "a companhia passou a consolidar: o ITR de 30/06/2026 é consolidado, a DFP de 31/12/2025 é individual e o ITR de 30/06/2025 é individual";
     const ind = calcularIndicadores({ tipo: "indisponivel", motivo, fim: "2026-06-30", parcelas: null, fluxos: null, estoques: { data: "2026-06-30", origem: {}, contas: { "2.03": { valor: 800 } } } });
     assert.deepEqual(Object.keys(ind), INDICADORES.map((i) => i.id));
-    for (const [id, r] of Object.entries(ind)) assert.deepEqual(r, { valor: null, motivo }, id);
+    for (const [id, r] of Object.entries(ind)) assert.deepEqual(r, id === "da" ? { valor: null, motivo, origem: null } : { valor: null, motivo }, id);
     assert.deepEqual(caixa({ tipo: "indisponivel", motivo, fluxos: null, estoques: null }), { valor: null, motivo });
   });
 
   test("período sem demonstrativo de fluxo (tipo null na série): tudo null com motivo", () => {
     const ind = calcularIndicadores({ inicio: null, fim: "2025-12-31", tipo: null, dias: null, meses: null, demonstrativos: {} });
-    for (const r of Object.values(ind)) assert.deepEqual(r, { valor: null, motivo: "o período não tem DRE, DFC nem DVA" });
+    for (const r of Object.values(ind)) assert.deepEqual([r.valor, r.motivo], [null, "o período não tem DRE, DFC nem DVA"]);
   });
 
   test("nenhum motivo aparece junto com valor, e nenhum null fica sem motivo", () => {
@@ -407,8 +410,8 @@ describe("WEG, 12 meses até o 3T26", () => {
   test("fluxos de 12 meses e balanço de 30/09/2026", () => {
     assert.equal(ind.receita.valor, 40_719_467);
     assert.equal(ind.ebit.valor, 7_884_487);
-    // D&A: 1.001.296 (2025) + 772.679 (9M26) − acumulado 9M25 do ITR de 30/09/2025
-    assert.equal(ind.da.valor, 1_068_117);
+    // D&A: 1.001.296 (2025) + 772.679 (9M26) − acumulado 9M25 do ITR de 30/09/2025. Na WEG a DFC e a DVA dão o mesmo.
+    assert.deepEqual(ind.da, { valor: 1_068_117, motivo: null, origem: "DFC" });
     assert.equal(ind.ebitda.valor, 7_884_487 + 1_068_117);
     assert.equal(ind.roe.valor, 6_690_278 / WEG.doze.estoques.contas["2.03"].valor);
     assert.equal(WEG.doze.estoques.data, "2026-09-30");
@@ -458,7 +461,7 @@ describe("release de resultados: Raia Drogasil (RD Saúde) 4T25", () => {
   //
   // EBITDA: não comparado. O release só publica o EBITDA pré-IFRS 16 (3.434,0, página 14) e o
   // ajustado (3.374,8 pré-IFRS 16 e 4.688,2 em IFRS 16, página 17). Não há "EBITDA (RCVM 156)" no
-  // padrão das demonstrações financeiras, que é o do nosso cálculo (4.756,6).
+  // padrão das demonstrações financeiras, que é o do nosso cálculo (4.818,3, com a D&A da DFC).
   const RELEASE = { receita: 44_250_449, lucroIfrs16EmMilhoes: 1_300.3, lucroPreIfrs16: 1_362_494 };
   const ind = calcularIndicadores(ano(RAIA, "2025-12-31"));
 
@@ -492,8 +495,11 @@ describe("São Martinho: exercício de abril a março", () => {
   test("valores do exercício (R$ mil)", () => {
     assert.equal(ind.receita.valor, 7_431_765);
     assert.equal(ind.lucroLiquido.valor, 836_177);
-    assert.equal(ind.da.valor, 2_371_247);
-    assert.equal(ind.ebitda.valor, 1_394_801 + 2_371_247);
+    // A D&A vem da DFC ("Depreciação e amortização", 1.086.030). A DVA traz 2.371.247: a diferença é a
+    // exaustão do ativo biológico, que a São Martinho lança na DFC como "Ativos biológicos colhidos" e
+    // que a regra da D&A não reconhece. É o caso em que a DFC dá menos do que a DVA.
+    assert.deepEqual(ind.da, { valor: 1_086_030, motivo: null, origem: "DFC" });
+    assert.equal(ind.ebitda.valor, 1_394_801 + 1_086_030);
   });
 
   test("o ROE usa o PL de 31/03/2026", () => {

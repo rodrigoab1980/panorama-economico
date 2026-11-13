@@ -87,19 +87,20 @@ export const CATEGORIAS = {
     mistura: ARRENDAMENTO,
     motivoMistura: "juros de dívida misturados com juros de arrendamento na DFC",
   },
-  // Capex: imobilizado, intangível (inclusive software), ativo de contrato (concessões) e ativo biológico. Só no investimento (6.02).
+  // Capex: imobilizado, intangível (inclusive software), ativo de contrato (concessões), ativo biológico e
+// aquisição, adição ou construção de propriedade para investimento (shoppings e terrenos). Só no investimento (6.02).
   // De fora: venda, alienação ou recebimento; aquisição de empresa e combinação de negócios (M&A); aplicações financeiras.
   capex: {
     nome: "capex",
     onde: ["6.02"],
-    bate: [/imobilizad|intangiv|softwares?\b|ativos? de contrato|ativos? contratua|ativos? biologic|plantio|madeira em pe|ativo nao circulante/],
+    bate: [/imobilizad|intangiv|softwares?\b|ativos? de contrato|ativos? contratua|ativos? biologic|plantio|madeira em pe|ativo nao circulante|(aquisic|adic|construc).*propriedades? para investimento/],
     exceto: [
       /vend|alienac|recebi|baixa|resultado|ganho|perda|indeniza|reembols/,
       /combinac|aquisic\w* de (empresa|controlad|negocio|participac|investid|subsidiari)|caixa adquirid|incorpora/,
       /aplicac\w* financeir|titulos|resgate|juros|dividend|mantidos? para venda|direito de uso/,
     ],
     // Traz outra coisa junto do capex (ex.: "Adições ao imobilizado, intangível e investimentos").
-    mista: /(,| e) (em )?investimentos?\b|investimentos? e |propriedades? para investimento|participac|(^| )e outros ativos|arrendament/,
+    mista: /(,| e) (em )?investimentos?\b|investimentos? e |participac|(^| )e outros ativos|arrendament/,
   },
   // Depreciação e amortização nos ajustes do lucro (6.01.01). Só para conferir a D&A da DVA.
   daDfc: {

@@ -15,6 +15,7 @@
 // 7. Dívida líquida negativa (caixa líquido) é valor válido, não null.
 // 8. Capex, juros pagos, arrendamentos pagos e proventos não têm código fixo na DFC: saem do classificador
 //    (classificador-dfc.mjs). Categoria não identificada é null com motivo, nunca zero.
+// 8b. A D&A do EBITDA é a da DFC quando identificada; a da DVA (7.04.01) fica de reserva.
 // 9. Há sempre dois FCL: FCO − capex, e o mesmo depois dos pagamentos de arrendamento (IFRS 16).
 // 10. Os valores por ação usam as ações em circulação (total − tesouraria) do fim do período e saem em R$.
 //     O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado.
@@ -56,6 +57,14 @@ export const DIVIDA_POR_DESCRICAO = {
   excecoes: [/compuls/i],
 };
 
+// Diluição acima deste tamanho, para cima ou para baixo, não é mostrada. O arquivo da CVM não traz os
+// desdobramentos e grupamentos: um desdobramento de 1 para 3 aparece como +200% e um grupamento de 15
+// para 1, como −93%, e nenhum dos dois muda a fatia do acionista. Por que 50%: emissão e recompra de
+// verdade raramente passam disso num ano, e o menor desdobramento comum (1 para 2) dá +100% e o menor
+// grupamento comum (2 para 1), −50%. Uma incorporação grande paga em ações também cai aqui; fica null
+// com o motivo, que é melhor do que um número que parece emissão.
+export const LIMITE_DILUICAO = 0.5;
+
 // Alerta de dívida fora das contas padrão: dívida bruta zero com despesa financeira acima desta fração
 // do ativo total. Por que 0,5%: quem não tem dívida ainda paga tarifas, IOF e ajustes a valor presente,
 // mas isso fica em poucos décimos de ponto do ativo; já uma dívida de 10% do ativo a 10% ao ano custa
@@ -93,7 +102,10 @@ export const INDICADORES = [
   { id: "lucroBruto", nome: "Lucro bruto", unidade: "R$ mil", formula: "Lucro bruto, como a companhia informa (DRE, conta 3.03)" },
   { id: "margemBruta", nome: "Margem bruta", unidade: "razão", formula: "Lucro bruto ÷ receita líquida" },
   { id: "ebit", nome: "EBIT", unidade: "R$ mil", formula: "Resultado antes do resultado financeiro e dos tributos (DRE, conta 3.05)" },
-  { id: "da", nome: "Depreciação e amortização", unidade: "R$ mil", formula: "Depreciação, amortização e exaustão da DVA (conta 7.04.01), com o sinal trocado" },
+  {
+    id: "da", nome: "Depreciação e amortização", unidade: "R$ mil",
+    formula: "Depreciação, amortização e exaustão dos ajustes do lucro na DFC, achadas pela descrição das linhas. Quando não são identificadas, vale a da DVA (conta 7.04.01), com o sinal trocado",
+  },
   { id: "ebitda", nome: "EBITDA", unidade: "R$ mil", formula: "EBIT + depreciação e amortização" },
   { id: "margemEbitda", nome: "Margem EBITDA", unidade: "razão", formula: "EBITDA ÷ receita líquida" },
   { id: "resultadoFinanceiro", nome: "Resultado financeiro", unidade: "R$ mil", formula: "Receitas financeiras menos despesas financeiras (DRE, conta 3.06)" },
@@ -153,7 +165,10 @@ export const INDICADORES = [
     formula: "Dividendos e juros sobre o capital próprio pagos aos acionistas da companhia, achados pela descrição das linhas do financiamento na DFC. Os pagos a não controladores ficam de fora",
   },
   { id: "acoesCirculacao", nome: "Ações em circulação", unidade: "ações", formula: "Ações do capital integralizado − ações em tesouraria, no fim do período (composição do capital)" },
-  { id: "diluicao", nome: "Diluição", unidade: "razão", formula: "Ações em circulação ÷ ações em circulação do exercício anterior − 1. Positiva quando o número de ações cresce" },
+  {
+    id: "diluicao", nome: "Diluição", unidade: "razão",
+    formula: "Ações em circulação ÷ ações em circulação do exercício anterior − 1. Positiva quando o número de ações cresce. Variação acima de 50%, para cima ou para baixo, não é mostrada: sugere desdobramento ou grupamento",
+  },
   {
     id: "lucroPorAcao", nome: "Lucro por ação", unidade: "R$ por ação",
     formula: "Lucro atribuído aos sócios da controladora (DRE, conta 3.11.01) ÷ ações em circulação. Usa o lucro da controladora, e não o consolidado, porque a parte dos minoritários não pertence ao acionista da companhia",
@@ -416,7 +431,25 @@ export function fluxosClassificados(periodo, { excecoes = [] } = {}) {
   return resultado;
 }
 
+// D&A do período, a que entra no EBITDA: { valor, motivo, origem }.
+//   1. A da DFC (depreciação, amortização e exaustão nos ajustes do lucro, achadas pela descrição), quando
+//      identificada: `origem` "DFC". É a mais completa: em algumas companhias a DVA não traz toda a
+//      amortização (direito de uso, mais-valia) e o EBITDA sai menor do que deveria.
+//   2. Senão, a da DVA (conta 7.04.01), que vem negativa: `origem` "DVA". O sinal é só trocado, sem
+//      Math.abs, para um valor positivo na origem aparecer como D&A negativa, e não ser escondido.
+// Nos 12 meses, a da DFC só vale se foi identificada nas três parcelas; se faltar em alguma, vale a DVA.
+// `classes` é a saída de fluxosClassificados para o mesmo período.
+export function depreciacaoEAmortizacao(periodo, classes) {
+  const p = adaptarPeriodo(periodo);
+  if (p.tipo === "indisponivel") return { ...nulo(p.motivo), origem: null };
+  const daDfc = (classes ?? fluxosClassificados(p)).daDfc;
+  if (daDfc.valor != null) return { ...ok(daDfc.valor), origem: "DFC" };
+  const daDva = combinar([fluxo(p, "7.04.01")], (v) => 0 - v);
+  return { ...daDva, origem: daDva.valor == null ? null : "DVA" };
+}
+
 // Indicadores de um período. Devolve { [id]: { valor, motivo } }, com um item para cada id de INDICADORES.
+// A D&A (`da`) traz também `origem`, "DFC" ou "DVA", dizendo de onde saiu.
 // `contexto` traz o que não está no período:
 //   composicao          composição do capital do fim do período, JÁ EM UNIDADES de ação ({ acoesCirculacao, ... })
 //   composicaoAnterior  a do exercício anterior, para a diluição (só na série anual)
@@ -425,15 +458,15 @@ export function fluxosClassificados(periodo, { excecoes = [] } = {}) {
 // calcularIndicadoresDaSerie() monta o contexto de cada período.
 export function calcularIndicadores(periodo, contexto = {}) {
   const p = adaptarPeriodo(periodo);
-  if (p.tipo === "indisponivel") return Object.fromEntries(INDICADORES.map(({ id }) => [id, nulo(p.motivo)]));
+  if (p.tipo === "indisponivel") return Object.fromEntries(INDICADORES.map(({ id }) => [id, id === "da" ? { ...nulo(p.motivo), origem: null } : nulo(p.motivo)]));
 
   const receita = fluxo(p, "3.01");
   const lucroBruto = fluxo(p, "3.03");
   const ebit = fluxo(p, "3.05");
-  // A DVA traz a depreciação negativa. O sinal é só trocado: sem Math.abs, para um valor positivo
-  // na origem aparecer como D&A negativa, e não ser escondido.
-  const da = combinar([fluxo(p, "7.04.01")], (v) => 0 - v);
-  const ebitda = combinar([ebit, da], (a, b) => a + b);
+  // As linhas da DFC achadas pela descrição (#36). As somas vêm com o sinal da DFC (pagamento negativo).
+  const classes = fluxosClassificados(p, { excecoes: contexto.excecoesDfc });
+  const da = depreciacaoEAmortizacao(p, classes);
+  const ebitda = combinar([ebit, da], (a, b) => a + b); // combinar devolve só { valor, motivo }
   const resultadoFinanceiro = fluxo(p, "3.06");
   const lucroLiquido = fluxo(p, "3.11");
 
@@ -461,7 +494,6 @@ export function calcularIndicadores(periodo, contexto = {}) {
 
   // Fluxo de caixa (#36). As somas do classificador vêm com o sinal da DFC (pagamento negativo).
   const fco = fluxo(p, "6.01");
-  const classes = fluxosClassificados(p, { excecoes: contexto.excecoesDfc });
   // Categoria da DFC como valor positivo. Quando não foi identificada, o motivo diz qual.
   const pago = (categoria, rotulo) => {
     const c = classes[categoria];
@@ -490,7 +522,12 @@ export function calcularIndicadores(periodo, contexto = {}) {
     if (contexto.primeiroAno) return nulo("primeiro ano da série");
     const antes = contexto.composicaoAnterior?.acoesCirculacao;
     if (antes == null || antes <= 0) return nulo("falta a composição do capital do exercício anterior");
-    return ok(acoes.valor / antes - 1);
+    const variacao = acoes.valor / antes - 1;
+    if (Math.abs(variacao) > LIMITE_DILUICAO || variacao === -LIMITE_DILUICAO) {
+      const n = Math.round(Math.abs(variacao) * 100);
+      return nulo(`variação de ${variacao > 0 ? "+" : "-"}${n}% sugere desdobramento ou grupamento`);
+    }
+    return ok(variacao);
   };
 
   return {
