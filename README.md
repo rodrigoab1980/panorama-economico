@@ -40,7 +40,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
-| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado e de retorno de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
+| `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida e liquidez de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
 | `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
 | `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
@@ -117,7 +117,27 @@ A página Fundamentalista (em construção na v2.0) mostra, para cada exercício
 | ROA | Lucro líquido ÷ ativo total (BPA 1) no fim do período |
 | ROIC | EBIT × (1 − 34%) ÷ capital investido no fim do período |
 
-Capital investido = patrimônio líquido (2.03) + dívida bruta − caixa. A dívida bruta são os empréstimos e financiamentos de curto e de longo prazo (BPP 2.01.04 + 2.02.01). O caixa é caixa e equivalentes mais aplicações financeiras (BPA 1.01.01 + 1.01.02).
+Capital investido = patrimônio líquido + dívida bruta − caixa, com a dívida bruta e o caixa da tabela abaixo.
+
+Caixa, dívida e liquidez, sempre com o saldo do fim do período:
+
+| Indicador | Fórmula |
+|---|---|
+| Patrimônio líquido | BPP 2.03 |
+| Caixa | BPA 1.01.01 + 1.01.02 (caixa e equivalentes + aplicações financeiras) |
+| Dívida bruta | (BPP 2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03): empréstimos, financiamentos e debêntures, sem arrendamentos |
+| Arrendamentos | 2.01.04.03 + 2.02.01.03 + as linhas de arrendamento em outras obrigações (2.01.05 e 2.02.02) |
+| Dívida bruta com arrendamentos | Dívida bruta + arrendamentos |
+| Dívida líquida | Dívida bruta − caixa. Negativa quer dizer mais caixa do que dívida |
+| Dívida líquida com arrendamentos | Dívida bruta + arrendamentos − caixa |
+| Dívida bruta ÷ patrimônio líquido | Dívida bruta ÷ BPP 2.03 |
+| Dívida líquida ÷ EBITDA | Dívida líquida ÷ EBITDA do período |
+| Dívida de curto prazo | (2.01.04 − 2.01.04.03) ÷ dívida bruta |
+| Despesas financeiras | DRE 3.06.02, com o sinal trocado |
+| Cobertura de juros | EBIT ÷ despesas financeiras |
+| Custo aproximado da dívida | Despesas financeiras ÷ dívida bruta |
+| Liquidez corrente | BPA 1.01 ÷ BPP 2.01 |
+| Liquidez imediata | Caixa ÷ BPP 2.01 |
 
 As escolhas por trás das fórmulas:
 
@@ -125,15 +145,20 @@ As escolhas por trás das fórmulas:
 2. **No ROE, lucro e patrimônio entram os dois com minoritários** (3.11 ÷ 2.03), para os dois lados ficarem na mesma base.
 3. **O ROA é lucro ÷ ativo**, a definição clássica. Outras fontes usam EBIT ÷ ativo e chegam a um número maior.
 4. **O ROIC usa a alíquota nominal de 34%** (IR + CSLL), não a efetiva. A efetiva oscila com JCP, incentivos e prejuízo fiscal, e faria o ROIC variar sem motivo operacional.
-5. **A dívida bruta não inclui arrendamentos (IFRS 16).**
+5. **A dívida bruta não inclui arrendamentos (IFRS 16), e as duas versões são sempre calculadas.** O número principal é sem arrendamentos; a dívida bruta e a líquida "com arrendamentos" saem ao lado. Em varejo e telecom o arrendamento passa da dívida (na Raia Drogasil, 4,97 bilhões contra 3,87 bilhões em 2025), então os dois números contam histórias diferentes. Quem lança o arrendamento dentro de empréstimos e financiamentos (contas 2.01.04.03 e 2.02.01.03) tem esse valor tirado da dívida bruta.
+6. **Os arrendamentos são achados pela descrição.** A maioria das companhias não usa a conta fixa: cria uma linha própria em "outras obrigações", sem código fixo. Entram as linhas de 2.01.05 e 2.02.02 cuja descrição contém "arrendament". "Aluguéis" não entra, porque é aluguel a pagar. Se uma linha e uma sublinha dela batem, conta só a de cima. Quando nenhuma linha bate, o valor é zero, o que quer dizer "nenhuma linha com esse nome", e não necessariamente "sem arrendamento".
+7. **"Despesas financeiras" é uma aproximação dos juros.** A conta da DRE inclui variação cambial, juros de arrendamento e outros encargos. Por isso a cobertura de juros e o custo da dívida são aproximados, e o custo pode sair alto demais em quem tem pouca dívida e muito câmbio. Os juros pagos, do fluxo de caixa, entram depois.
+8. **Dívida fora das contas padrão vira aviso, não zero.** Quando a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e tudo o que depende dela (inclusive o ROIC) ficam vazios, com o motivo "a dívida pode estar fora das contas padrão". É o caso da Allos, que registra empréstimos e debêntures em outras obrigações. O limite de 0,5% separa quem só paga tarifas e IOF de quem tem dívida.
 
 Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente.
 
-Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores e as margens saem, mas ROE, ROA e ROIC não: nada é anualizado. O EBITDA depende da DVA; sem ela, fica vazio, e o EBIT não entra no lugar.
+Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores, as margens e os saldos do balanço saem, mas ROE, ROA, ROIC, dívida líquida ÷ EBITDA, cobertura de juros e custo da dívida não: nada é anualizado. O EBITDA depende da DVA; sem ela, fica vazio, e o EBIT não entra no lugar.
+
+Nos indicadores de dívida, a dívida líquida negativa é um valor válido (caixa líquido), não um vazio. Dívida líquida ÷ EBITDA fica vazia com EBITDA zero ou negativo. Parcela de curto prazo e custo da dívida ficam vazios para quem não tem dívida ("sem dívida financeira"). A cobertura e o custo ficam vazios com despesa financeira zero ou negativa, e também quando a companhia informa só o resultado financeiro líquido, sem abrir receitas e despesas. As duas liquidezes ficam vazias com passivo circulante zero.
 
 São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
-A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados de 2025 da WEG e da Raia Drogasil.
+A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `LIMITE_DESPESA_SEM_DIVIDA`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados e os balanços de 2025 da WEG e da Raia Drogasil.
 
 ## Atualização confiável (cron-job.org)
 
