@@ -1,0 +1,30 @@
+name: Teste temporário do download da B3 (#51)
+
+# Passo 0 da #51: confirma que a B3 não bloqueia o runner do GitHub Actions. Sai antes do PR.
+on:
+  push:
+    branches: [feat/cotacao-multiplos]
+
+permissions:
+  contents: read
+
+jobs:
+  baixar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: |
+          cat > baixar.mjs <<'JS'
+          const dia = process.argv[2];
+          const url = `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_D${dia}.ZIP`;
+          const t = Date.now();
+          const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+          const b = Buffer.from(await r.arrayBuffer());
+          console.log(dia, r.status, r.headers.get("content-type"), b.length, "bytes", Date.now() - t, "ms", b.subarray(0, 4).toString("hex"));
+          if (!r.ok || b.subarray(0, 2).toString() !== "PK") process.exit(1);
+          JS
+          node baixar.mjs 12112026
+          node baixar.mjs 11112026
