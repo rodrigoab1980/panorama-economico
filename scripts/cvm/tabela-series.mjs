@@ -48,6 +48,7 @@ console.log(`\nOrigem dos anuais: ${anos.map((p) => `${br(p.fim)} = ${origem(p)}
 if (doze.tipo === "itr") {
   const { anual: a, acumuladoAtual: b, acumuladoAnterior: c } = doze.parcelas;
   console.log(`12 meses = anual (${br(a.inicio)} a ${br(a.fim)}) + acumulado (${br(b.inicio)} a ${br(b.fim)}) − acumulado (${br(c.inicio)} a ${br(c.fim)}).`);
+  console.log(`O acumulado anterior vem do ITR de ${br(c.dtRefer)}, como entregue. As três parcelas são ${a.consolidado ? "consolidadas" : "individuais"}.`);
   console.log(`O patrimônio líquido da última coluna é a posição em ${br(doze.estoques.data)}.`);
 } else if (doze.tipo === "ano-fechado") {
   console.log("12 meses = ano fechado: o documento mais recente é a DFP.");

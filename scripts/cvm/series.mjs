@@ -7,7 +7,10 @@
 // 2. Reapresentação: para o exercício que termina em F, vale o PENÚLTIMO da DFP seguinte, quando existe.
 //    A escolha é por (período, demonstrativo) inteiro, nunca conta a conta.
 // 3. Base de 12 meses = anual da última DFP + acumulado do ITR mais recente − acumulado do mesmo intervalo
-//    do ano anterior (o PENÚLTIMO do próprio ITR). Se o ITR não encaixa na DFP, o resultado é null com motivo.
+//    do ano anterior. O acumulado anterior vem do ITR do ano anterior COMO ENTREGUE (ÚLTIMO), não do
+//    PENÚLTIMO do ITR atual: assim a parcela subtraída é a que está dentro do anual da DFP. As três parcelas
+//    têm de estar na mesma base (consolidado ou individual). Se o ITR não encaixa na DFP, se falta o ITR do
+//    ano anterior ou se a base muda, o resultado é null com motivo.
 // 4. Ausência é null. Zero só quando a CVM informa zero. null em qualquer parcela dá null.
 
 import { ehPorAcao } from "./leitor.mjs";
@@ -77,7 +80,7 @@ function documentosDe(fatos) {
     if (!doc.blocos.has(kb)) {
       doc.blocos.set(kb, {
         familia: familia(f.demonstrativo), metodo: metodo(f.demonstrativo), ordem: f.ordem, inicio: f.inicio, fim: f.fim,
-        documento: f.documento, dtRefer: f.dtRefer, versao: f.versao, contas: [],
+        documento: f.documento, dtRefer: f.dtRefer, versao: f.versao, consolidado: f.consolidado, contas: [],
       });
     }
     doc.blocos.get(kb).contas.push({ conta: f.conta, descricao: f.descricao, contaFixa: f.contaFixa, valor: f.valor });
@@ -107,11 +110,14 @@ const maisLongo = (blocos) => blocos.reduce((a, b) => (a == null || (b.inicio ??
 // Escolhe a origem de um (período, demonstrativo).
 //   proprio:   bloco ÚLTIMO da DFP do próprio exercício (pode faltar)
 //   seguinte:  bloco PENÚLTIMO da DFP do exercício seguinte, para o mesmo fim (pode faltar)
-// Vale o seguinte quando ele existe e, na DFC, usa o mesmo método do próprio (se a empresa trocou
-// DFC_MI por DFC_MD, vale o da própria DFP). Devolve o bloco escolhido com a origem; `reapresentado`
-// é true/false quando dá para comparar com o original e null quando não há o documento original.
+// Vale o seguinte quando ele existe e é comparável com o próprio: na DFC, mesmo método (se a empresa
+// trocou DFC_MI por DFC_MD, vale o da própria DFP); em todos, mesma base (se a empresa passou a consolidar,
+// o PENÚLTIMO consolidado da DFP seguinte vem zerado, e vale o individual da própria DFP).
+// Devolve o bloco escolhido com a origem; `reapresentado` é true/false quando dá para comparar com o
+// original e null quando não há o documento original.
 export function escolherOrigem(proprio, seguinte) {
-  const usaSeguinte = seguinte != null && (proprio == null || seguinte.metodo === proprio.metodo);
+  const usaSeguinte = seguinte != null
+    && (proprio == null || (seguinte.metodo === proprio.metodo && seguinte.consolidado === proprio.consolidado));
   const bloco = usaSeguinte ? seguinte : proprio;
   if (!bloco) return null;
   let reapresentado = false;
@@ -132,7 +138,7 @@ export function escolherOrigem(proprio, seguinte) {
     ...(bloco.metodo ? { metodo: bloco.metodo } : {}),
     inicio: bloco.inicio,
     fim: bloco.fim,
-    origem: { documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem, reapresentado },
+    origem: { documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem, consolidado: bloco.consolidado, reapresentado },
     ...(originais ? { originais } : {}),
     contas: bloco.contas,
   };
@@ -172,7 +178,10 @@ export function serieAnual(fatos, { desde = "2010-01-01" } = {}) {
   return periodos;
 }
 
-const origemDe = (bloco) => ({ inicio: bloco.inicio, fim: bloco.fim, documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem });
+const origemDe = (bloco) => ({
+  inicio: bloco.inicio, fim: bloco.fim, documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem, consolidado: bloco.consolidado,
+});
+const base = (consolidado) => (consolidado ? "consolidado" : "individual");
 const dataBr = (iso) => iso.split("-").reverse().join("/");
 
 function estoquesDe(blocos, data) {
@@ -181,7 +190,7 @@ function estoquesDe(blocos, data) {
   for (const fam of ESTOQUES) {
     const bloco = blocos.find((b) => b.familia === fam && b.fim === data);
     if (!bloco) continue;
-    origem ??= { documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem };
+    origem ??= { documento: bloco.documento, dtRefer: bloco.dtRefer, versao: bloco.versao, ordem: bloco.ordem, consolidado: bloco.consolidado };
     for (const [conta, descricao] of contasFixas(bloco)) contas[conta] = { demonstrativo: fam, descricao, valor: valorDaConta(bloco, conta) };
   }
   return origem ? { data, origem, contas } : null;
@@ -190,6 +199,7 @@ function estoquesDe(blocos, data) {
 // Base de 12 meses, só para contas fixas.
 // Devolve { tipo, motivo, fim, parcelas, fluxos, estoques }:
 //   tipo "itr":          anual + acumulado atual − acumulado anterior; `parcelas` traz as datas e a origem das três
+//                        (o acumulado anterior é o ÚLTIMO do ITR do ano anterior, na mesma base das outras duas)
 //   tipo "ano-fechado":  o documento mais recente é a DFP; os 12 meses são o próprio exercício
 //   tipo "indisponivel": não deu para calcular; `motivo` diz por quê e `fluxos` é null (os estoques saem, se houver)
 // fluxos:   { conta: { demonstrativo, descricao, valor, anual, acumuladoAtual, acumuladoAnterior } }
@@ -222,7 +232,10 @@ export function base12Meses(fatos) {
     }
     return {
       tipo: "ano-fechado", motivo: null, fim: ultimaDfp.dtRefer,
-      parcelas: { anual: { inicio: anual.inicio, fim: anual.fim, documento: "dfp", dtRefer: ultimaDfp.dtRefer, versao: ultimaDfp.versao, ordem: "ultimo" }, acumuladoAtual: null, acumuladoAnterior: null },
+      parcelas: {
+        anual: { inicio: anual.inicio, fim: anual.fim, documento: "dfp", dtRefer: ultimaDfp.dtRefer, versao: ultimaDfp.versao, ordem: "ultimo", consolidado: FLUXOS.map((f) => anual.demonstrativos[f]).find(Boolean)?.origem.consolidado ?? null },
+        acumuladoAtual: null, acumuladoAnterior: null,
+      },
       fluxos, estoques,
     };
   }
@@ -244,22 +257,35 @@ export function base12Meses(fatos) {
   if (anual.tipo !== "anual") {
     return falha(`a última DFP (${dataBr(ultimaDfp.dtRefer)}) cobre ${anual.meses ?? "?"} meses, não um exercício de 12 meses`);
   }
-  const anteriores = fluxosDoItr.filter((b) => b.ordem === "penultimo");
-  const fimAnterior = anteriores.map((b) => b.fim).sort().at(-1);
-  const anterior = intervaloAcumulado(anteriores.filter((b) => b.fim === fimAnterior));
-  if (!anterior) return falha(`o ITR de ${dataBr(fim)} não traz o acumulado do ano anterior`);
+
+  // Acumulado do ano anterior: vem do ITR do mesmo período do ano anterior, como entregue (ÚLTIMO).
+  // O leitor já deixou só a maior versão de cada documento. O PENÚLTIMO do ITR atual não é usado:
+  // ele pode vir reapresentado (e aí não é mais a parcela que está dentro do anual da DFP) ou zerado.
+  const fimEsperado = umAnoAntes(fim);
+  const itrAnterior = itrs.find((d) => perto(d.dtRefer, fimEsperado));
+  if (!itrAnterior) return falha(`falta o ITR de ${dataBr(fimEsperado)}, de onde sai o acumulado do ano anterior`);
+  const fluxosAnteriores = itrAnterior.blocos.filter((b) => FLUXOS.includes(b.familia) && b.ordem === "ultimo" && b.fim === itrAnterior.dtRefer);
+  const anterior = intervaloAcumulado(fluxosAnteriores);
+  if (!anterior) return falha(`o ITR de ${dataBr(itrAnterior.dtRefer)} não traz DRE, DFC nem DVA do período`);
   if (!mesmoIntervaloUmAnoAntes(atual, anterior)) {
-    return falha(`o acumulado anterior do ITR (${dataBr(anterior.inicio)} a ${dataBr(anterior.fim)}) não é o mesmo intervalo do atual (${dataBr(atual.inicio)} a ${dataBr(atual.fim)}) um ano antes`);
+    return falha(`o acumulado do ITR de ${dataBr(itrAnterior.dtRefer)} (${dataBr(anterior.inicio)} a ${dataBr(anterior.fim)}) não é o mesmo intervalo do atual (${dataBr(atual.inicio)} a ${dataBr(atual.fim)}) um ano antes`);
   }
   if (!perto(anterior.inicio, anual.inicio)) {
-    return falha(`o acumulado anterior do ITR começa em ${dataBr(anterior.inicio)}, e o exercício da última DFP, em ${dataBr(anual.inicio)}`);
+    return falha(`o acumulado do ITR de ${dataBr(itrAnterior.dtRefer)} começa em ${dataBr(anterior.inicio)}, e o exercício da última DFP, em ${dataBr(anual.inicio)}`);
+  }
+
+  // As três parcelas na mesma base. Se a companhia passou a consolidar (ou deixou de), não há como somar.
+  const baseAnual = FLUXOS.map((f) => anual.demonstrativos[f]).find(Boolean).origem.consolidado;
+  if (baseAnual !== atual.consolidado || anterior.consolidado !== atual.consolidado) {
+    const mudou = atual.consolidado ? "a companhia passou a consolidar" : "a companhia deixou de consolidar";
+    return falha(`${mudou}: o ITR de ${dataBr(fim)} é ${base(atual.consolidado)}, a DFP de ${dataBr(ultimaDfp.dtRefer)} é ${base(baseAnual)} e o ITR de ${dataBr(itrAnterior.dtRefer)} é ${base(anterior.consolidado)}`);
   }
 
   const fluxos = {};
   for (const fam of FLUXOS) {
     const blocoAnual = anual.demonstrativos[fam];
     const blocoAtual = fluxosDoItr.find((b) => b.familia === fam && b.ordem === "ultimo" && b.inicio === atual.inicio && b.fim === atual.fim);
-    const blocoAnterior = fluxosDoItr.find((b) => b.familia === fam && b.ordem === "penultimo" && b.inicio === anterior.inicio && b.fim === anterior.fim);
+    const blocoAnterior = fluxosAnteriores.find((b) => b.familia === fam && b.inicio === anterior.inicio && b.fim === anterior.fim);
     const contas = new Map([...contasFixas(blocoAnual), ...contasFixas(blocoAtual), ...contasFixas(blocoAnterior)]);
     for (const [conta, descricao] of contas) {
       const parcelas = { anual: valorDaConta(blocoAnual, conta), acumuladoAtual: valorDaConta(blocoAtual, conta), acumuladoAnterior: valorDaConta(blocoAnterior, conta) };
@@ -269,7 +295,7 @@ export function base12Meses(fatos) {
   return {
     tipo: "itr", motivo: null, fim,
     parcelas: {
-      anual: { inicio: anual.inicio, fim: anual.fim, documento: "dfp", dtRefer: ultimaDfp.dtRefer, versao: ultimaDfp.versao, ordem: "ultimo" },
+      anual: { inicio: anual.inicio, fim: anual.fim, documento: "dfp", dtRefer: ultimaDfp.dtRefer, versao: ultimaDfp.versao, ordem: "ultimo", consolidado: baseAnual },
       acumuladoAtual: origemDe(atual),
       acumuladoAnterior: origemDe(anterior),
     },

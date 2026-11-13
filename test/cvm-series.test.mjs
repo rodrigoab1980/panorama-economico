@@ -48,10 +48,18 @@ describe("WEG: base de 12 meses no 3T26 (parcelas conferidas no arquivo, R$ mil)
     assert.equal(WEG.doze.motivo, null);
     assert.equal(WEG.doze.fim, "2026-09-30");
     assert.deepEqual(WEG.doze.parcelas, {
-      anual: { inicio: "2025-01-01", fim: "2025-12-31", documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "ultimo" },
-      acumuladoAtual: { inicio: "2026-01-01", fim: "2026-09-30", documento: "itr", dtRefer: "2026-09-30", versao: 1, ordem: "ultimo" },
-      acumuladoAnterior: { inicio: "2025-01-01", fim: "2025-09-30", documento: "itr", dtRefer: "2026-09-30", versao: 1, ordem: "penultimo" },
+      anual: { inicio: "2025-01-01", fim: "2025-12-31", documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "ultimo", consolidado: true },
+      acumuladoAtual: { inicio: "2026-01-01", fim: "2026-09-30", documento: "itr", dtRefer: "2026-09-30", versao: 1, ordem: "ultimo", consolidado: true },
+      acumuladoAnterior: { inicio: "2025-01-01", fim: "2025-09-30", documento: "itr", dtRefer: "2025-09-30", versao: 1, ordem: "ultimo", consolidado: true },
     });
+  });
+
+  test("o acumulado anterior vem do ITR de 30/09/2025 como entregue, não do PENÚLTIMO do ITR de 2026", () => {
+    const { acumuladoAnterior } = WEG.doze.parcelas;
+    assert.deepEqual([acumuladoAnterior.dtRefer, acumuladoAnterior.ordem], ["2025-09-30", "ultimo"]);
+    // Os valores usados são os do documento de 2025 (aqui coincidem com o PENÚLTIMO de 2026: a WEG não reapresentou).
+    const de2025 = (conta) => fatosDe("weg").find((f) => f.documento === "itr" && f.dtRefer === "2025-09-30" && f.ordem === "ultimo" && f.inicio === "2025-01-01" && f.conta === conta).valor;
+    for (const conta of ["3.01", "3.05", "3.11", "6.01"]) assert.equal(WEG.doze.fluxos[conta].acumuladoAnterior, de2025(conta), conta);
   });
 
   test("usa o acumulado de 9 meses, não o trimestre (a DRE do ITR traz os dois)", () => {
@@ -79,8 +87,8 @@ describe("WEG: série anual", () => {
     assert.deepEqual(WEG.anual.map((p) => [p.inicio, p.fim, p.tipo, p.meses]), [
       ["2024-01-01", "2024-12-31", "anual", 12], ["2025-01-01", "2025-12-31", "anual", 12],
     ]);
-    assert.deepEqual(periodo(WEG, "2025-12-31").demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "ultimo", reapresentado: false });
-    assert.deepEqual(periodo(WEG, "2024-12-31").demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "penultimo", reapresentado: null });
+    assert.deepEqual(periodo(WEG, "2025-12-31").demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "ultimo", consolidado: true, reapresentado: false });
+    assert.deepEqual(periodo(WEG, "2024-12-31").demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2025-12-31", versao: 1, ordem: "penultimo", consolidado: true, reapresentado: null });
   });
 
   test("valores anuais da tabela do checkpoint (R$ mil)", () => {
@@ -123,6 +131,7 @@ describe("São Martinho: período é data (exercício de abril a março)", () =>
     assert.deepEqual([anual.inicio, anual.fim], ["2025-04-01", "2026-03-31"]);
     assert.deepEqual([acumuladoAtual.inicio, acumuladoAtual.fim], ["2026-04-01", "2026-06-30"]);
     assert.deepEqual([acumuladoAnterior.inicio, acumuladoAnterior.fim], ["2025-04-01", "2025-06-30"]);
+    assert.deepEqual([acumuladoAnterior.dtRefer, acumuladoAnterior.ordem], ["2025-06-30", "ultimo"], "vem do ITR de 30/06/2025 como entregue");
     assert.equal(acumuladoAtual.inicio, somarDias(anual.fim, 1));
   });
 
@@ -134,7 +143,7 @@ describe("São Martinho: período é data (exercício de abril a março)", () =>
 
   test("exercício até 03/2025: vem da DFP seguinte e, comparado com o original, não mudou", () => {
     const dre = periodo(SAO_MARTINHO, "2025-03-31").demonstrativos.DRE;
-    assert.deepEqual(dre.origem, { documento: "dfp", dtRefer: "2026-03-31", versao: 1, ordem: "penultimo", reapresentado: false });
+    assert.deepEqual(dre.origem, { documento: "dfp", dtRefer: "2026-03-31", versao: 1, ordem: "penultimo", consolidado: true, reapresentado: false });
     assert.equal(dre.originais, undefined);
     assert.equal(valorDaConta(dre, "3.11"), 556_731);
   });
@@ -148,7 +157,7 @@ describe("Hapvida: reapresentação", () => {
   const p2022 = periodo(HAPVIDA, "2022-12-31");
 
   test("o anual de 2022 sai da DFP 2023, marcado como reapresentado: lucro de −1.718.120", () => {
-    assert.deepEqual(p2022.demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2023-12-31", versao: 2, ordem: "penultimo", reapresentado: true });
+    assert.deepEqual(p2022.demonstrativos.DRE.origem, { documento: "dfp", dtRefer: "2023-12-31", versao: 2, ordem: "penultimo", consolidado: true, reapresentado: true });
     assert.equal(valorDaConta(p2022.demonstrativos.DRE, "3.11"), -1_718_120);
   });
 
@@ -171,7 +180,7 @@ describe("Hapvida: reapresentação", () => {
 
   test("o anual de 2023 sai da própria DFP 2023", () => {
     const dre = periodo(HAPVIDA, "2023-12-31").demonstrativos.DRE;
-    assert.deepEqual(dre.origem, { documento: "dfp", dtRefer: "2023-12-31", versao: 2, ordem: "ultimo", reapresentado: false });
+    assert.deepEqual(dre.origem, { documento: "dfp", dtRefer: "2023-12-31", versao: 2, ordem: "ultimo", consolidado: true, reapresentado: false });
     assert.equal(valorDaConta(dre, "3.11"), -757_409);
   });
 
@@ -203,11 +212,10 @@ const fato = (o) => ({
 });
 // DFP de um exercício: lucro e, se pedido, PL.
 const dfp = (inicio, fim, lucro, extra = {}) => fato({ inicio, fim, valor: lucro, ...extra });
-// ITR: acumulado atual e acumulado do ano anterior.
-const itr = (dtRefer, [iniA, valA], [iniP, fimP, valP], extra = {}) => [
-  fato({ documento: "itr", dtRefer, inicio: iniA, fim: dtRefer, valor: valA, ...extra }),
-  fato({ documento: "itr", dtRefer, ordem: "penultimo", inicio: iniP, fim: fimP, valor: valP, ...extra }),
-];
+// Um ITR: o acumulado do período, como entregue (ÚLTIMO).
+const umItr = (dtRefer, inicio, valor, extra = {}) => fato({ documento: "itr", dtRefer, inicio, fim: dtRefer, valor, ...extra });
+// O ITR atual e o ITR do mesmo período do ano anterior (dois documentos).
+const itr = (dtRefer, [iniA, valA], [iniP, fimP, valP], extra = {}) => [umItr(dtRefer, iniA, valA, extra), umItr(fimP, iniP, valP, extra)];
 
 describe("sintético: base de 12 meses", () => {
   const ANUAL = dfp("2025-01-01", "2025-12-31", 1000);
@@ -216,6 +224,51 @@ describe("sintético: base de 12 meses", () => {
     const r = base12Meses([ANUAL, ...itr("2026-06-30", ["2026-01-01", 300], ["2025-01-01", "2025-06-30", 200])]);
     assert.equal(r.tipo, "itr");
     assert.equal(r.fluxos["3.11"].valor, 1100);
+  });
+
+  test("ano anterior reapresentado no PENÚLTIMO do ITR atual: vale o valor original, do ITR do ano anterior", () => {
+    const r = base12Meses([ANUAL,
+      umItr("2026-06-30", "2026-01-01", 300),
+      fato({ documento: "itr", dtRefer: "2026-06-30", ordem: "penultimo", inicio: "2025-01-01", fim: "2025-06-30", valor: 150 }), // reapresentado: era 200
+      umItr("2025-06-30", "2025-01-01", 200),
+    ]);
+    assert.equal(r.tipo, "itr");
+    assert.deepEqual([r.fluxos["3.11"].anual, r.fluxos["3.11"].acumuladoAtual, r.fluxos["3.11"].acumuladoAnterior, r.fluxos["3.11"].valor], [1000, 300, 200, 1100]);
+    assert.deepEqual([r.parcelas.acumuladoAnterior.dtRefer, r.parcelas.acumuladoAnterior.ordem], ["2025-06-30", "ultimo"]);
+  });
+
+  test("ITR do ano anterior ausente: null com o motivo, mesmo havendo o PENÚLTIMO no ITR atual", () => {
+    const r = base12Meses([ANUAL,
+      umItr("2026-06-30", "2026-01-01", 300),
+      fato({ documento: "itr", dtRefer: "2026-06-30", ordem: "penultimo", inicio: "2025-01-01", fim: "2025-06-30", valor: 200 }),
+    ]);
+    assert.equal(r.tipo, "indisponivel");
+    assert.equal(r.fluxos, null);
+    assert.match(r.motivo, /falta o ITR de 30\/06\/2025/);
+  });
+
+  test("troca de individual para consolidado (como a TIM): null com o motivo", () => {
+    const ind = { consolidado: false };
+    const r = base12Meses([
+      dfp("2025-01-01", "2025-12-31", 1000, ind),
+      umItr("2025-06-30", "2025-01-01", 200, ind),
+      umItr("2026-06-30", "2026-01-01", 300), // consolidado
+      fato({ documento: "itr", dtRefer: "2026-06-30", ordem: "penultimo", inicio: "2025-01-01", fim: "2025-06-30", valor: 0 }), // coluna zerada
+    ]);
+    assert.equal(r.tipo, "indisponivel");
+    assert.equal(r.fluxos, null);
+    assert.match(r.motivo, /a companhia passou a consolidar: o ITR de 30\/06\/2026 é consolidado, a DFP de 31\/12\/2025 é individual e o ITR de 30\/06\/2025 é individual/);
+  });
+
+  test("base diferente em qualquer uma das três parcelas impede a conta", () => {
+    const ind = { consolidado: false };
+    const soAnteriorInd = base12Meses([ANUAL, umItr("2026-06-30", "2026-01-01", 300), umItr("2025-06-30", "2025-01-01", 200, ind)]);
+    assert.match(soAnteriorInd.motivo, /passou a consolidar.*ITR de 30\/06\/2025 é individual/);
+    const deixou = base12Meses([ANUAL, umItr("2026-06-30", "2026-01-01", 300, ind), umItr("2025-06-30", "2025-01-01", 200)]);
+    assert.match(deixou.motivo, /deixou de consolidar/);
+    const tudoInd = base12Meses([dfp("2025-01-01", "2025-12-31", 1000, ind), umItr("2026-06-30", "2026-01-01", 300, ind), umItr("2025-06-30", "2025-01-01", 200, ind)]);
+    assert.equal(tudoInd.fluxos["3.11"].valor, 1100, "tudo individual é a mesma base: a conta sai");
+    assert.equal(tudoInd.parcelas.anual.consolidado, false);
   });
 
   test("ITR que não encaixa na DFP (DFP atrasada): null com o motivo, nunca um número", () => {
@@ -255,7 +308,7 @@ describe("sintético: base de 12 meses", () => {
     const r = base12Meses([
       ANUAL, dfp("2025-01-01", "2025-12-31", 5000, receita),
       ...itr("2026-06-30", ["2026-01-01", 300], ["2025-01-01", "2025-06-30", 200]),
-      fato({ documento: "itr", dtRefer: "2026-06-30", inicio: "2026-01-01", fim: "2026-06-30", valor: 2600, ...receita }), // sem o acumulado anterior
+      umItr("2026-06-30", "2026-01-01", 2600, receita), // sem a receita no ITR do ano anterior
     ]);
     assert.equal(r.fluxos["3.11"].valor, 1100);
     assert.deepEqual(r.fluxos["3.01"], { demonstrativo: "DRE", descricao: "Sintética", valor: null, anual: 5000, acumuladoAtual: 2600, acumuladoAnterior: null });
@@ -308,8 +361,19 @@ describe("sintético: série anual e escolha da origem", () => {
     assert.deepEqual([a2025.demonstrativos.DFC.metodo, valorDaConta(a2025.demonstrativos.DFC, "6.01")], ["MD", 500]);
   });
 
+  test("empresa que passou a consolidar: o ano antigo fica com o individual da própria DFP, não com o PENÚLTIMO consolidado zerado", () => {
+    const fatos = [
+      dfp("2024-01-01", "2024-12-31", 900, { consolidado: false }),
+      dfp("2025-01-01", "2025-12-31", 1000),
+      fato({ dtRefer: "2025-12-31", ordem: "penultimo", inicio: "2024-01-01", fim: "2024-12-31", valor: 0 }), // consolidado de 2024 não existia
+    ];
+    const [a2024, a2025] = serieAnual(fatos);
+    assert.deepEqual([valorDaConta(a2024.demonstrativos.DRE, "3.11"), a2024.demonstrativos.DRE.origem.consolidado, a2024.demonstrativos.DRE.origem.dtRefer, a2024.demonstrativos.DRE.origem.reapresentado], [900, false, "2024-12-31", false]);
+    assert.deepEqual([valorDaConta(a2025.demonstrativos.DRE, "3.11"), a2025.demonstrativos.DRE.origem.consolidado], [1000, true]);
+  });
+
   test("escolherOrigem: por demonstrativo inteiro, com reapresentado true, false ou null", () => {
-    const bloco = (o) => ({ familia: "DRE", metodo: null, ordem: "ultimo", inicio: "2024-01-01", fim: "2024-12-31", documento: "dfp", dtRefer: "2024-12-31", versao: 1,
+    const bloco = (o) => ({ familia: "DRE", metodo: null, ordem: "ultimo", inicio: "2024-01-01", fim: "2024-12-31", documento: "dfp", dtRefer: "2024-12-31", versao: 1, consolidado: true,
       contas: [{ conta: "3.01", descricao: "Receita", contaFixa: true, valor: 100 }, { conta: "3.01.01", descricao: "Aberta", contaFixa: false, valor: 60 }], ...o });
     const proprio = bloco({});
     const igual = bloco({ ordem: "penultimo", dtRefer: "2025-12-31" });
@@ -328,7 +392,7 @@ describe("sintético: série anual e escolha da origem", () => {
   });
 
   test("conta fixa que some na reapresentação fica registrada no original; a que surge, com original null", () => {
-    const base = { familia: "DRE", metodo: null, inicio: "2024-01-01", fim: "2024-12-31", documento: "dfp", versao: 1 };
+    const base = { familia: "DRE", metodo: null, inicio: "2024-01-01", fim: "2024-12-31", documento: "dfp", versao: 1, consolidado: true };
     const c = (conta, valor) => ({ conta, descricao: conta, contaFixa: true, valor });
     const r = escolherOrigem({ ...base, ordem: "ultimo", dtRefer: "2024-12-31", contas: [c("3.01", 10), c("3.10", 5)] },
       { ...base, ordem: "penultimo", dtRefer: "2025-12-31", contas: [c("3.01", 10), c("3.12", 7)] });
