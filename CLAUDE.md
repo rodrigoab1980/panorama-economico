@@ -18,18 +18,25 @@ Evoluir o projeto até um nível de engenharia sólido: testes, modularização,
 - Mantenha o README e o changelog atualizados a cada mudança relevante.
 
 ## Roteiro (issues)
-Nesta ordem de execução; as letras são as das issues.
+A v1.0 está concluída (issues #6–#15 e #27, tag v1.0).
+O roteiro atual são os milestones v2.0 e v3.0. Execute na ordem dos números:
+a próxima issue é sempre a ABERTA de menor número do milestone ativo (v2.0 antes de v3.0).
+Nunca pegue a mais recente da lista do `gh issue list`.
 
-1. **D. Base de testes do `update.mjs`**: módulo de funções puras + `node:test`, sem dependências novas. Inclui também a licença MIT e o CHANGELOG.
-2. **E. CI nos PRs**: roda os testes, não publica.
-3. **F. Aceitar só links http(s) nas notícias**, com teste.
-4. **B. Feed do Yahoo Finance com 404**: trocar a URL ou remover a fonte; atualizar o README.
-5. **H. Aba B3**: trocar ELET3 por AXIA3.
-6. **C. Aviso de dado desatualizado na página**: mostrar a data; destacar atraso maior que 1h.
-7. **G. Actions do workflow em versões com Node 24.**
-8. **I. Histórico diário em JSON** com variação semanal e mensal.
-9. **J. Alertas de movimento fora do padrão** (limite X configurável).
-10. **A. Atualização confiável**: gatilho externo com cron-job.org e token fine-grained restrito a este repositório (só Actions: escrita, com validade). O token nunca vai para nenhum arquivo; o usuário configura à mão e o README documenta o passo a passo.
-11. **Documentação final**: README com decisões de arquitetura, changelog e release v1.0.
+### v2.0 — Fundamentalista para decidir (#29–#40)
+Página /fundamentos/ com dados da CVM Dados Abertos (DFP, ITR, FCA), 10+ anos e base de 12 meses, com o fluxo de caixa no centro.
+Universo: ações do Ibovespa, sem bancos e seguradoras.
+Começa pelo spike da CVM (#29) e pelo build multi-página (#30).
 
-Já existente no repositório: `.gitignore` (node_modules/, site/data/, .env); timeout de 20 s por requisição e fallback para o último JSON publicado quando uma coleta falha.
+### v3.0 — Overview e Treinamentos (#41–#48)
+Conteúdo em Markdown no repositório. O Overview de mercado é autoral, com dados vivos do site.
+Os treinamentos têm o módulo iniciante grátis; os pagos ficam numa plataforma externa e o site é só a vitrine.
+
+### Decisões já tomadas
+- Build próprio em Node (`scripts/build.mjs` → `dist/`); única dependência nova permitida: `marked`.
+- Fundamentos coletados num workflow semanal separado, gravando na branch `dados`.
+- Raiz do site continua sendo o Diário (visão de trade).
+- Lógica pura em módulos testados; rede e disco só na casca.
+- Nunca "compre", "venda", nota ou preço-alvo: só dados, regras à vista e aviso legal.
+- Não copiar layout, nomes ou textos de outros sites (ex.: Bastter); a referência é só de conteúdo.
+- Resumo de IA continua desligado.
