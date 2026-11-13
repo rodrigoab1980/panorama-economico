@@ -125,7 +125,7 @@ Caixa, dívida e liquidez, sempre com o saldo do fim do período:
 |---|---|
 | Patrimônio líquido | BPP 2.03 |
 | Caixa | BPA 1.01.01 + 1.01.02 (caixa e equivalentes + aplicações financeiras) |
-| Dívida bruta | (BPP 2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03): empréstimos, financiamentos e debêntures, sem arrendamentos |
+| Dívida bruta | (BPP 2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03) + as linhas de empréstimos, financiamentos e debêntures em outras obrigações (2.01.05 e 2.02.02): sem arrendamentos |
 | Arrendamentos | 2.01.04.03 + 2.02.01.03 + as linhas de arrendamento em outras obrigações (2.01.05 e 2.02.02) |
 | Dívida bruta com arrendamentos | Dívida bruta + arrendamentos |
 | Dívida líquida | Dívida bruta − caixa. Negativa quer dizer mais caixa do que dívida |
@@ -146,9 +146,10 @@ As escolhas por trás das fórmulas:
 3. **O ROA é lucro ÷ ativo**, a definição clássica. Outras fontes usam EBIT ÷ ativo e chegam a um número maior.
 4. **O ROIC usa a alíquota nominal de 34%** (IR + CSLL), não a efetiva. A efetiva oscila com JCP, incentivos e prejuízo fiscal, e faria o ROIC variar sem motivo operacional.
 5. **A dívida bruta não inclui arrendamentos (IFRS 16), e as duas versões são sempre calculadas.** O número principal é sem arrendamentos; a dívida bruta e a líquida "com arrendamentos" saem ao lado. Em varejo e telecom o arrendamento passa da dívida (na Raia Drogasil, 4,97 bilhões contra 3,87 bilhões em 2025), então os dois números contam histórias diferentes. Quem lança o arrendamento dentro de empréstimos e financiamentos (contas 2.01.04.03 e 2.02.01.03) tem esse valor tirado da dívida bruta.
-6. **Os arrendamentos são achados pela descrição.** A maioria das companhias não usa a conta fixa: cria uma linha própria em "outras obrigações", sem código fixo. Entram as linhas de 2.01.05 e 2.02.02 cuja descrição contém "arrendament". "Aluguéis" não entra, porque é aluguel a pagar. Se uma linha e uma sublinha dela batem, conta só a de cima. Quando nenhuma linha bate, o valor é zero, o que quer dizer "nenhuma linha com esse nome", e não necessariamente "sem arrendamento".
+6. **Os arrendamentos são achados pela descrição.** A maioria das companhias não usa a conta fixa: cria uma linha própria em "outras obrigações", sem código fixo. Entram as linhas de 2.01.05 e 2.02.02 cuja descrição contém "arrendament". "Aluguéis" não entra, porque é aluguel a pagar. Se uma linha e uma sublinha dela batem, conta só a de cima. Quando nenhuma linha bate e as duas contas fixas estão zeradas, o indicador fica vazio, com o motivo "nenhuma linha de arrendamento identificada no passivo", e as duas versões "com arrendamentos" ficam vazias junto. Não vira zero, porque a companhia pode ter o arrendamento dentro de outra linha: na DFP de 2025 isso acontece em 12 das 64 companhias da página. A dívida sem arrendamentos não muda.
 7. **"Despesas financeiras" é uma aproximação dos juros.** A conta da DRE inclui variação cambial, juros de arrendamento e outros encargos. Por isso a cobertura de juros e o custo da dívida são aproximados, e o custo pode sair alto demais em quem tem pouca dívida e muito câmbio. Os juros pagos, do fluxo de caixa, entram depois.
-8. **Dívida fora das contas padrão vira aviso, não zero.** Quando a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e tudo o que depende dela (inclusive o ROIC) ficam vazios, com o motivo "a dívida pode estar fora das contas padrão". É o caso da Allos, que registra empréstimos e debêntures em outras obrigações. O limite de 0,5% separa quem só paga tarifas e IOF de quem tem dívida.
+8. **Dívida lançada em outras obrigações entra pela descrição.** A Allos deixa as contas de empréstimos zeradas e registra a dívida numa linha própria de outras obrigações. Por isso a dívida bruta soma também as linhas sem código fixo de 2.01.05 (curto prazo) e 2.02.02 (longo prazo) cuja descrição tem "empréstimo" e também "financiamento" ou "debênture". O empréstimo compulsório fica de fora: é um passivo com consumidores, não uma dívida financeira. Vale a mesma regra de não contar uma linha e a sublinha dela.
+9. **Dívida fora das contas padrão vira aviso, não zero.** Se, mesmo assim, a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e tudo o que depende dela (inclusive o ROIC) ficam vazios, com o motivo "a dívida pode estar fora das contas padrão". O limite de 0,5% separa quem só paga tarifas e IOF de quem tem dívida. Hoje nenhuma das 64 companhias dispara o aviso.
 
 Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente.
 
@@ -158,7 +159,7 @@ Nos indicadores de dívida, a dívida líquida negativa é um valor válido (cai
 
 São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
-A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `LIMITE_DESPESA_SEM_DIVIDA`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados e os balanços de 2025 da WEG e da Raia Drogasil.
+A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicadores`, `caixa`, `dividaBruta`, `arrendamentos`, `ARRENDAMENTOS`, `DIVIDA_POR_DESCRICAO`, `LIMITE_DESPESA_SEM_DIVIDA`) e os testes em `test/cvm-indicadores.test.mjs`, que conferem os números com os releases de resultados e os balanços de 2025 da WEG e da Raia Drogasil.
 
 ## Atualização confiável (cron-job.org)
 

@@ -75,14 +75,31 @@ As outras criam uma linha própria em "Outras Obrigações" (**2.01.05** e **2.0
 - A regra dos indicadores: as duas contas fixas mais as subcontas de 2.01.05 e 2.02.02 cuja descrição bate com `/arrendament/i`. Se uma conta e um ancestral dela batem, conta só o ancestral.
 - Na Raia, "Aluguéis" (2.01.05.02.04, 132.470) é aluguel a pagar e fica de fora: a descrição não bate.
 - As descrições variam ("Passivo de arrendamento", "Arrendamento mercantil", "Obrigações com arrendamento", "Arrendamentos de direito de uso a pagar"), mas todas as que apareceram nas 64 companhias contêm "arrendament".
-- 12 das 64 não têm nenhuma linha com esse nome (Ambev, B3, Cury e MRV, por exemplo). Para elas o valor sai zero. Isso quer dizer "nenhuma linha com esse nome", não "sem arrendamento": o passivo pode estar dentro de outra linha.
+- 12 das 64 não têm nenhuma linha com esse nome e têm as duas contas fixas zeradas: Ambev, B3, CSN Mineração, CPFL, Cury, Cyrela, Engie, Hypera, Iguatemi, MRV, Multiplan e Sabesp. Para elas o indicador é `null` com o motivo "nenhuma linha de arrendamento identificada no passivo", e não zero: o passivo pode estar dentro de outra linha. As contas fixas vêm zeradas em quase todas as companhias, então o zero delas não informa nada.
 - A C&A usa a descrição "Financiamento por Arrendamento" numa subconta não fixa de outras obrigações. A regra pega pelo "arrendament".
 - A Rumo tem "Arrendamentos e concessões em litígio e parcelados" (além de "Passivos de arrendamento"), que a regra também soma. É discutível se isso é passivo de arrendamento; a lista de exceções existe para casos assim e hoje está vazia.
 - A base de 12 meses usa o balanço do ITR mais recente. Para a regra funcionar ali, os `estoques` do `base12Meses` ganharam o campo `naoFixas`, com as subcontas sem código fixo.
 
 ### Dívida fora das contas padrão (Allos)
 
-A Allos deixa a 2.01.04 e a 2.02.01 zeradas e registra a dívida em outras obrigações: "Empréstimos, financiamentos e debêntures" em 2.01.05.02.05 (325.357) e em 2.02.02.02.07 (5.553.953), R$ mil em 31/12/2025. Os indicadores ainda não somam dívida por descrição. Em vez disso, quando a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e o que depende dela ficam `null` com o motivo. Nas 64 companhias, só a Allos dispara o alerta.
+A Allos deixa a 2.01.04 e a 2.02.01 zeradas e registra a dívida em outras obrigações: "Empréstimos, financiamentos e debêntures" em 2.01.05.02.05 (325.357) e em 2.02.02.02.07 (5.553.953), R$ mil em 31/12/2025, 5.879.310 no total.
+
+A dívida bruta soma essas linhas pela descrição. Entram as subcontas não fixas de 2.01.05 (curto prazo) e de 2.02.02 (longo prazo) cuja descrição bate com `/empr[ée]stimo/i` **e** com `/financiament|deb[êe]nture/i`, menos as que batem com `/compuls/i`. Se uma conta e um ancestral dela batem, conta só o ancestral. A regra fica na constante `DIVIDA_POR_DESCRICAO`.
+
+Por que as duas expressões: uma só pegaria o que não é dívida financeira. Na DFP de 2025, as linhas desses dois grupos com alguma das palavras são:
+
+| Companhia | Conta | Descrição | R$ mil | Entra? |
+|---|---|---|---:|---|
+| Allos | 2.01.05.02.05 | Empréstimos, financiamentos e debêntures | 325.357 | sim |
+| Allos | 2.02.02.02.07 | Empréstimos, financiamentos e debêntures | 5.553.953 | sim |
+| Axia | 2.01.05.02.05 | Empréstimo compulsório | 1.406.460 | não: passivo com consumidores |
+| Axia | 2.01.05.02.06 | Empréstimo compulsório - Acordos | 1.073.452 | não: idem |
+| C&A | 2.01.05.02.06 e 2.02.02.02.06 | Financiamento por Arrendamento | 372.743 e 1.407.500 | não: é arrendamento |
+| Eneva | 2.01.05.02.15 | Ajuste a valor justo das debêntures a apropriar | 24.961 | não: é ajuste |
+
+Nas 64 companhias, só a Allos ganha dívida por essa regra.
+
+Como rede de segurança, se a dívida bruta ainda dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e o que depende dela ficam `null` com o motivo "a dívida pode estar fora das contas padrão". Com a regra da descrição, nenhuma das 64 dispara esse alerta hoje.
 
 ## DFC: capex, juros, dividendos e arrendamentos
 
