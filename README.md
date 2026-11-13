@@ -36,7 +36,8 @@ Navegador
 | `scripts/logica.mjs` | Toda a lógica pura: sem rede, sem disco, sem relógio implícito. É o que os testes cobrem. |
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `site/` | A página publicada: `index.html`, `app.js` (renderização), `atraso.js` (regra de dado desatualizado, usada também nos testes) e `style.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
-| `test/` | Testes `node:test`, um arquivo por assunto. |
+| `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
+| `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
 | `.github/workflows/atualizar.yml` | Coleta, histórico e deploy no GitHub Pages. |
 | `.github/workflows/ci.yml` | Roda os testes em todo PR e na `main`. Não publica nada. |
 | branch `dados` | Histórico diário e resumos arquivados. Só o robô escreve nela. |
