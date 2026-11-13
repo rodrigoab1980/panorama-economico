@@ -92,6 +92,22 @@ export function setorPorTicker(setores) {
   return mapa;
 }
 
+// Motivos aceitos para uma companhia ficar fora da página na v2.
+export const MOTIVOS_FORA = ["banco", "seguradora", "holding"];
+
+// { banco: [tickers], ... } → Map(ticker → motivo). Motivo desconhecido ou ticker em dois motivos dá erro.
+export function motivoPorTicker(foraDaPagina) {
+  const mapa = new Map();
+  for (const [motivo, tickers] of Object.entries(foraDaPagina)) {
+    if (!MOTIVOS_FORA.includes(motivo)) throw new Error(`foraDaPagina: motivo desconhecido "${motivo}" (aceitos: ${MOTIVOS_FORA.join(", ")})`);
+    for (const t of tickers) {
+      if (mapa.has(t)) throw new Error(`foraDaPagina: ${t} está em "${mapa.get(t)}" e em "${motivo}"`);
+      mapa.set(t, motivo);
+    }
+  }
+  return mapa;
+}
+
 // Junta os tickers por companhia. Entrada: [{ ticker, cnpj, origem }] → Map(cnpj → [{ ticker, origem }]).
 export function juntarClasses(vinculos) {
   const porCnpj = new Map();
@@ -107,10 +123,13 @@ export function juntarClasses(vinculos) {
 //   vinculos:  Map de vinculosDoFca()
 //   cadastro:  Map de cadastroDoFca()
 //   excecoes:  [{ ticker, cnpj, motivo, obs? }]  (a exceção vence o FCA)
-//   setores:   { "Nome": [tickers] }, financeiros: ["Nome", ...]
+//   setores:   { "Nome": [tickers] }
+//   foraDaPagina: { banco: [tickers], seguradora: [tickers], holding: [tickers] }
 // Devolve { mapeadas: [companhia], pendentes: [{ ticker, motivo }] }, em ordem estável.
-export function montarUniverso({ tickers, vinculos, cadastro, excecoes = [], setores = {}, financeiros = [] }) {
+// Cada companhia sai com foraDaPagina: null (entra na página) ou o motivo ("banco", "seguradora", "holding").
+export function montarUniverso({ tickers, vinculos, cadastro, excecoes = [], setores = {}, foraDaPagina = {} }) {
   const pendentes = [];
+  const motivoFora = motivoPorTicker(foraDaPagina);
   const excecao = new Map();
   for (const e of excecoes) {
     const t = normalizarTicker(e.ticker);
@@ -152,6 +171,8 @@ export function montarUniverso({ tickers, vinculos, cadastro, excecoes = [], set
     const setoresDaCia = [...new Set(nomes.map((t) => setorDe.get(t)).filter(Boolean))];
     if (setoresDaCia.length === 0) { pendurar("companhia sem setor em setores.json"); continue; }
     if (setoresDaCia.length > 1) { pendurar(`tickers da mesma companhia em setores diferentes: ${setoresDaCia.join(", ")}`); continue; }
+    const motivosFora = [...new Set(nomes.map((t) => motivoFora.get(t)).filter(Boolean))];
+    if (motivosFora.length > 1) { pendurar(`tickers da mesma companhia com motivos diferentes em foraDaPagina: ${motivosFora.join(", ")}`); continue; }
 
     // Outras classes da mesma companhia que o FCA informa (porta de entrada da busca), fora da carteira.
     const outras = [];
@@ -164,7 +185,7 @@ export function montarUniverso({ tickers, vinculos, cadastro, excecoes = [], set
       cdCvm: cad.cdCvm,
       nome: cad.nome,
       setor: setoresDaCia[0],
-      financeira: financeiros.includes(setoresDaCia[0]),
+      foraDaPagina: motivosFora[0] ?? null,
       tickers: [
         ...daCarteira.map((t) => ({ ticker: t.ticker, origem: t.origem, ibovespa: true })),
         ...outras.sort().map((ticker) => ({ ticker, origem: "fca", ibovespa: false })),
@@ -178,14 +199,16 @@ export function montarUniverso({ tickers, vinculos, cadastro, excecoes = [], set
   return { mapeadas, pendentes };
 }
 
-// Resumo por setor, para a revisão: [{ setor, financeira, empresas, tickers }], do maior para o menor.
+// Resumo por setor, para a revisão: [{ setor, naPagina, tickers, fora: [{ ticker, motivo }] }],
+// do setor com mais companhias na página para o com menos. A comparação com pares (#39) só conta as da página.
 export function resumoPorSetor(mapeadas) {
   const grupos = new Map();
   for (const c of mapeadas) {
-    if (!grupos.has(c.setor)) grupos.set(c.setor, { setor: c.setor, financeira: c.financeira, empresas: 0, tickers: [] });
+    if (!grupos.has(c.setor)) grupos.set(c.setor, { setor: c.setor, naPagina: 0, tickers: [], fora: [] });
     const g = grupos.get(c.setor);
-    g.empresas++;
-    g.tickers.push(c.tickers.find((t) => t.ibovespa).ticker);
+    const ticker = c.tickers.find((t) => t.ibovespa).ticker;
+    if (c.foraDaPagina) g.fora.push({ ticker, motivo: c.foraDaPagina });
+    else { g.naPagina++; g.tickers.push(ticker); }
   }
-  return [...grupos.values()].sort((a, b) => b.empresas - a.empresas || (a.setor < b.setor ? -1 : 1));
+  return [...grupos.values()].sort((a, b) => b.naPagina - a.naPagina || (a.setor < b.setor ? -1 : 1));
 }

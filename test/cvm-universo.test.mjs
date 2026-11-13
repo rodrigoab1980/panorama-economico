@@ -2,8 +2,8 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  cadastroDoFca, cdCvmValido, cnpjValido, juntarClasses, lerFca, montarUniverso, normalizarTicker,
-  resumoPorSetor, setorPorTicker, tickerValido, vinculosDoFca,
+  MOTIVOS_FORA, cadastroDoFca, cdCvmValido, cnpjValido, juntarClasses, lerFca, montarUniverso, motivoPorTicker,
+  normalizarTicker, resumoPorSetor, setorPorTicker, tickerValido, vinculosDoFca,
 } from "../scripts/cvm/universo.mjs";
 
 const json = (nome) => JSON.parse(readFileSync(new URL(`../scripts/cvm/${nome}`, import.meta.url), "utf8"));
@@ -22,7 +22,7 @@ const SETORES = {
   "Mineração e siderurgia": ["CSNA3"], "Financeiro": ["B3SA3"], "Varejo e consumo": ["CEAB3"], "Alimentos e bebidas": ["MBRF3"],
 };
 const montar = (tickers, extra = {}) => montarUniverso({
-  tickers, vinculos: VINCULOS, cadastro: CADASTRO, setores: SETORES, financeiros: ["Financeiro"], ...extra,
+  tickers, vinculos: VINCULOS, cadastro: CADASTRO, setores: SETORES, foraDaPagina: { holding: ["KLBN11"] }, ...extra,
 });
 const cia = (r, cnpj) => r.mapeadas.find((c) => c.cnpj === cnpj);
 
@@ -96,7 +96,7 @@ describe("montarUniverso com o FCA real", () => {
     const r = montar(["PETR4", "PETR3"]);
     assert.deepEqual(r, {
       mapeadas: [{
-        cnpj: PETROBRAS, cdCvm: "009512", nome: "PETROLEO BRASILEIRO S.A. PETROBRAS", setor: "Petróleo e gás", financeira: false,
+        cnpj: PETROBRAS, cdCvm: "009512", nome: "PETROLEO BRASILEIRO S.A. PETROBRAS", setor: "Petróleo e gás", foraDaPagina: null,
         tickers: [{ ticker: "PETR3", origem: "fca", ibovespa: true }, { ticker: "PETR4", origem: "fca", ibovespa: true }],
       }],
       pendentes: [],
@@ -143,10 +143,24 @@ describe("montarUniverso com o FCA real", () => {
     ]);
   });
 
-  test("financeira vem do setor: B3 fica na lista, marcada", () => {
-    const r = montar(["B3SA3", "PETR4"]);
-    assert.equal(cia(r, B3).financeira, true);
-    assert.equal(cia(r, PETROBRAS).financeira, false);
+  test("foraDaPagina: a companhia fica na lista, marcada com o motivo; as outras saem com null", () => {
+    const r = montar(["B3SA3", "PETR4", "KLBN11"]);
+    assert.equal(cia(r, KLABIN).foraDaPagina, "holding"); // motivo de teste, não o real da Klabin
+    assert.equal(cia(r, B3).foraDaPagina, null);
+    assert.equal(cia(r, PETROBRAS).foraDaPagina, null);
+  });
+
+  test("foraDaPagina vale para a companhia: basta um dos tickers dela estar na lista", () => {
+    const r = montar(["PETR3", "PETR4"], { foraDaPagina: { banco: ["PETR4"] } });
+    assert.equal(cia(r, PETROBRAS).foraDaPagina, "banco");
+  });
+
+  test("motivo desconhecido, ticker em dois motivos ou motivos diferentes na mesma companhia não passam", () => {
+    assert.throws(() => montar(["PETR4"], { foraDaPagina: { estatal: ["PETR4"] } }), /motivo desconhecido "estatal"/);
+    assert.throws(() => montar(["PETR4"], { foraDaPagina: { banco: ["PETR4"], holding: ["PETR4"] } }), /PETR4 está em "banco" e em "holding"/);
+    const r = montar(["PETR3", "PETR4"], { foraDaPagina: { banco: ["PETR3"], holding: ["PETR4"] } });
+    assert.deepEqual(r.mapeadas, []);
+    assert.match(r.pendentes[0].motivo, /motivos diferentes em foraDaPagina: banco, holding/);
   });
 
   test("companhia sem setor, ou com tickers em setores diferentes, vai para pendentes", () => {
@@ -220,14 +234,19 @@ describe("universo.json e arquivos mantidos à mão", () => {
   const universo = json("universo.json");
   const carteira = json("tickers-ibovespa.json");
   const { excecoes } = json("excecoes-tickers.json");
-  const { setores, financeiros } = json("setores.json");
+  const { setores, foraDaPagina } = json("setores.json");
+  const motivoFora = motivoPorTicker(foraDaPagina);
 
   test("a carteira tem data de referência, fonte e tickers válidos, sem repetição", () => {
     assert.match(carteira.dataReferencia, /^\d{4}-\d{2}-\d{2}$/);
     assert.ok(carteira.fonte.length > 10);
     assert.equal(new Set(carteira.tickers).size, carteira.tickers.length);
     for (const t of carteira.tickers) assert.ok(tickerValido(t), t);
-    assert.deepEqual(universo.carteira, { dataReferencia: carteira.dataReferencia, fonte: carteira.fonte });
+    assert.match(carteira.url, /^https:\/\/www\.b3\.com\.br\//);
+    assert.match(carteira.consultadoEm, /^\d{4}-\d{2}-\d{2}$/);
+    assert.deepEqual(universo.carteira, {
+      dataReferencia: carteira.dataReferencia, fonte: carteira.fonte, url: carteira.url, consultadoEm: carteira.consultadoEm,
+    });
   });
 
   test("todo ticker da carteira está em mapeadas ou em pendentes", () => {
@@ -244,7 +263,8 @@ describe("universo.json e arquivos mantidos à mão", () => {
       assert.ok(cdCvmValido(c.cdCvm), c.nome);
       assert.ok(c.nome.length > 2);
       assert.ok(Object.hasOwn(setores, c.setor), `${c.nome}: setor "${c.setor}"`);
-      assert.equal(c.financeira, financeiros.includes(c.setor), c.nome);
+      assert.ok(c.foraDaPagina === null || MOTIVOS_FORA.includes(c.foraDaPagina), `${c.nome}: foraDaPagina "${c.foraDaPagina}"`);
+      assert.equal(Object.hasOwn(c, "financeira"), false, "o campo financeira foi trocado por foraDaPagina");
       assert.ok(c.tickers.some((t) => t.ibovespa), c.nome);
       for (const t of c.tickers) {
         assert.ok(tickerValido(t.ticker), t.ticker);
@@ -272,15 +292,32 @@ describe("universo.json e arquivos mantidos à mão", () => {
     }
   });
 
-  test("setores.json: só tickers da carteira, cada um num setor só, e os financeiros existem", () => {
+  test("setores.json: só tickers da carteira, cada um num setor só", () => {
     const mapa = setorPorTicker(setores);
     for (const t of mapa.keys()) assert.ok(carteira.tickers.includes(t), `${t} está em setores.json e não na carteira`);
-    for (const f of financeiros) assert.ok(Object.hasOwn(setores, f), f);
+    for (const t of motivoFora.keys()) assert.ok(carteira.tickers.includes(t), `${t} está em foraDaPagina e não na carteira`);
+  });
+
+  test("fora da página: bancos, seguradoras e holdings, cada um com o motivo; a B3 entra", () => {
+    const fora = Object.fromEntries(MOTIVOS_FORA.map((m) => [m, []]));
+    for (const c of universo.mapeadas.filter((x) => x.foraDaPagina)) fora[c.foraDaPagina].push(c.tickers.find((t) => t.ibovespa).ticker);
+    assert.deepEqual(fora, {
+      banco: ["BBAS3", "BBDC3", "BPAC11", "ITUB4", "SANB11"],
+      seguradora: ["BBSE3", "CXSE3", "PSSA3"],
+      holding: ["BRAP4", "ITSA4"],
+    });
+    const b3 = universo.mapeadas.find((c) => c.tickers.some((t) => t.ticker === "B3SA3"));
+    assert.deepEqual([b3.setor, b3.foraDaPagina], ["Serviços financeiros", null]);
+  });
+
+  test("setores com menos de 3 companhias na página são só os já aceitos na revisão", () => {
+    const poucos = resumoPorSetor(universo.mapeadas).filter((g) => g.naPagina > 0 && g.naPagina < 3).map((g) => g.setor);
+    assert.deepEqual(poucos, ["Serviços financeiros"]);
   });
 
   test("resumoPorSetor bate com o universo (a tabela mostrada na revisão)", () => {
     const resumo = resumoPorSetor(universo.mapeadas);
-    assert.equal(resumo.reduce((s, g) => s + g.empresas, 0), universo.mapeadas.length);
+    assert.equal(resumo.reduce((s, g) => s + g.naPagina + g.fora.length, 0), universo.mapeadas.length);
     assert.deepEqual(resumo.map((g) => g.setor).sort(), Object.keys(setores).sort());
   });
 });

@@ -147,7 +147,7 @@ A lista de empresas fica em `scripts/cvm/universo.json`, **uma entrada por compa
 |---|---|---|
 | `scripts/cvm/tickers-ibovespa.json` | Tickers da carteira teórica do Ibovespa, com data de referência e fonte (B3) | à mão, a cada rebalanceamento (janeiro, maio e setembro) |
 | `scripts/cvm/excecoes-tickers.json` | Vínculos manuais ticker → CNPJ, cada um com o motivo | à mão, quando o FCA vem errado |
-| `scripts/cvm/setores.json` | Setor de cada ticker (classificação nossa, não a da CVM) e quais setores são financeiros | à mão |
+| `scripts/cvm/setores.json` | Setor de cada ticker (classificação nossa, não a da CVM) e quem fica fora da página, com o motivo | à mão |
 | FCA do ano (`valor_mobiliario` e `geral`) | Código de negociação, CNPJ, código CVM e nome | CVM |
 
 Regras do vínculo (`scripts/cvm/universo.mjs`, funções puras):
@@ -155,7 +155,8 @@ Regras do vínculo (`scripts/cvm/universo.mjs`, funções puras):
 - **Nada é adivinhado.** O vínculo vem do FCA só quando o código de negociação é válido (4 caracteres + 3, 4, 5, 6, 7, 8 ou 11), está em `Bolsa` e não tem data de fim de negociação. Fora disso, só por exceção com motivo. O que não liga vai para `pendentes`, com o motivo.
 - A exceção vence o FCA. Mesmo código em duas companhias é ambíguo e vira pendente.
 - As outras classes que a companhia informa no FCA (ex.: ENGI3 e ENGI4 da Energisa, que está na carteira com ENGI11) entram na mesma entrada com `ibovespa: false`, só como porta de entrada da busca.
-- Bancos e seguradoras não saem da lista: ficam com `financeira: true` e fora da página na v2.
+- Bancos, seguradoras e holdings não saem da lista: ficam com `foraDaPagina` igual ao motivo (`"banco"`, `"seguradora"` ou `"holding"`) e fora da página na v2. As demais saem com `foraDaPagina: null`. Na carteira de 13/11/2026 são 10 de 74: 5 bancos, 3 seguradoras (BB Seguridade, Caixa Seguridade e Porto Seguro) e 2 holdings (Itaúsa e Bradespar). A B3 entra na página, sozinha no setor "Serviços financeiros".
+- São 13 setores. Entre os que têm empresa na página, só "Serviços financeiros" (a B3) fica com menos de 3 e, por isso, sem mediana de pares na #39.
 
 Na carteira de 13/11/2026 (76 tickers, 74 companhias), 71 tickers ligaram pelo FCA e 5 precisaram de exceção:
 
@@ -164,7 +165,7 @@ Na carteira de 13/11/2026 (76 tickers, 74 companhias), 71 tickers ligaram pelo F
 | CSNA3 | código "4030" (o código CVM) | CSN |
 | CMIN3 | código "25585" (o código CVM) | CSN Mineração |
 | BPAC11 | código "000000" na linha de Units | Banco BTG Pactual |
-| MBRF3 | código "ADR"; a B3 chama o papel de "MARFRIG" | Marfrig Global Foods |
+| MBRF3 | código "ADR"; a B3 chama o papel de "MARFRIG". É a Marfrig depois de incorporar as ações da BRF (fato relevante de 08/09/2025, fechamento em 22/09/2025) | Marfrig Global Foods |
 | CEAB3 | código certo, mas com data de fim de negociação igual à de início (28/10/2019) | C&A Modas |
 
 Para gerar de novo (sem rede e sem ZIP, como as fixtures):

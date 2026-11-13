@@ -2,7 +2,9 @@
   "dataReferencia": "2026-11-13",
   "fonte": "B3, carteira teórica do Ibovespa (Índices > Ibovespa > Composição da carteira > Carteira do dia)",
   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
-  "obs": "Lista mantida à mão. A carteira é rebalanceada em janeiro, maio e setembro: ao atualizar, troque a data e rode scripts/cvm/gerar-universo.mjs.",
+  "urlDados": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IBOV?language=pt-br",
+  "consultadoEm": "2026-11-13",
+  "obs": "Lista mantida à mão. \"dataReferencia\" é a data da carteira informada pela B3; \"consultadoEm\" é o dia em que a lista foi copiada. A carteira é rebalanceada em janeiro, maio e setembro: ao atualizar, troque as datas e rode scripts/cvm/gerar-universo.mjs.",
   "tickers": [
     "ABEV3", "ALOS3", "ASAI3", "AURE3", "AXIA3", "AZZA3", "B3SA3", "BBAS3", "BBDC3", "BBDC4",
     "BBSE3", "BEEF3", "BPAC11", "BRAP4", "BRAV3", "CEAB3", "CMIG4", "CMIN3", "COGN3", "CPFE3",

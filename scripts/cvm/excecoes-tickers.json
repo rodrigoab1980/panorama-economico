@@ -25,7 +25,7 @@
       "ticker": "MBRF3",
       "cnpj": "03.853.896/0001-40",
       "motivo": "No FCA 2026, a Marfrig Global Foods preencheu \"ADR\" no código de negociação das ações ordinárias em Bolsa. A B3 lista o MBRF3 com o nome \"MARFRIG\" na carteira do Ibovespa.",
-      "obs": "MBRF3 é o código da Marfrig depois da incorporação das ações da BRF em 2025 (no FCA, o BRFS3 tem fim de negociação em 22/09/2025). O histórico desta entrada é só o da Marfrig; a BRF (CNPJ 01.838.723/0001-27) continua como companhia separada na CVM. Série combinada, se houver, é assunto da #33."
+      "obs": "MBRF3 é o código da Marfrig depois da incorporação das ações da BRF. O fato relevante conjunto de 08/09/2025 fixou o fechamento em 22/09/2025 (mesma data do fim de negociação do BRFS3 no FCA), com as ações negociadas como MBRF3 a partir de 23/09/2025 e 0,8521 ação da Marfrig por ação da BRF. O histórico desta entrada é só o da Marfrig; a BRF (CNPJ 01.838.723/0001-27) continua como companhia separada na CVM. Série combinada, se houver, é assunto da #33."
     }
   ]
 }

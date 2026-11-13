@@ -1,20 +1,23 @@
 {
-  "obs": "Classificação nossa, não a da CVM: poucos grupos, no espírito do mapa do Diário, para a comparação com pares (#39). Mantida à mão, por ticker da carteira. Os setores listados em \"financeiros\" ficam fora da página na v2 (financeira: true).",
-  "financeiros": ["Financeiro"],
+  "obs": "Classificação nossa, não a da CVM: poucos grupos, no espírito do mapa do Diário, para a comparação com pares (#39). Mantida à mão, por ticker da carteira. Em \"foraDaPagina\" ficam as companhias que não entram na página na v2, com o motivo: banco, seguradora ou holding.",
+  "foraDaPagina": {
+    "banco": ["ITUB4", "BBDC3", "BBDC4", "BBAS3", "SANB11", "BPAC11"],
+    "seguradora": ["BBSE3", "CXSE3", "PSSA3"],
+    "holding": ["ITSA4", "BRAP4"]
+  },
   "setores": {
     "Petróleo e gás": ["PETR3", "PETR4", "PRIO3", "BRAV3", "UGPA3", "VBBR3", "CSAN3"],
-    "Mineração e siderurgia": ["VALE3", "BRAP4", "CSNA3", "CMIN3", "GGBR4", "GOAU4", "USIM5"],
+    "Materiais básicos": ["VALE3", "BRAP4", "CSNA3", "CMIN3", "GGBR4", "GOAU4", "USIM5", "SUZB3", "KLBN11"],
     "Energia e saneamento": ["AXIA3", "AURE3", "CMIG4", "CPLE3", "CPFE3", "ENGI11", "ENEV3", "EGIE3", "EQTL3", "ISAE4", "TAEE11", "SBSP3", "CSMG3"],
-    "Varejo e consumo": ["ASAI3", "AZZA3", "CEAB3", "LREN3", "MGLU3", "NATU3", "RADL3", "VIVA3", "SMFT3"],
+    "Consumo e serviços": ["ASAI3", "AZZA3", "CEAB3", "LREN3", "MGLU3", "NATU3", "RADL3", "VIVA3", "SMFT3", "COGN3", "YDUQ3"],
     "Alimentos e bebidas": ["ABEV3", "MBRF3", "BEEF3"],
     "Saúde": ["RDOR3", "HAPV3", "FLRY3", "HYPE3"],
     "Construção civil": ["CURY3", "CYRE3", "DIRR3", "MRVE3", "TEND3"],
     "Shoppings": ["ALOS3", "IGTI11", "MULT3"],
     "Indústria": ["WEGE3", "EMBJ3", "POMO4"],
     "Transporte e logística": ["RENT3", "VAMO3", "RAIL3", "MOTV3"],
-    "Papel e celulose": ["SUZB3", "KLBN11"],
     "Telecom e tecnologia": ["VIVT3", "TIMS3", "TOTS3"],
-    "Educação": ["COGN3", "YDUQ3"],
-    "Financeiro": ["ITUB4", "BBDC3", "BBDC4", "BBAS3", "SANB11", "BPAC11", "BBSE3", "CXSE3", "PSSA3", "ITSA4", "B3SA3"]
+    "Serviços financeiros": ["B3SA3"],
+    "Financeiro": ["ITUB4", "BBDC3", "BBDC4", "BBAS3", "SANB11", "BPAC11", "BBSE3", "CXSE3", "PSSA3", "ITSA4"]
   }
 }

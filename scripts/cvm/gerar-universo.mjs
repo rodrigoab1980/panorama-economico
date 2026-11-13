@@ -24,7 +24,7 @@ const json = (nome) => JSON.parse(readFileSync(join(AQUI, nome), "utf8"));
 const linhas = (nome) => new TextDecoder("latin1").decode(readFileSync(join(pasta, nome))).split("\n");
 
 const carteira = json("tickers-ibovespa.json");
-const { setores, financeiros } = json("setores.json");
+const { setores, foraDaPagina } = json("setores.json");
 const arquivoVm = `fca_cia_aberta_valor_mobiliario_${ano}.csv`;
 const arquivoGeral = `fca_cia_aberta_geral_${ano}.csv`;
 
@@ -34,21 +34,23 @@ const { mapeadas, pendentes } = montarUniverso({
   cadastro: cadastroDoFca(linhas(arquivoGeral), arquivoGeral),
   excecoes: json("excecoes-tickers.json").excecoes,
   setores,
-  financeiros,
+  foraDaPagina,
 });
 
 const saida = {
   obs: "Gerado por scripts/cvm/gerar-universo.mjs. Não edite à mão: mude tickers-ibovespa.json, excecoes-tickers.json ou setores.json e gere de novo.",
-  carteira: { dataReferencia: carteira.dataReferencia, fonte: carteira.fonte },
+  carteira: { dataReferencia: carteira.dataReferencia, fonte: carteira.fonte, url: carteira.url, consultadoEm: carteira.consultadoEm },
   fca: [arquivoVm, arquivoGeral],
   mapeadas,
   pendentes,
 };
 writeFileSync(join(AQUI, "universo.json"), `${JSON.stringify(saida, null, 2)}\n`);
 
-const naoFin = mapeadas.filter((c) => !c.financeira).length;
-console.log(`${carteira.tickers.length} tickers da carteira de ${carteira.dataReferencia} → ${mapeadas.length} companhias (${naoFin} na página, ${mapeadas.length - naoFin} financeiras), ${pendentes.length} pendentes`);
+const naPagina = mapeadas.filter((c) => !c.foraDaPagina).length;
+console.log(`${carteira.tickers.length} tickers da carteira de ${carteira.dataReferencia} → ${mapeadas.length} companhias (${naPagina} na página, ${mapeadas.length - naPagina} fora), ${pendentes.length} pendentes`);
 for (const g of resumoPorSetor(mapeadas)) {
-  console.log(`  ${String(g.empresas).padStart(2)}  ${g.setor}${g.financeira ? " (financeira)" : ""}${g.empresas < 3 ? "  ← menos de 3" : ""}: ${g.tickers.join(" ")}`);
+  const fora = g.fora.length ? `  | fora: ${g.fora.map((f) => `${f.ticker} (${f.motivo})`).join(" ")}` : "";
+  const poucos = g.naPagina > 0 && g.naPagina < 3 ? "  ← menos de 3 na página" : "";
+  console.log(`  ${String(g.naPagina).padStart(2)}  ${g.setor}${poucos}: ${g.tickers.join(" ")}${fora}`);
 }
 for (const p of pendentes) console.log(`  PENDENTE ${p.ticker}: ${p.motivo}`);
