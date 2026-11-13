@@ -1,0 +1,21 @@
+CNPJ_Companhia;Data_Referencia;Versao;ID_Documento;Nome_Empresarial;Valor_Mobiliario;Sigla_Classe_Acao_Preferencial;Classe_Acao_Preferencial;Codigo_Negociacao;Composicao_BDR_Unit;Mercado;Sigla_Entidade_Administradora;Entidade_Administradora;Data_Inicio_Negociacao;Data_Fim_Negociacao;Segmento;Data_Inicio_Listagem;Data_Fim_Listagem
+00.001.180/0001-26;2026-01-01;4;159987;AXIA Energia S.A.;Ações Ordinárias;;;AXIA3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;1971-09-07;;Novo Mercado;1971-09-07;
+00.001.180/0001-26;2026-01-01;4;159987;AXIA Energia S.A.;Debêntures;;;;;Balcão Organizado;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2024-10-17;;Básico;2024-09-15;
+00.001.180/0001-26;2026-01-01;4;159987;AXIA Energia S.A.;Ações Preferenciais;PNC;Preferencial Classe C;AXIA7;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2025-12-22;;Novo Mercado;2025-12-22;
+00.864.214/0001-06;2026-01-01;2;161925;ENERGISA S.A.;Ações Ordinárias;;;ENGI3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;1995-12-20;;Nível 2 de Governança Corporativa;1995-12-20;
+00.864.214/0001-06;2026-01-01;2;161925;ENERGISA S.A.;Debêntures;;;;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2016-02-19;;Nível 2 de Governança Corporativa;2016-02-19;
+00.864.214/0001-06;2026-01-01;2;161925;ENERGISA S.A.;Nota Comercial;;;;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2019-06-14;2021-05-04;Nível 2 de Governança Corporativa;2019-06-14;2021-05-04
+00.864.214/0001-06;2026-01-01;2;161925;ENERGISA S.A.;Ações Preferenciais;;;ENGI4;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;1995-12-20;;Nível 2 de Governança Corporativa;1995-12-20;
+00.864.214/0001-06;2026-01-01;2;161925;ENERGISA S.A.;Units;;;ENGI11;1 ação ordinária e 4 ações preferenciais;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;1995-12-20;;Nível 2 de Governança Corporativa;1995-12-20;
+01.838.723/0001-27;2026-01-01;2;159005;BRF S.A.;Ações Ordinárias;;;BRFS3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2006-02-17;2025-09-22;Novo Mercado;2006-02-17;
+03.853.896/0001-40;2026-01-01;1;158008;MARFRIG GLOBAL FOODS S.A.;Ações Ordinárias;;;ADR;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2007-06-29;;Novo Mercado;2007-06-29;
+09.346.601/0001-25;2026-01-01;2;158175;B3 S.A. - BRASIL, BOLSA, BALCÃO;Ações Ordinárias;;;B3SA3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2008-08-20;;Novo Mercado;2008-08-11;
+09.346.601/0001-25;2026-01-01;2;158175;B3 S.A. - BRASIL, BOLSA, BALCÃO;Debêntures;;;;;Balcão Organizado;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2019-05-03;;Básico;2019-05-03;
+33.000.167/0001-01;2026-01-01;1;156276;PETROLEO BRASILEIRO S.A. PETROBRAS;Ações Ordinárias;;;PETR3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2018-05-14;;Nível 2 de Governança Corporativa;1977-07-20;
+33.000.167/0001-01;2026-01-01;1;156276;PETROLEO BRASILEIRO S.A. PETROBRAS;Debêntures;;;;;Balcão Não-Organizado;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2019-02-12;;Básico;2019-02-12;
+33.000.167/0001-01;2026-01-01;1;156276;PETROLEO BRASILEIRO S.A. PETROBRAS;Nota Comercial;;;;;Balcão Organizado;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2022-12-14;;Básico;2022-09-12;
+33.000.167/0001-01;2026-01-01;1;156276;PETROLEO BRASILEIRO S.A. PETROBRAS;Ações Preferenciais;;;PETR4;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2018-05-14;;Nível 2 de Governança Corporativa;1977-07-20;
+33.042.730/0001-04;2026-01-01;1;158706;CIA SIDERURGICA NACIONAL;Ações Ordinárias;;;4030;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;1973-07-09;;Básico;1973-07-09;
+33.042.730/0001-04;2026-01-01;1;158706;CIA SIDERURGICA NACIONAL;Debêntures;;;;;Balcão Organizado;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2011-07-20;;Básico;2011-07-20;
+45.242.914/0001-05;2026-01-01;1;156253;C&A Modas S.A.;Ações Ordinárias;;;CEAB3;;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2019-10-28;2019-10-28;Novo Mercado;2019-10-24;
+89.637.490/0001-45;2026-01-01;2;162053;KLABIN S.A.;Units;;;KLBN11;1 KLBN3 + 4 KLBN4;Bolsa;B3;B3 S.A. - Brasil, Bolsa, Balcão.;2014-01-07;;Nível 2 de Governança Corporativa;2013-11-28;
