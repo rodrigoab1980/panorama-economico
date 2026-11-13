@@ -120,6 +120,39 @@ Sem o ajuste, o FCL fica quase 10 vezes maior. No balanço, o passivo de arrenda
 - O 4º trimestre isolado sai de DFP − acumulado 9M.
 - **Exercício fora de dezembro:** São Martinho fecha em 31/03 (DFP em março, ITR em junho, setembro e dezembro), e a Cosan fechava em março até 2013. A base de 12 meses não pode supor que o ano começa em janeiro: tem que usar `DT_INI_EXERC`/`DT_FIM_EXERC`.
 
+### Série anual e base de 12 meses: as regras (#33)
+
+Implementadas em `scripts/cvm/series.mjs` (funções puras, sobre os fatos de uma companhia) e testadas em `test/cvm-series.test.mjs`.
+
+1. **Período é data, não "ano" nem "trimestre".** Fluxo (DRE, DFC, DVA) é o par (`inicio`, `fim`); estoque (BPA, BPP) é o `fim`. A série anual é indexada pela data de fim do exercício.
+   - "Anual" é o fluxo de DFP com 350 a 380 dias.
+   - Outra duração é exercício de transição: entra na série marcado com os meses e não é ano comparável (ex.: a Tenda tem uma DFP de 3 meses, de 01/01 a 31/03/2023).
+2. **Reapresentação: escolhe-se o documento, não a conta.** Para o exercício que termina em F, vale o `PENÚLTIMO` da DFP seguinte, quando existe; senão, o `ÚLTIMO` da própria DFP.
+   - A escolha é por (período, demonstrativo) inteiro. Misturar contas de dois documentos quebraria a soma do demonstrativo, porque as subcontas não têm código fixo.
+   - Se a DFP seguinte traz a DFC em outro método (a empresa trocou DFC_MI por DFC_MD), vale a DFC da própria DFP.
+   - Cada (período, demonstrativo) carrega a origem: `documento`, `dtRefer`, `versao`, `ordem` e `reapresentado`. Esse último é `true` ou `false` quando dá para comparar com o documento original, e `null` quando o original não está disponível (o primeiro ano da série só existe como `PENÚLTIMO`).
+   - Quando é reapresentado, `originais` guarda o valor antigo das contas fixas que mudaram, para a página mostrar "era X, virou Y". Conta fixa fora de `originais` não mudou.
+3. **Base de 12 meses** = anual da última DFP + acumulado do ITR mais recente − acumulado do mesmo intervalo do ano anterior (o `PENÚLTIMO` do próprio ITR).
+   - Na DRE do ITR, o acumulado é o intervalo que começa mais cedo. No 1º trimestre do exercício, trimestre e acumulado são o mesmo intervalo.
+   - **Encaixe obrigatório:** o acumulado do ITR tem que começar no dia seguinte ao fim da última DFP, e o acumulado anterior tem que ser o mesmo intervalo um ano antes. Se não encaixa (DFP atrasada, mudança de exercício, última DFP de transição), o resultado é `null` com o motivo, nunca um número.
+   - Se o documento mais recente é a DFP, os 12 meses são o próprio ano fechado, marcado como tal.
+   - Estoque é a posição do ITR mais recente, sem soma.
+   - Só entram contas fixas, sem o lucro por ação (3.99.*), que não é somável. A conta em si é a função genérica `doze(anual, acumuladoAtual, acumuladoAnterior)`, que a #36 reutiliza sobre as linhas classificadas.
+4. **Ausência é `null`.** Zero só quando a CVM informa zero. `null` em qualquer parcela dá `null`. Conta repetida no mesmo bloco com valores diferentes também dá `null`.
+
+Conferido em dados reais: com as DFP de 2022, 2023, 2025 e 2026 e o ITR de 2026 completos, as 74 companhias do universo fecham a base de 12 meses, sem erro.
+
+Um caso para ter em mente: a Hapvida reapresentou 2022 com o custo quase igual à receita, e o lucro bruto (3.03) daquele ano passou de 5.655.096 para **−1.139** (R$ mil). É o que a CVM traz, e combina com o resto do mesmo documento. Por isso a origem é escolhida por demonstrativo inteiro e o valor original fica guardado.
+
+Para ver a série e os 12 meses de uma companhia em R$ milhões (é a tabela usada no checkpoint da #33):
+
+```bash
+node scripts/cvm/tabela-series.mjs test/fixtures/cvm/weg            # 2 últimos anos + 12 meses
+node scripts/cvm/tabela-series.mjs test/fixtures/cvm/sao-martinho 3 # 3 últimos anos + 12 meses
+```
+
+A pasta pode ser qualquer uma com os CSVs de DFP e ITR de **uma** companhia.
+
 ## Versões, reapresentações e consolidado × individual
 
 - O **índice** (`dfp_cia_aberta_AAAA.csv`) lista **todas** as versões entregues: em 2024, 139 empresas tinham mais de uma versão na DFP, e algumas chegavam à versão 5 no ITR. Já os **CSVs de dados trazem uma única versão por documento**: em todos os 32 ZIPs, o filtro "versão mais recente" não descartou nenhuma linha. O leitor deve filtrar mesmo assim, porque é barato e protege contra mudança no portal.
@@ -228,6 +261,7 @@ Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; pre
 | `weg/` | WEG (industrial) | DFP 2025 + ITR 3T26 | caso limpo; testa a base de 12 meses |
 | `raia-drogasil/` | Raia Drogasil | DFP 2025 | IFRS 16 relevante (arrendamentos ≈ 66% do capex) |
 | `hapvida/` | Hapvida | DFP 2022 + DFP 2023 | lucro de 2022 reapresentado (−0,78 bi → −1,72 bi) |
+| `sao-martinho/` | São Martinho | DFP 03/2025 + DFP 03/2026 + ITR 06/2026 | exercício de abril a março; o último ITR entregue é o do 1º trimestre |
 
 O teste `test/cvm-fixtures.test.mjs` confirma nessas fixtures os principais fatos deste documento: formato, contas fixas, subcontas sem código fixo, base de 12 meses, reapresentação e IFRS 16.
 
@@ -236,13 +270,13 @@ O teste `test/cvm-fixtures.test.mjs` confirma nessas fixtures os principais fato
 As fixtures saem de `scripts/cvm/gerar-fixtures.mjs`, que recebe a pasta com os CSVs já extraídos e os `CD_CVM` desejados. Ele não acessa a rede nem abre ZIP: acha o CNPJ pelo `CD_CVM` no arquivo de índice, recorta o cabeçalho e as linhas da empresa e grava copiando os bytes originais (latin1, CRLF). Quais documentos entram em cada fixture está em `FIXTURES`, em `scripts/cvm/fixtures.mjs` (lógica pura, testada em `test/cvm-recorte.test.mjs`).
 
 ```bash
-# extrair só os anos usados (DFP 2022, 2023 e 2025; ITR 2026) para uma pasta qualquer
+# extrair só os anos usados (DFP 2022, 2023, 2025 e 2026; ITR 2026) para uma pasta qualquer
 mkdir -p ~/cvm/csv && cd ~/cvm/csv
-for z in dfp_cia_aberta_2022 dfp_cia_aberta_2023 dfp_cia_aberta_2025 itr_cia_aberta_2026; do unzip -oq ~/cvm/zip/$z.zip; done
+for z in dfp_cia_aberta_2022 dfp_cia_aberta_2023 dfp_cia_aberta_2025 dfp_cia_aberta_2026 itr_cia_aberta_2026; do unzip -oq ~/cvm/zip/$z.zip; done
 cd -
 
-# WEG = 005410, Raia Drogasil = 005258, Hapvida = 024392 (sem CD_CVM, gera as três)
-node scripts/cvm/gerar-fixtures.mjs ~/cvm/csv 005410 005258 024392
+# WEG = 005410, Raia Drogasil = 005258, Hapvida = 024392, São Martinho = 020516 (sem CD_CVM, gera as quatro)
+node scripts/cvm/gerar-fixtures.mjs ~/cvm/csv 005410 005258 024392 020516
 git status --short test/fixtures   # vazio: os recortes saem idênticos aos commitados
 ```
 
