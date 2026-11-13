@@ -40,3 +40,8 @@ Os treinamentos têm o módulo iniciante grátis; os pagos ficam numa plataforma
 - Nunca "compre", "venda", nota ou preço-alvo: só dados, regras à vista e aviso legal.
 - Não copiar layout, nomes ou textos de outros sites (ex.: Bastter); a referência é só de conteúdo.
 - Resumo de IA continua desligado.
+- Timeout de 20 s por requisição e fallback para o último JSON publicado.
+- Armazenamento dos fundamentos: JSON puro, com formato intermediário normalizado que permite trocar para SQLite (decidido no checkpoint da #29).
+- A ficha mostra a evolução ano a ano (2010 em diante), não só o dado de hoje.
+- Pare após a #29 e a #33 para checkpoint.
+- A #51 roda depois da #36 e antes da #37.
