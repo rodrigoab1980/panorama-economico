@@ -14,9 +14,9 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch onde gravar (dados-teste para ensaio; dados para valer)"
+        description: "Branch onde gravar (dados para valer; outra, como dados-teste, para ensaio)"
         type: string
-        default: dados-teste
+        default: dados
 
 permissions:
   contents: write
@@ -27,9 +27,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # ENSAIO: enquanto a primeira execução real não for aprovada, a coleta agendada também grava em
-  # `dados-teste`. Para valer, troque aqui para `dados` (o workflow de atualização lê de lá).
-  BRANCH_DE_DADOS: ${{ inputs.branch || 'dados-teste' }}
+  # A coleta agendada grava em `dados`, de onde o workflow de atualização lê. Numa execução manual,
+  # o campo `branch` permite gravar em outra (um ensaio em `dados-teste`, por exemplo).
+  BRANCH_DE_DADOS: ${{ inputs.branch || 'dados' }}
 
 jobs:
   # HEAD em cada ZIP: o Last-Modified vira a chave de cache de cada arquivo.

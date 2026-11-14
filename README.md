@@ -260,7 +260,7 @@ CVM (ZIPs de DFP e ITR)
 
 **Na branch de dados ficam os fatos, não os indicadores.** O workflow semanal grava, para cada uma das 64 companhias da página, as linhas dos demonstrativos (com a maior versão de cada documento e com consolidado × individual já resolvidos) e a composição do capital. Quem calcula a série anual, a base de 12 meses, os indicadores e os múltiplos é o build, que roda a cada 15 minutos. Assim, uma fórmula nova ou um preço novo aparecem no site na execução seguinte, sem coletar a CVM de novo.
 
-> **Ensaio.** Enquanto a primeira execução real não for aprovada, a coleta grava na branch `dados-teste`, e não na `dados`. O build lê da `dados`; por isso o site ainda sai sem as fichas. Para valer, troque `BRANCH_DE_DADOS` em `.github/workflows/fundamentos.yml`.
+> **Ensaio.** A coleta agendada grava na branch `dados`, a mesma que o build lê. Para ensaiar sem mexer nela, rode o workflow à mão (`workflow_dispatch`) e informe outra branch no campo `branch`, por exemplo `dados-teste`. A primeira execução real foi feita assim, em 13/11/2026.
 
 ### O que é baixado
 
