@@ -196,7 +196,7 @@ describe("ficha da WEG: os números certos, já no HTML", () => {
     assert.match(HTML, /<tfoot><tr><th scope="row" class="fixa"[^>]*>Documento<\/th>/);
     assert.match(HTML, /<a href="http:\/\/www\.rad\.cvm\.gov\.br\/ENETCONSULTA\/frmDownloadDocumento\.aspx\?CodigoInstituicao=1&amp;NumeroSequencialDocumento=154872" rel="noopener external" title="DFP de 31\/12\/2025, versão 1, na CVM">DFP 31\/12\/2025<\/a>/);
     // sem o link (coleta antiga), o documento fica em texto
-    const sem = fichaHtml(fichaDaWeg({ mudar: (f) => { for (const p of f.anual) p.origem.link = null; for (const p of f.doze.origem) p.link = null; } }), { hoje: HOJE });
+    const sem = fichaHtml(fichaDaWeg({ mudar: (f) => { for (const p of f.anual) p.origem.link = null; for (const p of f.doze.origem) p.link = null; for (const d of f.documentos) d.link = null; } }), { hoje: HOJE });
     assert.ok(!sem.includes("rad.cvm.gov.br"));
     assert.match(sem, /<span title="DFP de 31\/12\/2025, versão 1">DFP 31\/12\/2025<\/span>/);
   });
@@ -502,8 +502,8 @@ describe("build: a lista e uma página por companhia", () => {
     assert.ok(!lista.includes("<!-- painel -->") && !lista.includes('class="painel"'));
     assert.ok(lista.includes('class="menu-site"'));
     for (const f of ["fundamentos.css", "ficha.js", "lista.js"]) assert.ok(existsSync(join(dist, "fundamentos", f)), f);
-    // a página de rankings existe mesmo sem dados (com o aviso); as pastas das fichas, não
-    assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js", "rankings"]);
+    // as páginas de rankings e da temporada existem mesmo sem dados (com o aviso); as pastas das fichas, não
+    assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js", "rankings", "temporada"]);
   });
 
   test("com os fatos das 64 companhias: gera 64 fichas, os CSVs e a lista", () => {
@@ -520,7 +520,7 @@ describe("build: a lista e uma página por companhia", () => {
     assert.match(saida, /páginas das companhias: 64 em \d+ ms/);
     assert.equal(universo.length, 64);
 
-    const pastas = readdirSync(join(dist, "fundamentos"), { withFileTypes: true }).filter((e) => e.isDirectory() && e.name !== "dados" && e.name !== "rankings").map((e) => e.name);
+    const pastas = readdirSync(join(dist, "fundamentos"), { withFileTypes: true }).filter((e) => e.isDirectory() && e.name !== "dados" && e.name !== "rankings" && e.name !== "temporada").map((e) => e.name);
     assert.equal(pastas.length, 64);
     for (const p of pastas) {
       assert.match(p, /^[a-z0-9]+$/);
@@ -559,12 +559,25 @@ describe("build: a lista e uma página por companhia", () => {
     conferir(join(dist, "fundamentos", "index.html"));
     for (const p of pastas.slice(0, 5)) conferir(join(dist, "fundamentos", p, "index.html"));
     // os JSON das fichas continuam saindo: as 64, o índice, o painel e os rankings (#67)
-    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 67);
+    // com a temporada (#68), são 68
+    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 68);
     // a página de rankings sai com os 11 critérios e os links das fichas resolvem
     const rankings = readFileSync(join(dist, "fundamentos", "rankings", "index.html"), "utf8");
     assert.equal((rankings.match(/<section class="criterio"/g) ?? []).length, 11);
     assert.ok(!rankings.includes("<!-- rankings -->"));
     conferir(join(dist, "fundamentos", "rankings", "index.html"));
     assert.match(lista, /<a href="rankings\/">Rankings por indicador<\/a>/);
+    // a página da temporada sai com as 64, os links das fichas resolvem, e o JSON leva a data do build (#68)
+    const temporada = readFileSync(join(dist, "fundamentos", "temporada", "index.html"), "utf8");
+    assert.match(temporada, /<strong class="n">64 de 64<\/strong> já entregaram o ITR de 30\/09\/2026/);
+    assert.equal((temporada.match(/<li class="entrega entregue">/g) ?? []).length, 64);
+    assert.ok(!temporada.includes("<!-- temporada -->"));
+    conferir(join(dist, "fundamentos", "temporada", "index.html"));
+    assert.match(lista, /<a href="temporada\/">Temporada de balanços<\/a>/);
+    assert.match(weg, /<aside class="proximo-balanco"/);
+    const json = JSON.parse(readFileSync(join(dist, "fundamentos", "dados", "temporada.json"), "utf8"));
+    assert.match(json.hoje, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(json.coletadoEm, "2026-11-13");
+    assert.equal(json.entregues.length, 64);
   });
 });
