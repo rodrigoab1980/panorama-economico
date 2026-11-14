@@ -13,6 +13,7 @@ import { carimbo } from "./carimbo.mjs";
 import { UNIDADE_NO_CSV, montarCsv } from "./csv.mjs";
 import { escapar } from "./html.mjs";
 import { resumoHtml } from "./resumo.mjs";
+import { LEGENDA_DA_REGUA, TITULO_DA_REGUA, reguaHtml } from "./regua.mjs";
 
 export { escapar };
 
@@ -253,22 +254,32 @@ export function csvsDaFicha(ficha) {
 
 // ---------- ficha ----------
 
-function cabecalhoDaFicha(ficha, { hoje }) {
+// A cotação fica na linha do ticker (à direita no desktop, abaixo no celular). O preço do ticker que
+// dá nome à ficha vem sem repetir o ticker; os outros tickers da companhia vêm numa lista, cada um com
+// o seu. A fonte fica numa linha menor.
+function cotacaoHtml(ficha) {
   const cot = ficha.cotacoes ?? { tickers: [] };
   const comPreco = new Map((cot.tickers ?? []).map((t) => [t.ticker, t]));
-  const itens = (ficha.tickers ?? []).map((ticker) => {
+  const valor = (ticker) => {
     const c = comPreco.get(ticker);
-    return `<li><strong>${e(ticker)}</strong> ${c ? `<span class="n">${e(preco(c.preco))}</span> <time>${e(dataHora(c.dataHora))}</time>` : `<span class="vazio" title="sem cotação coletada para este ticker">${SEM_VALOR}</span>`}</li>`;
-  }).join("");
+    return c ? `<span class="n">${e(preco(c.preco))}</span> <time>${e(dataHora(c.dataHora))}</time>` : `<span class="vazio" title="sem cotação coletada para este ticker">${SEM_VALOR}</span>`;
+  };
+  const tickers = ficha.tickers ?? [];
+  const principal = tickers.includes(ficha.ticker) ? `<p class="cotacao-principal"><span class="so-leitor">${e(ficha.ticker)}: </span>${valor(ficha.ticker)}</p>` : "";
+  const outros = tickers.filter((t) => t !== ficha.ticker).map((t) => `<li><strong>${e(t)}</strong> ${valor(t)}</li>`).join("");
   const fonte = cot.fonte ? `<p class="fonte">Cotação: ${e(cot.fonte)}. É o preço do último negócio de cada ticker, na data e hora ao lado.</p>` : `<p class="fonte">Sem cotação coletada.</p>`;
+  return `<div class="cotacao">${principal}${outros ? `<ul class="cotacoes">${outros}</ul>` : ""}${fonte}</div>`;
+}
+
+function cabecalhoDaFicha(ficha, { hoje }) {
   const mesDoExercicio = Number(String(ficha.anual?.at(-1)?.fim ?? "").slice(5, 7)) || 12;
   const selo = carimbo({ documento: ficha.documentoMaisRecente, mesDoExercicio, hoje });
   const antiga = ficha.multiplos?.desatualizado ? `<p class="carimbo">Cotação desatualizada: o preço usado nos múltiplos é de ${e(data(ficha.multiplos.dataPregao))}.</p>` : "";
   return `<header class="ficha-cabecalho">`
     + `<p class="trilha"><a href="../">Todas as empresas</a></p>`
-    + `<h2>${e(ficha.nome)}</h2>`
-    + `<p class="setor">${e(ficha.setor ?? "Setor não informado")}</p>`
-    + `<ul class="cotacoes">${itens}</ul>${fonte}`
+    + `<div class="topo-da-ficha"><div class="identidade"><p class="ticker">${e(ficha.ticker)}</p><h2>${e(ficha.nome)}</h2>`
+    + `<p class="setor">${e(ficha.setor ?? "Setor não informado")}</p></div>${cotacaoHtml(ficha)}</div>`
+    + reguaHtml(ficha)
     + (selo.desatualizado ? `<p class="carimbo">${e(selo.texto)}</p>` : "")
     + antiga
     + `</header>`;
@@ -321,16 +332,14 @@ export function fichaHtml(ficha, { hoje, coletadoEm = null, menu = "<!-- menu --
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../tokens.css">
 <link rel="stylesheet" href="../fundamentos.css">
 </head>
 <body class="fundamentos">
 
-<header class="topo">
-  <div class="marca">
-    <h1>Fundamentalista</h1>
-    <p>${e(ficha.ticker)} · ${e(periodo)}</p>
-  </div>
+<header class="cabeca">
+  <a class="cabeca-marca" href="../../">Panorama Econômico</a>
+  <h1 class="so-leitor">Fundamentalista: ${e(ficha.ticker)}, ${e(periodo)}</h1>
   ${menu}
 </header>
 
@@ -358,8 +367,9 @@ ${BLOCOS.map((b) => blocoHtml(b, ficha, colunas)).join("\n")}
 
 // Trecho de HTML da lista de companhias, agrupadas por setor, para dentro de /fundamentos/index.html.
 //   indice  o índice das fichas (scripts/cvm/ficha.mjs): { coletadoEm, companhias: [{ ticker, nome, setor, ficha, motivo }] }
+//   fichas  { TICKER: ficha }, opcional: com ele, cada empresa ganha a régua de anos em miniatura
 // Sem JS a lista inteira fica visível; o campo de busca só aparece quando o JS liga (atributo hidden).
-export function listaHtml(indice) {
+export function listaHtml(indice, { fichas = null } = {}) {
   const companhias = indice?.companhias ?? [];
   if (companhias.length === 0) {
     return `<p class="sem-dados">Os dados das companhias ainda não foram coletados. A coleta roda aos domingos.</p>`;
@@ -374,15 +384,18 @@ export function listaHtml(indice) {
     const itens = lista.sort((a, b) => (a.ticker < b.ticker ? -1 : 1)).map((c) => {
       const busca = `${c.ticker} ${c.nome}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       const corpo = `<strong>${e(c.ticker)}</strong> <span>${e(c.nome)}</span>`;
+      const regua = c.ficha && fichas?.[c.ticker] ? reguaHtml(fichas[c.ticker], { miniatura: true }) : "";
       return c.ficha
-        ? `<li data-busca="${e(busca)}"><a href="${e(pastaDaFicha(c.ticker))}/">${corpo}</a></li>`
+        ? `<li data-busca="${e(busca)}"><a href="${e(pastaDaFicha(c.ticker))}/">${corpo}${regua ? ` ${regua}` : ""}</a></li>`
         : `<li data-busca="${e(busca)}" class="sem-ficha" title="${e(c.motivo ?? "sem ficha")}">${corpo} <em>sem ficha</em></li>`;
     }).join("");
     return `<section class="setor"><h3>${e(setor)} <small>${lista.length}</small></h3><ul>${itens}</ul></section>`;
   }).join("\n");
   const comFicha = companhias.filter((c) => c.ficha).length;
+  // A legenda só entra quando alguma linha tem a régua.
+  const legenda = setores.includes('class="regua miniatura"') ? `\n<div class="lista-legenda"><p>${TITULO_DA_REGUA}, ao lado de cada empresa:</p>${LEGENDA_DA_REGUA}</div>` : "";
   return `<div class="busca" hidden><label for="busca">Buscar por ticker ou nome</label><input id="busca" type="search" autocomplete="off" spellcheck="false" placeholder="WEGE3, Petrobras…"><p class="busca-vazia" hidden>Nenhuma empresa com esse ticker ou nome.</p></div>
-<p class="contagem">${comFicha} empresas${indice.coletadoEm ? `, com dados coletados em ${e(instanteBR(indice.coletadoEm))}` : ""}.</p>
+<p class="contagem">${comFicha} empresas${indice.coletadoEm ? `, com dados coletados em ${e(instanteBR(indice.coletadoEm))}` : ""}.</p>${legenda}
 <div class="setores">
 ${setores}
 </div>`;

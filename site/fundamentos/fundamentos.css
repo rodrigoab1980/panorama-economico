@@ -1,189 +1,273 @@
-/* Página Fundamentalista: a lista das empresas e a ficha de cada uma (#38).
-   Usa as variáveis de cor de style.css (tema "hora azul"); nenhuma cor nova.
+/* Página Fundamentalista: a lista das empresas e a ficha de cada uma.
+   Cores, tipografia e raio vêm de ../tokens.css (dois temas). Aqui não há cor fixa.
+
+   Direção (#65): o trabalho da página é ler 16 anos de números rápido e confiar neles. A hierarquia
+   vem do tamanho e do espaço, não de caixas. A única ousadia é a régua de anos, sob o nome da
+   companhia; o resto fica quieto. A largura da Archivo é o recurso tipográfico: expandida no ticker,
+   condensada no cabeçalho das tabelas, normal no texto.
+
    A página não rola para os lados: quem rola é a tabela, dentro de .rolagem. */
 
 body.fundamentos { overflow-x: hidden; }
-/* O cabeçalho do Diário tem quatro colunas (relógio e faixa do dia); aqui é só a marca e o menu. */
-body.fundamentos .topo { grid-template-columns: 1fr auto; }
-@media (max-width: 767px) { body.fundamentos .topo { grid-template-columns: 1fr; } }
-
-.lista, .ficha { max-width: 1280px; margin: 0 auto; padding: 20px 20px 48px; }
-@media (max-width: 767px) { .lista, .ficha { padding: 14px 12px 40px; } }
-
-.fundamentos h2 { margin: 0 0 4px; font-size: 26px; font-weight: 650; letter-spacing: -.01em; line-height: 1.15; overflow-wrap: anywhere; }
-.fundamentos h3 { margin: 0; font-size: 19px; font-weight: 600; }
-.fundamentos h4 { margin: 22px 0 4px; font-size: 16.5px; font-weight: 600; color: var(--papel); }
 .fundamentos a { text-decoration-color: var(--linha-forte); text-underline-offset: 3px; }
-.fundamentos a:hover { text-decoration-color: var(--papel-2); }
-.fundamentos .n { font-variant-numeric: tabular-nums; }
-.vazio { color: var(--papel-3); }
+.fundamentos a:hover { color: var(--acao); text-decoration-color: currentColor; }
+.vazio { color: var(--tinta-suave); }
 .menos { color: var(--baixa); }
 
+/* ---------- cabeçalho do site ---------- */
+.cabeca {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e-2) var(--e-4); flex-wrap: wrap;
+  padding: var(--e-3) var(--e-4); border-bottom: 1px solid var(--linha); background: var(--fundo);
+}
+.cabeca-marca { font-size: var(--t-3); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.01em; text-decoration: none; }
+/* Nas páginas de fundamentos o menu é sempre a lista em linha: são poucos itens e cabem no celular. */
+.cabeca .menu-site-lista { display: flex; gap: var(--e-4); }
+.cabeca .menu-site-gaveta { display: none; }
+.cabeca .menu-site a { color: var(--tinta-2); border-bottom-color: transparent; }
+.cabeca .menu-site a:hover { color: var(--tinta); }
+.cabeca .menu-site a[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+
+.lista, .ficha { max-width: 1180px; margin: 0 auto; padding: var(--e-4) var(--e-4) var(--e-6); }
+
+.fundamentos h2 { margin: 0; font-size: var(--t-4); font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
+.fundamentos h3 { margin: 0; font-size: var(--t-4); font-weight: 650; letter-spacing: -.005em; }
+.fundamentos h4 { margin: var(--e-4) 0 var(--e-1); font-size: var(--t-3); font-weight: 650; }
+.explica { margin: var(--e-1) 0 var(--e-2); max-width: 75ch; font-size: var(--t-2); color: var(--tinta-2); }
+
 /* ---------- lista ---------- */
-.lista .abre { max-width: 72ch; margin: 0 0 18px; color: var(--papel-2); }
-.busca { margin: 0 0 14px; max-width: 420px; }
-.busca label { display: block; margin-bottom: 4px; font-size: 14px; color: var(--papel-3); }
+.lista h2 { font-size: var(--t-5); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.015em; }
+.lista .abre { max-width: 70ch; margin: var(--e-2) 0 var(--e-4); color: var(--tinta-2); }
+.busca { margin: 0 0 var(--e-3); max-width: 420px; }
+.busca label { display: block; margin-bottom: var(--e-1); font-size: var(--t-2); color: var(--tinta-suave); }
 .busca input {
-  width: 100%; padding: 9px 12px; font: inherit; color: var(--papel);
-  background: var(--elevado); border: 1px solid var(--linha-forte); border-radius: var(--raio);
+  width: 100%; padding: 9px 12px; font: inherit; color: var(--tinta);
+  background: var(--superficie); border: 1px solid var(--tinta-suave); border-radius: var(--raio);
 }
-.busca input::placeholder { color: var(--papel-3); }
-.busca-vazia { margin: 10px 0 0; color: var(--papel-2); }
-.contagem { margin: 0 0 16px; font-size: 14.5px; color: var(--papel-3); }
-.sem-dados { padding: 14px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); color: var(--papel-2); }
+.busca input::placeholder { color: var(--tinta-suave); }
+.busca-vazia { margin: var(--e-2) 0 0; color: var(--tinta-2); }
+.contagem { margin: 0 0 var(--e-4); font-size: var(--t-2); color: var(--tinta-suave); }
+.sem-dados { padding: var(--e-3); border: 1px dashed var(--linha-forte); border-radius: var(--raio); color: var(--tinta-2); }
 
-.setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; align-items: start; }
-.setor { padding: 12px 14px 8px; background: var(--pre-abertura); border: 1px solid var(--linha); border-radius: var(--raio); }
-.setor h3 { margin-bottom: 6px; font-size: 16px; color: var(--papel-2); display: flex; justify-content: space-between; gap: 8px; }
-.setor h3 small { font-weight: 400; font-size: 13.5px; color: var(--papel-3); font-variant-numeric: tabular-nums; }
+/* A legenda da régua em miniatura: os mesmos três desenhos da ficha. */
+.lista-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-1) var(--e-3); margin: 0 0 var(--e-4); font-size: var(--t-1); color: var(--tinta-suave); }
+.lista-legenda p { margin: 0; color: var(--tinta-2); }
+
+.setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--e-4) var(--e-5); align-items: start; }
+.setor h3 { margin-bottom: var(--e-1); padding-bottom: var(--e-1); font-size: var(--t-3); border-bottom: 1px solid var(--linha-forte); display: flex; justify-content: space-between; gap: var(--e-2); }
+.setor h3 small { font-weight: 400; font-size: var(--t-2); color: var(--tinta-suave); }
 .setor ul { list-style: none; margin: 0; padding: 0; }
-.setor li { border-top: 1px solid var(--linha); }
-.setor li a, .setor li.sem-ficha { display: grid; grid-template-columns: 68px 1fr; gap: 8px; align-items: baseline; padding: 7px 2px; text-decoration: none; }
-.setor li.sem-ficha { grid-template-columns: 68px 1fr auto; color: var(--papel-3); }
-.setor li strong { font-weight: 600; font-variant-numeric: tabular-nums; }
-.setor li span { color: var(--papel-2); font-size: 14.5px; font-stretch: var(--estreito); overflow-wrap: anywhere; }
-.setor li em { font-style: normal; font-size: 13px; }
-.setor li a:hover span { color: var(--papel); }
+.setor li { border-bottom: 1px solid var(--linha); }
+/* Cada linha: o ticker, o nome e a régua de anos em miniatura, encostada à direita. */
+.setor li a, .setor li.sem-ficha { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; gap: var(--e-2); align-items: baseline; padding: 7px 0; text-decoration: none; }
+.setor li.sem-ficha { color: var(--tinta-suave); }
+.setor li strong { font-weight: 700; font-stretch: var(--largo); font-size: var(--t-2); }
+.setor li span { color: var(--tinta-2); font-size: var(--t-2); font-stretch: var(--estreito); overflow-wrap: anywhere; }
+.setor li em { font-style: normal; font-size: var(--t-1); }
+.setor li a:hover strong { color: var(--acao); }
 
-/* ---------- ficha: cabeçalho ---------- */
-.trilha { margin: 0 0 10px; font-size: 14.5px; color: var(--papel-2); }
-.ficha-cabecalho { margin-bottom: 16px; }
-.ficha-cabecalho .setor { margin: 0 0 10px; padding: 0; background: none; border: 0; color: var(--papel-2); }
-.cotacoes { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.cotacoes li { display: flex; align-items: baseline; gap: 7px; }
-.cotacoes strong { font-weight: 600; }
-.cotacoes .n { font-size: 18px; }
-.cotacoes time { font-size: 13.5px; color: var(--papel-3); }
-.fonte { margin: 0; font-size: 13.5px; color: var(--papel-3); max-width: 80ch; }
-/* Dado desatualizado: a cor que o site reserva para isso. */
+/* ---------- ficha: identidade ---------- */
+.trilha { margin: 0 0 var(--e-4); font-size: var(--t-2); color: var(--tinta-2); }
+.ficha-cabecalho { margin-bottom: var(--e-5); }
+/* A cotação divide a linha com o ticker: à direita no desktop, abaixo do nome no celular. */
+.topo-da-ficha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--e-3) var(--e-5); align-items: start; }
+.identidade { display: grid; gap: 2px; min-width: 0; }
+/* O ticker é o nome pelo qual o leitor conhece a companhia: largura expandida e peso alto. */
+.ticker { margin: 0; font-size: var(--t-6); font-weight: 800; font-stretch: var(--largo); line-height: 1; letter-spacing: -.02em; }
+.identidade h2 { color: var(--tinta-2); margin-top: var(--e-1); }
+.ficha-cabecalho .setor { margin: 0; font-size: var(--t-2); color: var(--tinta-suave); }
+
+/* ---------- régua de anos ---------- */
+/* Um bloco por exercício. É fato, não julgamento: a mesma tinta nos três estados; só o preenchimento muda. */
+/* Cada exercício tem a mesma largura (--bloco): uma série curta fica curta, não estica até a borda.
+   Só quando a tela é estreita demais para a série inteira os blocos encolhem, todos juntos. */
+.regua { --bloco: 44px; margin: var(--e-4) 0 0; }
+.regua figcaption { font-size: var(--t-2); color: var(--tinta-2); }
+.regua figcaption strong { font-weight: 650; color: var(--tinta); }
+.regua-anos {
+  list-style: none; margin: var(--e-2) 0 0; padding: 0 0 20px; display: flex; gap: 3px;
+}
+.regua-anos li { position: relative; flex: 0 1 var(--bloco); min-width: 0; height: 34px; border-radius: 2px; cursor: help; }
+.regua-anos .lucro { background: var(--tinta); }
+.regua-anos .prejuizo { box-shadow: inset 0 0 0 2px var(--tinta); }
+.regua-anos .sem-dado { border: 2px dashed var(--tinta); opacity: .55; }
+.regua-anos small {
+  position: absolute; top: calc(100% + 4px); left: 0; font-size: .72rem; line-height: 1;
+  font-stretch: var(--estreito); color: var(--tinta-suave); white-space: nowrap;
+}
+.regua-anos li:last-child small { left: auto; right: 0; }
+.regua-legenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--e-1) var(--e-4); font-size: var(--t-1); color: var(--tinta-suave); }
+.regua-legenda li { display: flex; align-items: center; gap: 6px; }
+.regua-legenda li::before { content: ""; width: 12px; height: 12px; border-radius: 2px; }
+.regua-legenda .lucro::before { background: var(--tinta); }
+.regua-legenda .prejuizo::before { box-shadow: inset 0 0 0 2px var(--tinta); }
+.regua-legenda .sem-dado::before { border: 2px dashed var(--tinta); opacity: .55; }
+/* Miniatura, para a lista de empresas: sem anos e sem legenda. Encostada à direita, o exercício mais
+   recente de cada empresa fica na mesma coluna. */
+.regua.miniatura { --bloco: 6px; margin: 0; align-self: center; }
+.regua.miniatura .regua-anos { margin: 0; padding: 0; gap: 1px; justify-content: flex-end; }
+.regua.miniatura .regua-anos li { flex: 0 0 var(--bloco); height: 13px; border-radius: 1px; cursor: inherit; }
+.regua.miniatura .regua-anos .prejuizo { box-shadow: inset 0 0 0 1px var(--tinta); }
+.regua.miniatura .regua-anos .sem-dado { border-width: 1px; }
+
+/* ---------- ficha: cotação e carimbo ---------- */
+/* O preço do ticker da ficha vem grande e sem repetir o ticker; os outros tickers da companhia, numa
+   lista menor; a fonte, na menor letra da escala. */
+.cotacao { display: grid; justify-items: end; gap: var(--e-1); text-align: right; }
+.cotacao-principal { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 0 var(--e-2); line-height: 1.1; }
+.cotacao-principal .n, .cotacao-principal .vazio { font-size: var(--t-6); font-weight: 500; font-stretch: var(--estreito); letter-spacing: -.01em; }
+.cotacao-principal time { font-size: var(--t-2); color: var(--tinta-2); }
+.cotacoes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 var(--e-4); }
+.cotacoes li { display: flex; align-items: baseline; gap: 6px; }
+.cotacoes strong { font-weight: 650; font-size: var(--t-2); }
+.cotacoes .n { font-size: var(--t-3); font-weight: 500; }
+.cotacoes time { font-size: var(--t-1); color: var(--tinta-suave); }
+.fonte { margin: 0; font-size: var(--t-1); line-height: 1.35; color: var(--tinta-suave); max-width: 44ch; }
+/* Dado desatualizado: a cor de atenção, com texto. */
 .carimbo {
-  margin: 10px 0 0; padding: 8px 12px; max-width: 80ch; font-size: 14.5px; color: var(--aviso);
-  border: 1px solid var(--aviso); border-radius: var(--raio);
+  margin: var(--e-3) 0 0; padding: var(--e-2) var(--e-3); max-width: 75ch; font-size: var(--t-2); color: var(--atencao);
+  border: 1px solid var(--atencao); border-radius: var(--raio);
 }
 
-.atalhos { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0 0 6px; }
-.atalhos a { padding: 5px 10px; font-size: 14.5px; text-decoration: none; color: var(--papel-2); background: var(--elevado); border: 1px solid var(--linha); border-radius: var(--raio); }
-.atalhos a:hover { color: var(--papel); border-color: var(--linha-forte); }
+.atalhos { display: flex; flex-wrap: wrap; gap: var(--e-1) var(--e-4); margin: var(--e-5) 0 0; padding-top: var(--e-3); border-top: 1px solid var(--linha); font-size: var(--t-2); }
+.atalhos a { color: var(--tinta-2); text-decoration: none; }
+.atalhos a:hover { color: var(--acao); text-decoration: underline; }
 
 /* ---------- ficha: ao longo dos anos, pontos de atenção e comparação com o setor ---------- */
-/* Cores neutras do tema: nada aqui diz se um número é favorável. Só os pontos de atenção usam a cor de aviso. */
-.resumo { margin: 0 0 8px; }
-.resumo h3 { margin-top: 22px; margin-bottom: 4px; }
+/* Cores neutras: nada aqui diz se um número é favorável. Só os pontos de atenção usam a cor de atenção. */
+.resumo h3 { margin-top: var(--e-5); }
 .resumo > h3:first-child { margin-top: 0; }
-.cartoes { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.cartao { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--pre-abertura); border: 1px solid var(--linha); border-radius: var(--raio); min-width: 0; }
-.cartao-rotulo { font-size: 13.5px; color: var(--papel-2); line-height: 1.25; }
-.cartao-numero { font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--papel); }
-.cartao-conta { font-size: 13px; color: var(--papel-3); line-height: 1.3; overflow-wrap: anywhere; }
-.prazos { display: flex; gap: 14px; flex-wrap: wrap; }
+/* Os cartões são o único lugar com caixas: são os números do topo. */
+.cartoes { list-style: none; margin: var(--e-3) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-3); }
+.cartao { display: flex; flex-direction: column; gap: 3px; padding: var(--e-3); background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-cartao); min-width: 0; }
+.cartao-rotulo { font-size: var(--t-1); color: var(--tinta-2); line-height: 1.25; }
+.cartao-numero { font-size: var(--t-5); font-weight: 650; line-height: 1.15; }
+/* A linha de apoio é curta; a frase completa da conta está no title do cartão (e no balão, com JS). */
+.cartao-conta { font-size: var(--t-1); color: var(--tinta-suave); line-height: 1.35; overflow-wrap: anywhere; }
+.cartao[title], .cartao[data-dica] { cursor: help; }
+.prazos { display: flex; gap: var(--e-3); flex-wrap: wrap; }
 .prazo { display: flex; flex-direction: column; }
-.prazo .cartao-numero { font-size: 20px; }
-.prazo small { font-size: 12px; color: var(--papel-3); }
-@media (max-width: 1000px) { .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 767px) {
-  .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .cartao { padding: 9px 10px; }
-  .cartao-numero { font-size: 20px; }
-  .prazo .cartao-numero { font-size: 17px; }
-  .prazos { gap: 10px; }
-}
+.prazo .cartao-numero { font-size: var(--t-4); }
+.prazo small { font-size: .75rem; color: var(--tinta-suave); }
 
-.acionadas, .regras { list-style: none; margin: 8px 0 0; padding: 0; }
-.acionadas li { display: flex; gap: 8px; align-items: baseline; padding: 9px 12px; margin-bottom: 6px; max-width: 100ch; font-size: 14.5px; border: 1px solid var(--aviso); border-radius: var(--raio); color: var(--papel); }
-.acionadas strong { color: var(--aviso); font-weight: 600; }
-.icone { color: var(--aviso); }
-.acionadas small, .regras small { display: block; margin-top: 3px; font-size: 13px; color: var(--papel-3); }
-.nenhuma { margin: 8px 0 0; font-size: 14.5px; color: var(--papel-2); }
-.atencao details, .pares details { margin-top: 8px; font-size: 14.5px; }
-.atencao summary, .pares summary { cursor: pointer; color: var(--papel-2); }
-.regras li { display: grid; grid-template-columns: minmax(150px, 230px) 1fr; gap: 2px 14px; padding: 8px 0; border-top: 1px solid var(--linha); max-width: 110ch; }
+.acionadas, .regras { list-style: none; margin: var(--e-2) 0 0; padding: 0; }
+.acionadas li { display: flex; gap: var(--e-2); align-items: baseline; padding: var(--e-2) var(--e-3); margin-bottom: 6px; max-width: 95ch; font-size: var(--t-2); border: 1px solid var(--atencao); border-radius: var(--raio); background: var(--superficie); }
+.acionadas strong { color: var(--atencao); font-weight: 650; }
+.icone { color: var(--atencao); }
+.acionadas small, .regras small { display: block; margin-top: 3px; font-size: var(--t-1); color: var(--tinta-suave); }
+.nenhuma { margin: var(--e-2) 0 0; font-size: var(--t-2); color: var(--tinta-2); }
+.atencao details, .pares details { margin-top: var(--e-2); font-size: var(--t-2); }
+.atencao summary, .pares summary { cursor: pointer; color: var(--tinta-2); }
+.atencao summary:hover, .pares summary:hover { color: var(--acao); }
+.regras li { display: grid; grid-template-columns: minmax(150px, 230px) 1fr; gap: 2px var(--e-3); padding: var(--e-2) 0; border-top: 1px solid var(--linha); max-width: 105ch; }
 .regras li strong { font-weight: 500; }
-.regras li span { color: var(--papel-2); overflow-wrap: anywhere; }
+.regras li span { color: var(--tinta-2); overflow-wrap: anywhere; }
 .regras li small { grid-column: 2; margin-top: 0; }
-.regras li.acionada > span { color: var(--papel); }
-@media (max-width: 767px) { .regras li { grid-template-columns: 1fr; } .regras li small { grid-column: 1; } }
-.pares .amostra p { margin: 6px 0 0; max-width: 90ch; color: var(--papel-2); font-size: 14px; }
-.comparacao { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.regras li.acionada > span { color: var(--tinta); }
+.pares .amostra p { margin: 6px 0 0; max-width: 85ch; color: var(--tinta-2); }
+.pares .rolagem { margin-top: var(--e-3); }
+.comparacao { border-collapse: collapse; width: 100%; font-size: var(--t-2); }
 .comparacao th, .comparacao td { padding: 7px 10px; border-bottom: 1px solid var(--linha); text-align: left; vertical-align: top; }
-.comparacao thead th { font-weight: 500; color: var(--papel-2); border-bottom-color: var(--linha-forte); white-space: nowrap; }
+.comparacao thead th { font-weight: 500; font-stretch: var(--estreito); color: var(--tinta-suave); border-bottom-color: var(--linha-forte); white-space: nowrap; }
 .comparacao tbody th { font-weight: 400; min-width: 150px; }
 .comparacao td.n, .comparacao thead th:nth-child(2), .comparacao thead th:nth-child(3) { text-align: right; white-space: nowrap; }
-.comparacao td small { color: var(--papel-3); font-size: 12.5px; }
-.comparacao td:last-child { color: var(--papel-2); min-width: 220px; }
+.comparacao td small { color: var(--tinta-suave); font-size: var(--t-1); }
+.comparacao td:last-child { color: var(--tinta-2); min-width: 220px; }
 .comparacao tbody tr:last-child th, .comparacao tbody tr:last-child td { border-bottom: 0; }
-.pares .rolagem { margin-top: 10px; }
-/* No celular a tabela rola para os lados; a posição fica numa linha só, para as linhas não ficarem altas. */
-@media (max-width: 767px) { .comparacao td:last-child { min-width: 320px; } .comparacao tbody th { min-width: 128px; } }
 
-/* ---------- ficha: blocos ---------- */
-.bloco { margin-top: 26px; scroll-margin-top: 110px; }
-.bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.csv { font-size: 14px; color: var(--papel-2); white-space: nowrap; }
-.explica { margin: 0 0 8px; max-width: 80ch; font-size: 14.5px; color: var(--papel-2); }
-.notas { margin: 10px 0 0; padding-left: 18px; max-width: 86ch; font-size: 14px; color: var(--papel-2); }
+/* ---------- ficha: blocos e tabelas ---------- */
+.bloco { margin-top: var(--e-6); scroll-margin-top: var(--e-4); }
+.bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-3); margin-bottom: var(--e-2); }
+.bloco-topo h3 { font-size: var(--t-5); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.015em; }
+.csv { font-size: var(--t-2); color: var(--tinta-2); white-space: nowrap; }
+.notas { margin: var(--e-2) 0 0; padding-left: 18px; max-width: 85ch; font-size: var(--t-2); color: var(--tinta-2); }
 .notas li { margin-bottom: 4px; }
-.notas.avisos { color: var(--aviso); }
+.notas.avisos { color: var(--atencao); margin-top: var(--e-4); }
 
-/* A tabela rola para os lados dentro desta caixa; o nome do indicador fica fixo à esquerda. */
-.rolagem { overflow-x: auto; max-width: 100%; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); -webkit-overflow-scrolling: touch; }
-.serie { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 14.5px; }
-.serie th, .serie td { padding: 6px 10px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+/* A tabela é uma superfície só. Ela rola para os lados dentro desta caixa; o nome do indicador fica
+   fixo à esquerda. No desktop a caixa também limita a altura, para o cabeçalho ficar fixo ao rolar. */
+.rolagem { overflow: auto; max-width: 100%; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--superficie); -webkit-overflow-scrolling: touch; }
+.serie { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: var(--t-2); }
+.serie th, .serie td { padding: 7px 12px; border-bottom: 1px solid var(--linha); white-space: nowrap; background: var(--superficie); }
+/* Zebra muito sutil. */
+.serie tbody tr:nth-child(even) th, .serie tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--superficie-2) 38%, var(--superficie)); }
 .serie tbody tr:last-child th, .serie tbody tr:last-child td { border-bottom-color: var(--linha-forte); }
-.serie thead th { font-weight: 500; color: var(--papel-2); text-align: right; vertical-align: bottom; background: var(--pre-abertura); border-bottom-color: var(--linha-forte); }
-.serie thead th small { display: block; font-size: 12px; font-weight: 400; color: var(--papel-3); }
+.serie thead th {
+  position: sticky; top: 0; z-index: 2; font-weight: 500; font-stretch: var(--estreito); color: var(--tinta-2);
+  text-align: right; vertical-align: bottom; border-bottom-color: var(--linha-forte);
+}
+.serie thead th small { display: block; font-size: .75rem; font-weight: 400; color: var(--tinta-suave); }
 .serie td.n { text-align: right; }
 .serie .fixa {
-  position: sticky; left: 0; z-index: 2; text-align: left; font-weight: 400; color: var(--papel);
-  background: var(--pre-abertura); border-right: 1px solid var(--linha-forte);
-  white-space: normal; min-width: 176px; max-width: 230px; line-height: 1.25;
+  position: sticky; left: 0; z-index: 3; text-align: left; font-weight: 400; color: var(--tinta);
+  border-right: 1px solid var(--linha-forte); white-space: normal; min-width: 190px; max-width: 240px; line-height: 1.25;
 }
-.serie thead .fixa { color: var(--papel-2); font-weight: 500; z-index: 3; }
+.serie thead .fixa { color: var(--tinta-2); font-weight: 500; z-index: 4; }
 .serie tbody .fixa[title], .serie tfoot .fixa[title] { cursor: help; }
 .serie .tend { padding: 2px 8px; text-align: center; }
-.serie thead .tend { text-align: center; font-size: 12.5px; color: var(--papel-3); }
-/* A coluna de hoje (12 meses) tem o fundo um tom acima. */
-.serie .hoje { background: var(--elevado); }
-.serie thead .hoje { color: var(--papel); }
+.serie thead .tend { text-align: center; font-size: var(--t-1); color: var(--tinta-suave); }
+/* A coluna de hoje (12 meses) se destaca só pelo fundo. */
+.serie .hoje, .serie tbody tr:nth-child(even) .hoje { background: var(--superficie-2); }
+.serie thead .hoje { color: var(--tinta); font-weight: 650; }
 .serie td.vazio[title] { cursor: help; }
 /* Quebra no número de ações: borda entre o ano em que mudou e o anterior (que fica à direita). */
-.serie .quebra { border-right: 2px dashed var(--aviso); }
-.serie tfoot td, .serie tfoot th { font-size: 12.5px; color: var(--papel-3); border-bottom: 0; text-align: right; line-height: 1.35; vertical-align: top; }
-.serie tfoot .fixa { text-align: left; color: var(--papel-3); }
-.serie tbody tr:hover th, .serie tbody tr:hover td { background: var(--elevado); }
+.serie .quebra { border-right: 2px dashed var(--atencao); }
+.serie tfoot td, .serie tfoot th { font-size: var(--t-1); color: var(--tinta-suave); border-bottom: 0; text-align: right; line-height: 1.35; vertical-align: top; }
+.serie tfoot .fixa { text-align: left; color: var(--tinta-suave); }
+/* Os links dos documentos ficam empilhados: cada um com 24 px de altura, o mínimo para o toque. */
+.serie tfoot a { display: inline-block; min-height: 24px; padding: 4px 0; }
+.serie tbody tr:hover th, .serie tbody tr:hover td { background: var(--superficie-2); }
 .serie.multiplos { width: 100%; }
-.serie.multiplos .motivo { text-align: left; white-space: normal; color: var(--papel-3); font-size: 13.5px; min-width: 200px; }
-.serie.multiplos thead .motivo { color: var(--papel-2); font-size: 14.5px; }
+.serie.multiplos .motivo { text-align: left; white-space: normal; color: var(--tinta-suave); font-size: var(--t-1); min-width: 200px; }
+.serie.multiplos thead .motivo { color: var(--tinta-2); font-size: var(--t-2); }
+@media (min-width: 768px) { .bloco .rolagem { max-height: 86vh; } }
 
 .tendencia { display: block; }
-.tendencia polyline { fill: none; stroke: var(--papel-2); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
-.tendencia circle { fill: var(--papel-2); }
-.tendencia circle.fim { fill: var(--papel); }
+.tendencia polyline { fill: none; stroke: var(--tinta-2); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.tendencia circle { fill: var(--tinta-2); }
+.tendencia circle.fim { fill: var(--tinta); }
 .tendencia .zero { stroke: var(--linha-forte); stroke-width: 1; stroke-dasharray: 2 2; }
-
-@media (max-width: 767px) {
-  .fundamentos h2 { font-size: 22px; }
-  .serie { font-size: 13.5px; }
-  .serie th, .serie td { padding: 6px 8px; }
-  /* No celular, o nome e o gráfico ficam estreitos para a coluna dos 12 meses caber na primeira tela. */
-  .serie .fixa { min-width: 112px; max-width: 112px; font-size: 13px; padding-left: 8px; padding-right: 6px; }
-  .serie .tend { padding: 2px 4px; }
-  .tendencia { width: 52px; height: auto; }
-  .serie thead .tend { font-size: 0; }
-  .bloco { scroll-margin-top: 150px; }
-}
 
 /* Balão com a fórmula, o documento e o motivo (ficha.js). Sem JS, tudo isso está no title. */
 .balao {
   position: absolute; z-index: 50; max-width: min(360px, calc(100vw - 24px)); padding: 10px 12px;
-  background: var(--elevado); border: 1px solid var(--linha-forte); border-radius: var(--raio);
-  box-shadow: 0 14px 40px rgba(4, 8, 16, .6); font-size: 14px; line-height: 1.4; color: var(--papel);
+  background: var(--superficie); border: 1px solid var(--linha-forte); border-radius: var(--raio);
+  box-shadow: 0 10px 28px var(--sombra); font-size: var(--t-2); line-height: 1.4; color: var(--tinta);
 }
-.balao b { display: block; margin-bottom: 4px; font-weight: 600; }
-.balao p { margin: 0 0 6px; color: var(--papel-2); }
+.balao b { display: block; margin-bottom: 4px; font-weight: 650; }
+.balao p { margin: 0 0 6px; color: var(--tinta-2); }
 .balao p:last-child { margin-bottom: 0; }
-.balao .motivo { color: var(--aviso); }
+.balao .motivo { color: var(--atencao); }
 
-.aviso-legal { margin-top: 32px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); font-size: 14px; max-width: 100%; }
-.aviso-legal p { margin: 0 0 6px; color: var(--papel-3); }
+.aviso-legal { margin-top: var(--e-6); padding-top: var(--e-3); border-top: 1px solid var(--linha-forte); font-size: var(--t-2); max-width: 85ch; }
+.aviso-legal p { margin: 0 0 6px; color: var(--tinta-suave); }
 .aviso-legal p:last-child { margin-bottom: 0; }
-.aviso-legal strong { color: var(--papel-2); font-weight: 500; }
+.aviso-legal strong { color: var(--tinta); font-weight: 500; }
+
+@media (max-width: 1000px) { .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .cabeca { padding: var(--e-3); }
+  .lista, .ficha { padding: var(--e-3) var(--e-3) var(--e-6); }
+  .ticker { font-size: 2rem; }
+  .topo-da-ficha { grid-template-columns: minmax(0, 1fr); }
+  .cotacao { justify-items: start; text-align: left; }
+  .cotacao-principal, .cotacoes { justify-content: flex-start; }
+  .cotacao-principal .n, .cotacao-principal .vazio { font-size: var(--t-5); }
+  .regua-anos li { height: 28px; }
+  .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-2); }
+  .cartao { padding: 10px; }
+  .cartao-numero { font-size: var(--t-4); }
+  .prazo .cartao-numero { font-size: 1.05rem; }
+  .prazos { gap: 10px; }
+  .regras li { grid-template-columns: 1fr; }
+  .regras li small { grid-column: 1; }
+  .comparacao td:last-child { min-width: 320px; }
+  .comparacao tbody th { min-width: 128px; }
+  .bloco-topo h3 { font-size: var(--t-4); }
+  .serie { font-size: .82rem; }
+  .serie th, .serie td { padding: 6px 8px; }
+  /* No celular, o nome e o gráfico ficam estreitos para a coluna dos 12 meses caber na primeira tela. */
+  .serie .fixa { min-width: 112px; max-width: 112px; padding-left: 8px; padding-right: 6px; }
+  .serie .tend { padding: 2px 4px; }
+  .tendencia { width: 52px; height: auto; }
+  .serie thead .tend { font-size: 0; }
+}

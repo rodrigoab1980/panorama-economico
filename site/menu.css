@@ -1,15 +1,15 @@
 /* Menu comum entre as páginas (inserido pelo build no lugar de <!-- menu -->).
-   Fica num arquivo próprio para não mexer no style.css do Diário. Usa as variáveis de cor de style.css.
+   Fica num arquivo próprio, carregado por todas as páginas. Usa os tokens de tokens.css.
    O menu mora dentro do <header class="topo"> e não pode empurrar nem cobrir a grade:
    - desktop (> 1100 px): lista em linha, posicionada no canto de cima do cabeçalho, fora do fluxo;
    - celular (≤ 767 px): <details> na mesma linha do "Restaurar layout", no espaço livre à direita;
    - entre 768 e 1100 px não há espaço livre no cabeçalho: o <details> ganha uma linha própria (≈ 34 px). */
 
-.menu-site { font-size: 15px; line-height: 1.2; }
+.menu-site { font-size: var(--t-2); line-height: 1.2; }
 .menu-site ul { list-style: none; margin: 0; padding: 0; }
-.menu-site a { display: block; padding: 4px 2px; color: var(--papel-2); text-decoration: none; border-bottom: 2px solid transparent; }
-.menu-site a:hover { color: var(--papel); }
-.menu-site a[aria-current="page"] { color: var(--papel); border-bottom-color: var(--linha-forte); }
+.menu-site a { display: block; padding: 4px 2px; color: var(--tinta-2); text-decoration: none; border-bottom: 2px solid transparent; }
+.menu-site a:hover { color: var(--tinta); }
+.menu-site a[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--linha-forte); }
 
 /* Desktop: lista em linha, sem ocupar célula da grade do cabeçalho. */
 .topo > .menu-site { position: absolute; top: 8px; right: 20px; }
@@ -22,19 +22,19 @@
   .menu-site-gaveta { display: block; position: relative; }
   .menu-site-gaveta summary {
     list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    padding: 7px 12px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--elevado); color: var(--papel);
+    padding: 7px 12px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--superficie-2); color: var(--tinta);
   }
   .menu-site-gaveta summary::-webkit-details-marker { display: none; }
   .menu-site-gaveta summary::after {
     content: ""; width: 7px; height: 7px; margin-top: -4px;
-    border-right: 2px solid var(--papel-2); border-bottom: 2px solid var(--papel-2); transform: rotate(45deg);
+    border-right: 2px solid var(--tinta-2); border-bottom: 2px solid var(--tinta-2); transform: rotate(45deg);
   }
   .menu-site-gaveta[open] summary::after { margin-top: 3px; transform: rotate(-135deg); }
   /* Aberto, a lista desce por cima do conteúdo só enquanto o usuário a mantém aberta. */
   .menu-site-gaveta ul {
     position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 200px; padding: 6px;
-    background: var(--pre-abertura); border: 1px solid var(--linha-forte); border-radius: var(--raio);
-    box-shadow: 0 14px 40px rgba(4, 8, 16, .6);
+    background: var(--superficie); border: 1px solid var(--linha-forte); border-radius: var(--raio);
+    box-shadow: 0 12px 32px var(--sombra);
   }
   .menu-site-gaveta a { padding: 9px 10px; border-bottom: 0; border-left: 2px solid transparent; }
   .menu-site-gaveta a[aria-current="page"] { border-left-color: var(--linha-forte); }

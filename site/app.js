@@ -123,7 +123,9 @@ function widgetTV(container, arquivo, config) {
   const s = document.createElement("script");
   s.src = `https://s3.tradingview.com/external-embedding/${arquivo}`;
   s.async = true;
-  s.textContent = JSON.stringify({ colorTheme: "dark", isTransparent: true, locale: "br", ...config });
+  // Os widgets acompanham o tema do aparelho, como o resto do site (tokens.css).
+  const tema = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  s.textContent = JSON.stringify({ colorTheme: tema, isTransparent: true, locale: "br", ...config });
   container.firstChild.appendChild(s);
 }
 

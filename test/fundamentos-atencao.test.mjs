@@ -756,14 +756,40 @@ describe("HTML do topo da ficha", () => {
   f.consistencia = calcularConsistencia(f);
   f.atencao = calcularAtencao(f);
 
-  test("cartões de consistência: o número grande e a conta", () => {
+  test("cartões de consistência: o número grande, uma linha de apoio curta e a frase completa no title", () => {
     const html = consistenciaHtml(f.consistencia);
     assert.match(html, /<h3>Ao longo dos anos<\/h3>/);
     assert.match(html, /Série de 11 exercícios de 12 meses, de 2015 a 2025\./);
-    assert.equal((html.match(/<li class="cartao">/g) ?? []).length, 8);
-    assert.match(html, /<span class="cartao-rotulo">Anos com lucro<\/span><strong class="cartao-numero">10 de 11<\/strong><span class="cartao-conta">anos, 2015–2025<\/span>/);
-    assert.match(html, /Maior sequência com lucro<\/span><strong class="cartao-numero">8 anos<\/strong><span class="cartao-conta">8 anos seguidos \(2018–2025\), até o último exercício<\/span>/);
-    assert.match(html, /Pior ano da série<\/span><strong class="cartao-numero">2017<\/strong><span class="cartao-conta">2017: prejuízo de R\$ 30 mil/);
+    assert.equal((html.match(/<li class="cartao"/g) ?? []).length, 8);
+    assert.match(html, /<li class="cartao" title="10 de 11 anos \(2015–2025\)"><span class="cartao-rotulo">Anos com lucro<\/span><strong class="cartao-numero">10 de 11<\/strong><span class="cartao-conta" aria-hidden="true">anos, 2015–2025<\/span><span class="so-leitor">10 de 11 anos \(2015–2025\)<\/span><\/li>/);
+    assert.match(html, /<li class="cartao" title="8 anos seguidos \(2018–2025\), até o último exercício"><span class="cartao-rotulo">Maior sequência com lucro<\/span><strong class="cartao-numero">8 anos<\/strong><span class="cartao-conta" aria-hidden="true">2018–2025<\/span>/);
+    assert.match(html, /<li class="cartao" title="2017: prejuízo de R\$ 30 mil[^"]*"><span class="cartao-rotulo">Pior ano da série<\/span><strong class="cartao-numero">2017<\/strong><span class="cartao-conta" aria-hidden="true">prejuízo de R\$ 30 mil<\/span>/);
+  });
+
+  test("a frase completa de cada conta continua na página, igual à da métrica: no title e para o leitor de tela", () => {
+    const c = f.consistencia;
+    const html = consistenciaHtml(c);
+    const escapada = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    for (const conta of [c.anosComLucro.conta, c.anosComFclPositivo.conta, c.sequenciaComLucro.conta, c.estabilidadeDaMargem.conta, c.piorAno.conta]) {
+      assert.ok(conta && html.includes(` title="${escapada(conta)}">`), conta);
+      assert.ok(html.includes(`<span class="so-leitor">${escapada(conta)}</span>`), conta);
+    }
+    for (const x of c.crescimento.filter((i) => i.valor != null)) assert.ok(html.includes(`${x.anos} anos: ${escapada(x.conta)}`), x.conta);
+  });
+
+  test("a linha de apoio é curta: no máximo 40 caracteres, e nunca vazia", () => {
+    const linhas = [...consistenciaHtml(f.consistencia).matchAll(/<span class="cartao-conta"[^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
+    assert.equal(linhas.length, 8);
+    for (const l of linhas) assert.ok(l.length > 0 && l.length <= 40, l);
+  });
+
+  test("crescimento e margem: a linha de apoio diz o período de cada prazo e os extremos da margem", () => {
+    const c = f.consistencia;
+    const html = consistenciaHtml(c);
+    const receita = c.crescimento.filter((x) => x.titulo === "Receita");
+    const esperado = [...new Set(receita.map((x) => (x.valor == null ? x.motivo : `${x.inicio.slice(0, 4)}–${x.fim.slice(0, 4)}`)))].join(" · ");
+    assert.ok(html.includes(`<span class="cartao-conta" aria-hidden="true">${esperado}</span>`), esperado);
+    assert.match(html, /Margem líquida: da menor à maior<\/span><strong class="cartao-numero">[^<]+<\/strong><span class="cartao-conta" aria-hidden="true">de [−\d,]+% a [−\d,]+%<\/span>/);
   });
 
   test("métrica sem cálculo mostra — e o motivo, nunca 0", () => {
@@ -771,7 +797,10 @@ describe("HTML do topo da ficha", () => {
     const html = consistenciaHtml(calcularConsistencia(curta));
     assert.match(html, /<strong class="cartao-numero">—<\/strong><small>em 5 anos<\/small>/);
     assert.match(html, /5 anos: sem cálculo \(série curta \(3 anos\)\)/);
-    assert.match(html, /Margem líquida: da menor à maior<\/span><strong class="cartao-numero">—<\/strong><span class="cartao-conta">nenhum ano com dado<\/span>/);
+    // os dois prazos sem cálculo pelo mesmo motivo: a linha de apoio diz o motivo uma vez só
+    assert.match(html, /<span class="cartao-conta" aria-hidden="true">série curta \(3 anos\)<\/span>/);
+    // sem conta, a linha de apoio é o motivo, e o cartão não leva title
+    assert.match(html, /<li class="cartao"><span class="cartao-rotulo">Margem líquida: da menor à maior<\/span><strong class="cartao-numero">—<\/strong><span class="cartao-conta">nenhum ano com dado<\/span><\/li>/);
   });
 
   test("pontos de atenção: as acionadas primeiro, com ícone, conta e limite; depois as 7 num details fechado", () => {

@@ -1,6 +1,7 @@
 // Camada extra da ficha (#38): o balão com a fórmula, o documento de origem e o motivo do vazio.
 // A página funciona sem este arquivo: as mesmas informações estão no `title` de cada célula.
 // Aqui elas viram um balão que também abre com o toque, porque `title` não aparece no celular.
+// O mesmo balão mostra a frase completa da conta de um cartão e o resultado de um bloco da régua (#65).
 (() => {
   let balao = null;
   let alvo = null;
@@ -15,6 +16,10 @@
   // O que mostrar para uma célula: a fórmula vem do nome do indicador (primeira coluna da linha),
   // o documento vem do cabeçalho da coluna, e o motivo, da própria célula.
   function conteudo(celula) {
+    if (celula.matches(".cartao, .regua-anos li")) {
+      const rotulo = celula.querySelector(".cartao-rotulo");
+      return celula.dataset.dica ? { titulo: rotulo ? rotulo.textContent.trim() : "", partes: [["", celula.dataset.dica]] } : null;
+    }
     const linha = celula.closest("tr");
     const tabela = celula.closest("table");
     if (!linha || !tabela) return null;
@@ -45,9 +50,11 @@
     balao.className = "balao";
     balao.id = "balao-da-ficha";
     balao.setAttribute("role", "tooltip");
-    const b = document.createElement("b");
-    b.textContent = c.titulo;
-    balao.append(b);
+    if (c.titulo) {
+      const b = document.createElement("b");
+      b.textContent = c.titulo;
+      balao.append(b);
+    }
     for (const [classe, texto] of c.partes) {
       const p = document.createElement("p");
       if (classe) p.className = classe;
@@ -67,13 +74,13 @@
   }
 
   // O `title` vira `data-dica`, para o navegador não mostrar a dica dele por cima do balão.
-  for (const el of document.querySelectorAll(".serie [title]")) {
+  for (const el of document.querySelectorAll(".serie [title], .cartao[title], .ficha .regua-anos li[title]")) {
     el.dataset.dica = el.getAttribute("title");
     el.removeAttribute("title");
-    if (el.matches("th.fixa, td.vazio")) el.tabIndex = 0;
+    if (el.matches("th.fixa, td.vazio, .cartao")) el.tabIndex = 0;
   }
 
-  const celulaDe = (evento) => (evento.target instanceof Element ? evento.target.closest(".serie th.fixa, .serie tbody td.n, .serie tfoot td") : null);
+  const celulaDe = (evento) => (evento.target instanceof Element ? evento.target.closest(".serie th.fixa, .serie tbody td.n, .serie tfoot td, .cartao[data-dica], .regua-anos li[data-dica]") : null);
 
   document.addEventListener("click", (evento) => {
     if (evento.target instanceof Element && evento.target.closest("a")) return; // link do documento segue normalmente
