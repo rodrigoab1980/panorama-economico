@@ -12,7 +12,7 @@ import {
 } from "../scripts/fundamentos/pagina.mjs";
 import { INDICADORES } from "../scripts/cvm/indicadores.mjs";
 import { MULTIPLOS } from "../scripts/cvm/multiplos.mjs";
-import { linksInternos } from "../scripts/paginas.mjs";
+import { PAGINAS, linksInternos, menuHtml } from "../scripts/paginas.mjs";
 import { serializar } from "../scripts/cvm/coleta.mjs";
 import { ARQUIVO, COTACOES, HOJE, WEG, fichaDaWeg } from "./apoio/ficha.mjs";
 
@@ -500,7 +500,7 @@ describe("build: a lista e uma página por companhia", () => {
     assert.ok(!lista.includes(MARCADOR_DA_LISTA));
     // sem dados não há painel: o marcador some e nada entra no lugar
     assert.ok(!lista.includes("<!-- painel -->") && !lista.includes('class="painel"'));
-    assert.ok(lista.includes('class="menu-site"'));
+    assert.ok(lista.includes('class="barra-site"'));
     for (const f of ["fundamentos.css", "ficha.js", "lista.js"]) assert.ok(existsSync(join(dist, "fundamentos", f)), f);
     // as páginas de rankings e da temporada existem mesmo sem dados (com o aviso); as pastas das fichas, não
     assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js", "rankings", "temporada"]);
@@ -528,8 +528,16 @@ describe("build: a lista e uma página por companhia", () => {
     }
     const weg = readFileSync(join(dist, "fundamentos", "wege3", "index.html"), "utf8");
     assert.match(weg, /<h2>WEG S\.A\.<\/h2>/);
-    assert.ok(weg.includes('class="menu-site"'));
+    assert.ok(weg.includes('class="barra-site"'));
     assert.ok(!weg.includes("<!-- menu --><!--"));
+    // as 64 fichas usam a mesma barra de topo das outras páginas: a de menuHtml, com a Fundamentalista marcada
+    const barraDaFicha = menuHtml(PAGINAS, "fundamentos", 2);
+    for (const p of pastas) {
+      const html = readFileSync(join(dist, "fundamentos", p, "index.html"), "utf8");
+      assert.ok(html.includes(barraDaFicha), `${p}: a barra não é a de menuHtml`);
+      assert.equal(html.split('<header class="barra-site">').length, 2, `${p}: uma barra só`);
+      assert.ok(!/menu-site|class="cabeca"/.test(html), `${p}: sobrou menu antigo`);
+    }
     // o menu, visto de duas pastas abaixo da raiz
     assert.match(weg, /<a href="\.\.\/\.\.\/" title="visão de trade">Diário<\/a>/);
     assert.match(weg, /<a href="\.\.\/\.\.\/fundamentos\/" aria-current="page"/);
