@@ -652,6 +652,7 @@ export function calcularIndicadoresDaSerie(series, { composicoes = [], excecoesD
 
   const avisos = [];
   const escalas = [...dosAnos.filter((x) => x.composicao).map((x) => x.composicao), ...(composicao ? [composicao] : [])]
+    .filter((c) => c.escala != null) // a composição que vem sem o total de ações não tem escala
     .filter((c, i, lista) => lista.findIndex((o) => o.dtRefer === c.dtRefer) === i);
   for (let i = 1; i < escalas.length; i++) {
     if (escalas[i].escala !== escalas[i - 1].escala) {
