@@ -159,7 +159,7 @@ export const INDICADORES = [
   { id: "fcf", nome: "Fluxo de caixa de financiamento (FCF)", unidade: "R$ mil", formula: "Caixa líquido das atividades de financiamento (DFC, conta 6.03)" },
   {
     id: "capex", nome: "Capex", unidade: "R$ mil",
-    formula: "Pagamentos por imobilizado, intangível, ativo de contrato e ativo biológico, achados pela descrição das linhas do investimento na DFC. Aquisição de empresas não entra",
+    formula: "Pagamentos por imobilizado, intangível, ativo de contrato, ativo biológico e propriedade para investimento, achados pela descrição das linhas do investimento na DFC. Aquisição de empresas não entra",
   },
   { id: "fcl", nome: "Fluxo de caixa livre (FCL)", unidade: "R$ mil", formula: "FCO − capex" },
   {

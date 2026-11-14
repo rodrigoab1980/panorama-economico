@@ -6,6 +6,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+### Corrigido
+- Painel da temporada: o número "prejuízo no acumulado" passa a contar também a companhia com lucro igual a zero, como já faziam as listas de variação, a soma por setor e a régua de anos. Antes, só contava lucro abaixo de zero (#72).
+- O balão do capex na ficha passa a citar a propriedade para investimento, que já entrava na conta. Nenhuma conta mudou (#72).
+- `npm test` passa inteiro num checkout do Windows: o `.gitattributes` fixa o fim de linha em LF para todo arquivo de texto (as fixtures da CVM continuam byte a byte), e o teste dos tokens de cor não depende mais do fim de linha (#72).
+
 ## [2.0.0] - 2026-11-14
 
 A página Fundamentalista: os fundamentos de 64 companhias do Ibovespa, sem bancos e seguradoras, tirados dos documentos entregues à CVM, com a evolução ano a ano desde 2010 e o fluxo de caixa no centro. Só dados e regras à vista: nada de "compre", "venda", nota ou preço-alvo. Esta versão consolida as issues #29 a #40, #51, #65 e #66; o detalhe de cada uma está nos pull requests #53 a #70.
