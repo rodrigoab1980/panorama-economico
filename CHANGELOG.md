@@ -6,6 +6,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+A v2.1 está em andamento.
+
+### Adicionado
+- **Rankings por indicador**, em `/fundamentos/rankings/`: onze critérios (anos com lucro, maior sequência com lucro, anos com FCL positivo, crescimento da receita e do lucro em 5 anos, ROIC, ROE, margem líquida, FCO ÷ EBITDA, dívida líquida ÷ EBITDA e pontos de atenção acionados), cada um com a lista dos maiores e a dos menores valores, a regra de cálculo, o período e quem ficou sem dado, com o motivo. Não há nota única nem lista de "ações", e os múltiplos de preço ficam fora de propósito. O menu ganha o item "Rankings", e a página inicial dos fundamentos, um link para ela (#67).
+- O build grava `dist/fundamentos/dados/rankings.json`. Um erro nos rankings não derruba o resto do site (#67).
+
 ### Corrigido
 - Painel da temporada: o número "prejuízo no acumulado" passa a contar também a companhia com lucro igual a zero, como já faziam as listas de variação, a soma por setor e a régua de anos. Antes, só contava lucro abaixo de zero (#72).
 - O balão do capex na ficha passa a citar a propriedade para investimento, que já entrava na conta. Nenhuma conta mudou (#72).

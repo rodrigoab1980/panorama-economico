@@ -502,7 +502,8 @@ describe("build: a lista e uma página por companhia", () => {
     assert.ok(!lista.includes("<!-- painel -->") && !lista.includes('class="painel"'));
     assert.ok(lista.includes('class="menu-site"'));
     for (const f of ["fundamentos.css", "ficha.js", "lista.js"]) assert.ok(existsSync(join(dist, "fundamentos", f)), f);
-    assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js"]);
+    // a página de rankings existe mesmo sem dados (com o aviso); as pastas das fichas, não
+    assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js", "rankings"]);
   });
 
   test("com os fatos das 64 companhias: gera 64 fichas, os CSVs e a lista", () => {
@@ -519,7 +520,7 @@ describe("build: a lista e uma página por companhia", () => {
     assert.match(saida, /páginas das companhias: 64 em \d+ ms/);
     assert.equal(universo.length, 64);
 
-    const pastas = readdirSync(join(dist, "fundamentos"), { withFileTypes: true }).filter((e) => e.isDirectory() && e.name !== "dados").map((e) => e.name);
+    const pastas = readdirSync(join(dist, "fundamentos"), { withFileTypes: true }).filter((e) => e.isDirectory() && e.name !== "dados" && e.name !== "rankings").map((e) => e.name);
     assert.equal(pastas.length, 64);
     for (const p of pastas) {
       assert.match(p, /^[a-z0-9]+$/);
@@ -557,7 +558,13 @@ describe("build: a lista e uma página por companhia", () => {
     };
     conferir(join(dist, "fundamentos", "index.html"));
     for (const p of pastas.slice(0, 5)) conferir(join(dist, "fundamentos", p, "index.html"));
-    // os JSON das fichas continuam saindo: as 64, o índice e o painel
-    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 66);
+    // os JSON das fichas continuam saindo: as 64, o índice, o painel e os rankings (#67)
+    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 67);
+    // a página de rankings sai com os 11 critérios e os links das fichas resolvem
+    const rankings = readFileSync(join(dist, "fundamentos", "rankings", "index.html"), "utf8");
+    assert.equal((rankings.match(/<section class="criterio"/g) ?? []).length, 11);
+    assert.ok(!rankings.includes("<!-- rankings -->"));
+    conferir(join(dist, "fundamentos", "rankings", "index.html"));
+    assert.match(lista, /<a href="rankings\/">Rankings por indicador<\/a>/);
   });
 });
