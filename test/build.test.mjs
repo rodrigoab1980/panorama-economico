@@ -22,13 +22,13 @@ describe("menuHtml", () => {
 
   test("caminhos relativos certos na raiz", () => {
     const html = menuHtml(PAGINAS, "diario", 0);
-    assert.deepEqual([...new Set(hrefs(html).map((i) => i.href))], ["./", "fundamentos/", "fundamentos/rankings/"]);
+    assert.deepEqual([...new Set(hrefs(html).map((i) => i.href))], ["./", "fundamentos/", "fundamentos/rankings/", "fundamentos/temporada/"]);
     assert.match(html, /<link rel="stylesheet" href="menu\.css">/);
   });
 
   test("caminhos relativos certos numa subpasta", () => {
     const html = menuHtml(PAGINAS, "fundamentos", 1);
-    assert.deepEqual([...new Set(hrefs(html).map((i) => i.href))], ["../", "../fundamentos/", "../fundamentos/rankings/"]);
+    assert.deepEqual([...new Set(hrefs(html).map((i) => i.href))], ["../", "../fundamentos/", "../fundamentos/rankings/", "../fundamentos/temporada/"]);
     assert.match(html, /<link rel="stylesheet" href="\.\.\/menu\.css">/);
   });
 
@@ -117,6 +117,14 @@ describe("build em dist/", () => {
     assert.match(html, /ainda não foram coletados/);
     assert.ok(!html.includes("<!-- rankings -->"));
     assert.ok(!existsSync(join(dist, "fundamentos", "dados", "rankings.json")));
+  });
+
+  test("sem dados, a página da temporada sai com o aviso, sem o marcador e sem o JSON", () => {
+    const html = readFileSync(join(dist, "fundamentos", "temporada", "index.html"), "utf8");
+    assert.match(html, /<h2>Temporada de balanços<\/h2>/);
+    assert.match(html, /ainda não foram coletados/);
+    assert.ok(!html.includes("<!-- temporada -->"));
+    assert.ok(!existsSync(join(dist, "fundamentos", "dados", "temporada.json")));
   });
 
   test("nenhum link interno quebrado e nenhum caminho absoluto em dist/", () => {

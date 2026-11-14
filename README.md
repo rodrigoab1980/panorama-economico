@@ -300,12 +300,14 @@ A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por iss
 - **`/fundamentos/`** abre com o [painel da temporada](#o-painel-da-temporada) e, logo abaixo, lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
 - **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
 - **`/fundamentos/rankings/`** traz os [rankings por indicador](#rankings-por-indicador): em cada critério, a lista dos maiores e a dos menores valores.
+- **`/fundamentos/temporada/`** traz a [temporada de balanços](#temporada-de-balanços): quem já entregou o documento do período, quem falta e a data provável de cada entrega.
 
 **O que a página mostra:**
 
 - **Página inicial:** o painel da temporada (quem já entregou o documento do período e como veio o acumulado do ano) e a lista por setor, com a régua de anos em miniatura ao lado de cada empresa.
 - **Rankings:** onze critérios, cada um com as duas pontas da ordenação, a regra de cálculo e quem ficou sem dado. Não há nota única nem lista de "ações".
-- **Ficha:** a régua de anos sob o nome; o topo com a consistência ao longo dos anos, os pontos de atenção e a comparação com os pares do setor; e quatro blocos de tabelas (Resultado, Caixa e dívida, Fluxo de caixa e Valuation), com os 12 meses e os exercícios desde 2010.
+- **Temporada:** o progresso da temporada, as próximas entregas agrupadas por semana e quem já entregou, com o link do documento na CVM. A data é sempre "data provável", com a origem e o prazo legal ao lado.
+- **Ficha:** a régua de anos sob o nome; o card do próximo balanço; o topo com a consistência ao longo dos anos, os pontos de atenção e a comparação com os pares do setor; e quatro blocos de tabelas (Resultado, Caixa e dívida, Fluxo de caixa e Valuation), com os 12 meses e os exercícios desde 2010.
 
 **Fontes:**
 
@@ -397,6 +399,44 @@ Os rankings saem das fichas que o build já monta (`consistencia`, `atencao` e `
 - **Cada linha:** posição, ticker (com link para a ficha), nome curto, a régua de anos em miniatura e o valor, escrito como na ficha.
 
 **Na tela:** um índice curto no topo, com âncoras, agrupa os critérios em Consistência, Crescimento, Rentabilidade, Caixa, Dívida e Atenção. As duas listas ficam lado a lado no desktop e empilhadas no celular. As palavras são neutras ("Maiores", "Menores", "posição"), e nenhuma lista tem cor de favorável ou desfavorável. A página é HTML estático, sem JavaScript.
+
+### Temporada de balanços
+
+A página `/fundamentos/temporada/` (#68, v2.1) diz, para cada companhia, qual é o próximo documento (ITR ou DFP) e quando ele deve sair, e mostra quem já entregou o documento do período. A ficha de cada companhia traz o mesmo dado num card, logo abaixo da régua de anos.
+
+**A data é uma estimativa deste site, e a página diz isso sempre.** A CVM não publica a data do próximo balanço em dado estruturado. A página nunca escreve só "data do balanço": é "data provável", com a origem e o prazo legal ao lado. A legenda fixa no topo diz: "A data provável é uma estimativa deste site, não uma data oficial: é o dia em que a empresa entregou o mesmo documento no ano anterior. A empresa pode divulgar antes ou depois."
+
+**As regras**, em `scripts/fundamentos/temporada.mjs` (lógica pura, com a data de hoje injetada):
+
+| O quê | Regra |
+|---|---|
+| Último documento entregue | O documento mais recente da companhia na coleta, com a data da primeira entrega à CVM |
+| Próximo documento | O período de 3 meses depois do último entregue: 31/03 → 30/06 → 30/09 → DFP de 31/12 → 31/03. É DFP quando cai no mês em que o exercício termina (o mês da DFP mais recente), e ITR nos outros |
+| Prazo legal do ITR | 45 dias depois do fim do trimestre (`PRAZO_ITR_DIAS`) |
+| Prazo legal da DFP | 3 meses depois do fim do exercício (`PRAZO_DFP_MESES`) |
+| Data provável | A data em que a companhia entregou o mesmo documento no ano anterior, levada um ano para a frente. 29/02 vira 28/02 |
+| Sem o documento do ano anterior | A data provável é o prazo legal, com a origem "prazo legal" e o motivo |
+| Fim de semana | Sábado e domingo passam para a segunda-feira, na data provável e no prazo legal |
+| Feriados | **Não entram na conta.** Uma data provável pode cair num feriado |
+
+Os prazos são os da Resolução CVM 80.
+
+**A situação** de cada documento que ainda não saiu é um texto, sem cor e sem a palavra "atrasada":
+
+- **"previsto para DD/MM"**: hoje ainda não passou da data provável.
+- **"ainda não entregou; no ano anterior entregou em DD/MM"**: a data provável passou, e o prazo legal não.
+- **"prazo legal vencido em DD/MM"**: o prazo legal passou. É fato, não julgamento.
+- **"data provável em DD/MM, depois da última atualização dos dados (DD/MM)"**: a data passou, mas depois do dia até onde vão os dados. A CVM atualiza os arquivos uma vez por semana, então a página não sabe se a empresa entregou, e não afirma que não entregou. O mesmo vale para o prazo legal.
+
+O dia até onde vão os dados (`dadosAte`) é o `Last-Modified` mais recente entre os ZIPs da CVM lidos pela coleta. Não é a data em que a coleta rodou: a coleta pode ser de hoje e os dados, de dias atrás.
+
+**Primeira entrega e reapresentação:** a data que vale é a da primeira entrega do documento. A coleta guarda, em cada documento, o campo `primeiraEntrega` (a data de entrega mais antiga entre as versões), ao lado da data e do link da versão mais nova. Sem esse campo (arquivo gravado antes da #68) e com o documento reapresentado, a página usa a data da reapresentação e escreve "estimada pela reapresentação do ano anterior".
+
+**Na página:** o topo repete o progresso do painel ("29 de 64 já entregaram o ITR de 30/09/2026"). "Próximas entregas" lista quem ainda não entregou, pela data provável, agrupado pela semana dela. "Já entregaram" vem da entrega mais recente para a mais antiga, com o link do documento e o próximo documento de cada uma. A companhia cujo exercício mudou de mês, ou cujo último exercício é de transição, traz a observação na linha.
+
+O build grava `dist/fundamentos/temporada/index.html` e `dist/fundamentos/dados/temporada.json`, com a data do dia do build. Como o build roda a cada 15 minutos, a situação muda de um dia para o outro sem nova coleta. Um erro na temporada não derruba o resto do site.
+
+**Data oficial:** as companhias entregam à CVM o "Calendário de Eventos Corporativos", pelo IPE. Ele ainda não é lido. Quando for, a data oficial entra identificada como oficial, e a estimativa continua valendo para quem não tiver o calendário.
 
 ### A ficha
 
@@ -506,8 +546,10 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `painel-html.mjs` | O HTML do painel, no topo de `/fundamentos/` |
 | `rankings.mjs` | Os rankings por indicador: os critérios, o exercício de referência, as duas pontas de cada critério e quem ficou fora |
 | `rankings-html.mjs` | O HTML da página `/fundamentos/rankings/` |
+| `temporada.mjs` | A temporada de balanços: o último documento, o próximo, o prazo legal, a data provável e a situação |
+| `temporada-html.mjs` | O HTML da página `/fundamentos/temporada/` e o card do próximo balanço na ficha |
 
-Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão), `lista.js` (a busca) e `rankings/index.html` (o molde da página de rankings). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
+Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão), `lista.js` (a busca), `rankings/index.html` (o molde da página de rankings) e `temporada/index.html` (o molde da página da temporada). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
 Aqui só há dados e regras à vista. Nada na página é recomendação de investimento.
 
@@ -573,7 +615,7 @@ O Diário não é afetado por nenhuma delas: é outro workflow, e o build não f
 
 Na branch de dados:
 
-- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos }`. `documentos` traz, de cada documento, a versão, a data de entrega e o link que a CVM informa. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
+- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos }`. `documentos` traz, de cada documento, a versão mais nova, com a data de entrega e o link que a CVM informa, e `primeiraEntrega`, a data de entrega mais antiga entre as versões (#68). Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
 - `fundamentos/indice.json`: `{ coletadoEm, arquivos, companhias }`. De cada ZIP, o `Last-Modified`, o tamanho e o estado. De cada companhia, os tickers, o **documento mais recente** (`{ tipo, dtRefer, versao }`, para o carimbo de desatualizado), o estado (`ok`, `mantido` ou `falhou`), o motivo e os avisos.
 
 No site (`dist/fundamentos/dados/`, gerado pelo build):

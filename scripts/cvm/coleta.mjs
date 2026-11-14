@@ -207,7 +207,9 @@ export function dependeDoArquivo(anterior, arquivo, anoCorrente) {
 // Devolve { cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos } ou null quando nenhum ZIP traz a companhia.
 //   fatos        blocos, já com a maior versão de cada documento e com consolidado × individual resolvido
 //   composicoes  composição do capital de cada documento, como veio (a escala é resolvida no build)
-//   documentos   a maior versão de cada documento, com a data de entrega e o link que a CVM informa
+//   documentos   a maior versão de cada documento, com a data de entrega e o link que a CVM informa, e
+//                `primeiraEntrega`: a data de entrega mais antiga entre as versões (a da versão 1, quando
+//                o ZIP a traz). É dela que sai a data provável da temporada (#68)
 //   origem       [{ arquivo, lastModified }] dos ZIPs que trouxeram alguma coisa da companhia
 //   avisos       o que merece ser olhado: consolidado zerado tratado como ausente
 export function montarCompanhia(companhia, extratos) {
@@ -228,7 +230,10 @@ export function montarCompanhia(companhia, extratos) {
     for (const d of parte.documentos ?? []) {
       const k = `${d.dtRefer}|${d.documento}`;
       const atual = documentos.get(k);
-      if (!atual || d.versao > atual.versao) documentos.set(k, d);
+      // A data da primeira entrega é a mais antiga entre as versões: a reapresentação não a apaga.
+      const datas = [atual?.primeiraEntrega, d.recebidoEm].filter(Boolean).sort();
+      const maior = !atual || d.versao > atual.versao ? d : atual;
+      documentos.set(k, { ...maior, primeiraEntrega: datas[0] ?? null });
     }
   }
   if (origem.length === 0) return null;

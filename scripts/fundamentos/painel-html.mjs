@@ -39,6 +39,7 @@ function temporadaHtml(p) {
 <div class="progresso">
 <p><strong class="n">${p.entregaram} de ${p.total}</strong> já entregaram ${ref.tipo === "dfp" ? "a" : "o"} ${e(ref.documento)}</p>
 <div class="progresso-trilho" aria-hidden="true"><span style="width:${(fracao * 100).toFixed(1)}%"></span></div>
+<p class="painel-link"><a href="temporada/">Temporada de balanços</a>: quem já entregou, quem falta e a data provável de cada entrega.</p>
 </div>
 <p class="temporada-base">Das ${p.entregaram} que entregaram, ${p.comparadas === p.entregaram ? "todas têm" : `${p.comparadas} têm`} a comparação com o ano anterior:</p>
 <ul class="temporada-numeros">

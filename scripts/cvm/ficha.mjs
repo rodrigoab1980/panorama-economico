@@ -11,6 +11,7 @@ import { calcularMultiplos, fundamentosParaMultiplos } from "./multiplos.mjs";
 import { calcularConsistencia } from "../fundamentos/consistencia.mjs";
 import { LIMITES_ATENCAO, calcularAtencao } from "../fundamentos/atencao.mjs";
 import { calcularPares } from "../fundamentos/pares.mjs";
+import { diaBR } from "../logica.mjs";
 
 export const PASTA_DAS_FICHAS = "fundamentos/dados";
 export const INDICE_DAS_FICHAS = "indice.json";
@@ -47,6 +48,8 @@ export function acumuladoDoAno(doze) {
 //   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], acumulado, composicao, indicadores }
 //              `acumulado` é a saída de acumuladoDoAno: o acumulado do ano e o do ano anterior
 //   multiplos  a saída de calcularMultiplos
+//   documentos [{ documento, dtRefer, versao, recebidoEm, primeiraEntrega, link }]: a lista dos documentos
+//              entregues (DFP desde 2010, ITR dos 2 últimos anos), como a coleta guardou
 //   consistencia  o topo da ficha (fundamentos/consistencia.mjs)
 //   atencao       as sete regras de pontos de atenção (fundamentos/atencao.mjs), com os limites usados
 // `pares` (a comparação com o setor) entra depois, em montarFichas, porque precisa de todas as fichas.
@@ -95,11 +98,24 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
       composicao: acoes(calculado.doze.composicao), indicadores: calculado.doze.indicadores,
     },
     multiplos,
+    // Os documentos entregues, do mais antigo ao mais novo, para a temporada de balanços (#68).
+    documentos: (arquivo.documentos ?? []).map((d) => ({
+      documento: d.documento, dtRefer: d.dtRefer, versao: d.versao ?? null,
+      recebidoEm: d.recebidoEm ?? null, primeiraEntrega: d.primeiraEntrega ?? null, link: d.link ?? null,
+    })),
     avisos: [...(arquivo.avisos ?? []), ...calculado.avisos],
   };
   ficha.consistencia = calcularConsistencia(ficha);
   ficha.atencao = calcularAtencao(ficha, limitesAtencao);
   return ficha;
+}
+
+// O dia ("AAAA-MM-DD", em Brasília) da atualização mais recente entre os ZIPs da CVM lidos pela coleta:
+// o Last-Modified de cada um, guardado no índice da coleta. A CVM atualiza os arquivos uma vez por
+// semana, então a coleta pode ser de hoje e os dados, de dias atrás. Sem o índice, null.
+export function dadosAte(indiceDaColeta) {
+  const instantes = Object.values(indiceDaColeta?.arquivos ?? {}).filter((a) => a?.status === "ok").map((a) => Date.parse(a.lastModified)).filter(Number.isFinite);
+  return instantes.length ? diaBR(new Date(Math.max(...instantes))) : null;
 }
 
 // Monta todas as fichas e o índice do site.
@@ -140,6 +156,8 @@ export function montarFichas({ companhias, arquivos, indiceDaColeta = null, cota
     indice: {
       montadoEm: hoje,
       coletadoEm: indiceDaColeta?.coletadoEm ?? null,
+      // Até que dia vão os dados: a atualização mais recente entre os ZIPs da CVM que a coleta leu (#68).
+      dadosAte: dadosAte(indiceDaColeta),
       cotacoes: cotacoes ? { coletadoEm: cotacoes.coletadoEm ?? null, fonte: cotacoes.fonte ?? null } : null,
       companhias: lista.sort((a, b) => (a.ticker < b.ticker ? -1 : 1)),
     },

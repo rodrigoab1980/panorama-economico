@@ -2,8 +2,9 @@
 // marcador <!-- menu --> pelo menu comum em cada página de PAGINAS e, a partir dos fatos da branch
 // `dados`, gera a página Fundamentalista: a lista em dist/fundamentos/, uma página por companhia em
 // dist/fundamentos/<ticker>/ (com os CSVs de cada bloco), os JSON em dist/fundamentos/dados/, o painel
-// da temporada, no topo da lista e em dist/fundamentos/dados/painel.json, e os rankings por indicador,
-// em dist/fundamentos/rankings/ e em dist/fundamentos/dados/rankings.json.
+// da temporada, no topo da lista e em dist/fundamentos/dados/painel.json, os rankings por indicador,
+// em dist/fundamentos/rankings/ e em dist/fundamentos/dados/rankings.json, e a temporada de balanços,
+// em dist/fundamentos/temporada/ e em dist/fundamentos/dados/temporada.json.
 // Só casca (disco); a lógica está em scripts/paginas.mjs, scripts/cvm/ficha.mjs e scripts/fundamentos/.
 //
 // Uso: node scripts/build.mjs [origem] [destino]   (padrão: site dist)
@@ -23,9 +24,12 @@ import { montarPainel } from "./fundamentos/painel.mjs";
 import { inserirPainel, painelHtml } from "./fundamentos/painel-html.mjs";
 import { montarRankings } from "./fundamentos/rankings.mjs";
 import { inserirRankings, rankingsHtml } from "./fundamentos/rankings-html.mjs";
+import { montarTemporada } from "./fundamentos/temporada.mjs";
+import { inserirTemporada, temporadaHtml } from "./fundamentos/temporada-html.mjs";
 
 const ARQUIVO_DO_PAINEL = "painel.json";
 const ARQUIVO_DOS_RANKINGS = "rankings.json";
+const ARQUIVO_DA_TEMPORADA = "temporada.json";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const origem = resolve(RAIZ, process.argv[2] ?? "site");
@@ -93,7 +97,7 @@ async function gerarPaginas({ fichas, indice }) {
   for (const [ticker, ficha] of Object.entries(fichas)) {
     const item = indice.companhias.find((c) => c.ticker === ticker);
     try {
-      const html = inserirMenu(fichaHtml(ficha, { hoje, coletadoEm: indice.coletadoEm }), menu);
+      const html = inserirMenu(fichaHtml(ficha, { hoje, coletadoEm: indice.coletadoEm, dadosAte: indice.dadosAte }), menu);
       const csvs = csvsDaFicha(ficha);
       const pasta = join(destino, pagina.pasta, pastaDaFicha(ticker));
       await mkdir(pasta, { recursive: true });
@@ -150,10 +154,35 @@ async function gerarRankings(indice, fichas) {
   await writeFile(arquivo, inserirRankings(await readFile(arquivo, "utf8"), corpo));
 }
 
+// A temporada de balanços, a partir das fichas e da data de hoje do build. Um erro aqui não derruba o
+// resto do site: a página sai com o aviso. Sem dados, a página diz que a coleta ainda não rodou.
+async function gerarTemporada(indice, fichas) {
+  const arquivo = join(destino, arquivoDaPagina(PAGINAS.find((p) => p.id === "temporada")));
+  let corpo;
+  try {
+    const temporada = fichas && indice ? montarTemporada(fichas, {
+      hoje: diaBR(new Date()),
+      dadosAte: indice.dadosAte,
+      semFicha: indice.companhias.filter((c) => !c.ficha),
+    }) : null;
+    if (temporada) {
+      await writeFile(join(destino, PASTA_DAS_FICHAS, ARQUIVO_DA_TEMPORADA), JSON.stringify(temporada, null, 1));
+      console.log(`temporada: ${temporada.referencia.documento}, ${temporada.entregaram} de ${temporada.total} entregaram, ${temporada.faltam.length} com data provável, hoje ${temporada.hoje}`);
+    }
+    corpo = temporadaHtml(temporada, { comPagina: indice ? new Set(indice.companhias.filter((c) => c.ficha).map((c) => c.ticker)) : null });
+  } catch (e) {
+    console.warn(`aviso: temporada não gerada: ${e.message}`);
+    corpo = `<h2>Temporada de balanços</h2>
+<p class="sem-dados">A temporada não pôde ser gerada nesta atualização. As fichas das empresas continuam disponíveis.</p>`;
+  }
+  await writeFile(arquivo, inserirTemporada(await readFile(arquivo, "utf8"), corpo));
+}
+
 let resultado = null;
 try { resultado = await gerarFichas(); } catch (e) { console.warn(`aviso: fichas não geradas: ${e.message}`); }
 try { if (resultado) await gerarPaginas(resultado); } catch (e) { console.warn(`aviso: páginas das companhias não geradas: ${e.message}`); }
 await gerarLista(resultado?.indice ?? null, resultado?.fichas ?? null);
 await gerarRankings(resultado?.indice ?? null, resultado?.fichas ?? null);
+await gerarTemporada(resultado?.indice ?? null, resultado?.fichas ?? null);
 
 console.log(`build pronto em ${destino}`);

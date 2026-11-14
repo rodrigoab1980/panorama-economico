@@ -14,6 +14,8 @@ import { UNIDADE_NO_CSV, montarCsv } from "./csv.mjs";
 import { escapar } from "./html.mjs";
 import { resumoHtml } from "./resumo.mjs";
 import { LEGENDA_DA_REGUA, TITULO_DA_REGUA, reguaHtml } from "./regua.mjs";
+import { temporadaDaCompanhia } from "./temporada.mjs";
+import { cardDaTemporadaHtml } from "./temporada-html.mjs";
 
 export { escapar };
 
@@ -271,7 +273,7 @@ function cotacaoHtml(ficha) {
   return `<div class="cotacao">${principal}${outros ? `<ul class="cotacoes">${outros}</ul>` : ""}${fonte}</div>`;
 }
 
-function cabecalhoDaFicha(ficha, { hoje }) {
+function cabecalhoDaFicha(ficha, { hoje, dadosAte }) {
   const mesDoExercicio = Number(String(ficha.anual?.at(-1)?.fim ?? "").slice(5, 7)) || 12;
   const selo = carimbo({ documento: ficha.documentoMaisRecente, mesDoExercicio, hoje });
   const antiga = ficha.multiplos?.desatualizado ? `<p class="carimbo">Cotação desatualizada: o preço usado nos múltiplos é de ${e(data(ficha.multiplos.dataPregao))}.</p>` : "";
@@ -280,6 +282,9 @@ function cabecalhoDaFicha(ficha, { hoje }) {
     + `<div class="topo-da-ficha"><div class="identidade"><p class="ticker">${e(ficha.ticker)}</p><h2>${e(ficha.nome)}</h2>`
     + `<p class="setor">${e(ficha.setor ?? "Setor não informado")}</p></div>${cotacaoHtml(ficha)}</div>`
     + reguaHtml(ficha)
+    // O próximo balanço (#68): data provável, sempre com a origem e o prazo legal. Sem a lista de
+    // documentos na ficha, não há card.
+    + (ficha.documentos?.length ? cardDaTemporadaHtml(temporadaDaCompanhia(ficha, hoje, { dadosAte })) : "")
     + (selo.desatualizado ? `<p class="carimbo">${e(selo.texto)}</p>` : "")
     + antiga
     + `</header>`;
@@ -314,8 +319,9 @@ function blocoHtml(bloco, ficha, colunas) {
 // Página da ficha de uma companhia. `menu` é o marcador que o build troca pelo menu comum.
 //   hoje        "AAAA-MM-DD" do dia do build, para o carimbo
 //   coletadoEm  data da coleta dos fundamentos (ISO), do índice
+//   dadosAte    "AAAA-MM-DD" da última atualização dos arquivos da CVM, para a situação do próximo balanço
 // Os caminhos partem de /fundamentos/<ticker>/: "../" é a lista e "../../" é a raiz do site.
-export function fichaHtml(ficha, { hoje, coletadoEm = null, menu = "<!-- menu -->" }) {
+export function fichaHtml(ficha, { hoje, coletadoEm = null, dadosAte = null, menu = "<!-- menu -->" }) {
   const colunas = colunasDaFicha(ficha);
   const titulo = `${ficha.ticker} · ${ficha.nome}`;
   const exercicios = ficha.anual ?? [];
@@ -344,7 +350,7 @@ export function fichaHtml(ficha, { hoje, coletadoEm = null, menu = "<!-- menu --
 </header>
 
 <main class="ficha" data-ticker="${e(ficha.ticker)}">
-${cabecalhoDaFicha(ficha, { hoje })}
+${cabecalhoDaFicha(ficha, { hoje, dadosAte })}
 <section class="resumo" id="resumo-consistencia"${ficha.consistencia || ficha.atencao || ficha.pares ? "" : " hidden"}>
 ${resumoHtml(ficha)}
 </section>
