@@ -428,6 +428,26 @@ A v2 usa **JSON puro**. O leitor gera um formato intermediário normalizado, com
 
 Motivo: o gargalo é ler os ZIPs, não armazenar (ver Volume acima). E as regras difíceis (classificador de contas, IFRS 16, exercício fora de dezembro) ficam em JS testado.
 
+## O que a série inteira mostra nos pontos de atenção (#39)
+
+Com os dados de 13/11/2026, nas 64 companhias da página (limites padrão):
+
+| Regra | Acionada | Não acionada | Não avaliada |
+|---|---:|---:|---:|
+| Lucro que não vira caixa | 7 | 52 | 5 |
+| Proventos maiores que o FCL | 25 | 39 | 0 |
+| Dívida líquida ÷ EBITDA alta | 14 | 50 | 0 |
+| Dívida concentrada no curto prazo | 1 | 63 | 0 |
+| Capex maior que o FCO | 4 | 60 | 0 |
+| Diluição | 14 | 39 | 11 |
+| Margem líquida em queda | 9 | 55 | 0 |
+
+- 23 companhias não acionam nenhuma regra, 19 acionam uma, 12 acionam duas, 9 acionam três e 1 aciona quatro (Equatorial).
+- **Não avaliadas:** a diluição fica sem avaliar em 11 companhias por desdobramento ou grupamento na janela de três exercícios. "Lucro que não vira caixa" fica sem avaliar em 5, que tiveram prejuízo em três ou mais dos últimos cinco exercícios.
+- **Proventos maiores que o FCL** é a regra que mais aciona (25 de 64). Ela soma os proventos pagos e o FCL dos últimos cinco exercícios com dado. Na primeira versão a regra olhava só os 12 meses e acionava em 24; com a soma de cinco anos saem as companhias que tiveram um ano fora da curva (a WEG, por exemplo) e entram as que pagam mais do que geram ao longo do período, quase todas de energia, saneamento, construção e concessões, que investem mais do que o caixa da operação.
+- **Períodos fora das contas:** o Assaí em 2018 (demonstração zerada) e três exercícios de transição (Cosan em 2013, Tenda em 03/2023 e Vivara em 2019).
+- **Comparação com o setor:** todos os 12 setores usam o exercício de 2025, e todas as 64 companhias o têm. Só Serviços financeiros (a B3 sozinha) fica sem mediana. Quatro setores têm exatamente 3 empresas (Alimentos e bebidas, Indústria, Shoppings e Telecom e tecnologia): neles a mediana é a empresa do meio. Com menos de 5 empresas com dado a página mostra só "acima", "abaixo" ou "na mediana", sem o quartil; é o caso desses quatro setores e também do setor de Saúde e do de Transporte e logística, que têm 4.
+
 ## Fixtures
 
 Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; preservados pelo `.gitattributes`), com o índice, DRE, BPA, BPP, DFC_MI e DVA consolidados e a composição do capital (da DFP e do ITR):

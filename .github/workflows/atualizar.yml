@@ -120,6 +120,13 @@ jobs:
       # Monta dist/ a partir de site/ (inclusive site/data/, recém-gerado pela coleta) e insere o menu comum.
       # Sem continue-on-error: se o build falhar, nada é publicado e o Pages segue com a última versão.
       - name: Montar o site (dist/)
+        env:
+          # Limites dos pontos de atenção da página Fundamentalista; vazio usa o padrão do código
+          # (0.8, 3, 0.5 e 0.02). Veja "Pontos de atenção" no README.
+          ATENCAO_FCO_SOBRE_LUCRO: ${{ vars.ATENCAO_FCO_SOBRE_LUCRO }}
+          ATENCAO_DIVIDA_EBITDA: ${{ vars.ATENCAO_DIVIDA_EBITDA }}
+          ATENCAO_DIVIDA_CURTO_PRAZO: ${{ vars.ATENCAO_DIVIDA_CURTO_PRAZO }}
+          ATENCAO_DILUICAO_ANUAL: ${{ vars.ATENCAO_DILUICAO_ANUAL }}
         run: npm run build
 
       - uses: actions/configure-pages@v6

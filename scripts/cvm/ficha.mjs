@@ -8,6 +8,9 @@ import { fatosDaCompanhia, documentoMaisRecente } from "./coleta.mjs";
 import { montarSeries } from "./series.mjs";
 import { calcularIndicadoresDaSerie } from "./indicadores.mjs";
 import { calcularMultiplos, fundamentosParaMultiplos } from "./multiplos.mjs";
+import { calcularConsistencia } from "../fundamentos/consistencia.mjs";
+import { LIMITES_ATENCAO, calcularAtencao } from "../fundamentos/atencao.mjs";
+import { calcularPares } from "../fundamentos/pares.mjs";
 
 export const PASTA_DAS_FICHAS = "fundamentos/dados";
 export const INDICE_DAS_FICHAS = "indice.json";
@@ -28,8 +31,11 @@ export const tickerPrincipal = (companhia) => (companhia.tickers.find((t) => t.i
 //              { documento, dtRefer, versao, consolidado, reapresentado, recebidoEm, link }
 //   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], composicao, indicadores }
 //   multiplos  a saída de calcularMultiplos
+//   consistencia  o topo da ficha (fundamentos/consistencia.mjs)
+//   atencao       as sete regras de pontos de atenção (fundamentos/atencao.mjs), com os limites usados
+// `pares` (a comparação com o setor) entra depois, em montarFichas, porque precisa de todas as fichas.
 // Só vão os indicadores calculados, não as contas dos demonstrativos: a ficha fica pequena.
-export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoesDfc = [] }) {
+export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoesDfc = [], limitesAtencao = LIMITES_ATENCAO }) {
   const series = montarSeries(fatosDaCompanhia(arquivo));
   const calculado = calcularIndicadoresDaSerie(series, { composicoes: arquivo.composicoes ?? [], excecoesDfc });
   const multiplos = calcularMultiplos({
@@ -53,7 +59,7 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
   const parcelas = Object.entries(series.doze?.parcelas ?? {}).filter(([, x]) => x?.dtRefer).map(([parcela, x]) => ({
     parcela, documento: x.documento, dtRefer: x.dtRefer, versao: x.versao ?? null, consolidado: x.consolidado ?? null, ...daCvm(x.documento, x.dtRefer),
   }));
-  return {
+  const ficha = {
     ticker: tickerPrincipal(companhia),
     tickers: companhia.tickers.map((t) => t.ticker),
     cnpj: companhia.cnpj, cdCvm: companhia.cdCvm, nome: companhia.nome, setor: companhia.setor ?? null,
@@ -74,6 +80,9 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
     multiplos,
     avisos: [...(arquivo.avisos ?? []), ...calculado.avisos],
   };
+  ficha.consistencia = calcularConsistencia(ficha);
+  ficha.atencao = calcularAtencao(ficha, limitesAtencao);
+  return ficha;
 }
 
 // Monta todas as fichas e o índice do site.
@@ -82,7 +91,7 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
 //   indiceDaColeta  fundamentos/indice.json da coleta, ou null
 // Devolve { fichas: { TICKER: ficha }, indice }. Uma companhia que dá erro ao montar não derruba as
 // outras: fica sem ficha, e o índice diz o erro.
-export function montarFichas({ companhias, arquivos, indiceDaColeta = null, cotacoes = null, hoje, excecoesDfc = [] }) {
+export function montarFichas({ companhias, arquivos, indiceDaColeta = null, cotacoes = null, hoje, excecoesDfc = [], limitesAtencao = LIMITES_ATENCAO }) {
   const fichas = {};
   const lista = [];
   for (const companhia of companhias) {
@@ -95,7 +104,7 @@ export function montarFichas({ companhias, arquivos, indiceDaColeta = null, cota
       continue;
     }
     try {
-      const ficha = montarFicha({ companhia, arquivo, cotacoes, hoje, excecoesDfc });
+      const ficha = montarFicha({ companhia, arquivo, cotacoes, hoje, excecoesDfc, limitesAtencao });
       fichas[ticker] = ficha;
       lista.push({
         ...base, ficha: true, motivo: null, documentoMaisRecente: ficha.documentoMaisRecente,
@@ -106,6 +115,9 @@ export function montarFichas({ companhias, arquivos, indiceDaColeta = null, cota
       lista.push({ ...base, ficha: false, motivo: `erro ao montar a ficha: ${e.message}`, documentoMaisRecente: documentoMaisRecente(arquivo) });
     }
   }
+  // A comparação com o setor precisa de todas as fichas: entra depois de montar as 64.
+  const pares = calcularPares(fichas);
+  for (const [ticker, ficha] of Object.entries(fichas)) ficha.pares = pares[ticker] ?? null;
   return {
     fichas,
     indice: {

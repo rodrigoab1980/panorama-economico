@@ -276,6 +276,51 @@ No **Valuation**, os múltiplos aparecem só na coluna de hoje: eles dependem do
 - **Desdobramento ou grupamento:** quando o número de ações muda mais de 50% de um exercício para o outro, a tabela ganha uma borda tracejada entre os dois anos e uma nota dizendo que os valores por ação antes disso não são comparáveis. Os valores antigos **não são ajustados**.
 - **Escala das ações:** as nove mudanças de escala (unidade ↔ mil) da série foram conferidas uma a uma; em todas a companhia mudou a forma de informar, e o lucro por ação calculado bate com o informado.
 
+### O topo da ficha: ao longo dos anos, pontos de atenção e comparação com o setor
+
+Antes dos quatro blocos, a ficha responde "a empresa é boa e sempre foi?" só com fatos e contas à vista. Não há adjetivo, nota, cor de favorável ou desfavorável, nem recomendação. Tudo é HTML estático, calculado no build.
+
+**Regras gerais das contas**
+
+- Só entram os exercícios anuais de 12 meses. Período de transição e período indisponível (o Assaí em 2018, com a demonstração zerada) ficam de fora, e a página diz quantos ficaram.
+- Um valor vazio nunca conta como 0 nem como negativo: sai do denominador, e o texto diz "9 de 10 anos com dado".
+- Série curta: se faltam anos para a métrica, ela fica vazia, com o motivo "série curta (N anos)". Nunca se calcula com menos pontos do que a regra pede.
+- "Hoje" é a base de 12 meses. Quando ela não tem o dado (TIM), vale o último exercício, e a conta diz isso.
+
+**Ao longo dos anos** (`scripts/fundamentos/consistencia.mjs`): uma grade de cartões, cada um com o número e a conta.
+
+| Cartão | Conta |
+|---|---|
+| Anos com lucro | Anos com lucro líquido acima de zero, sobre os anos com dado |
+| Anos com FCL positivo | O mesmo, com o fluxo de caixa livre |
+| Maior sequência com lucro | Maior número de anos seguidos com lucro. Um ano sem dado quebra a sequência. Diz os anos e se ela vai até o último exercício |
+| Crescimento ao ano (receita, lucro e FCO) | `(fim ÷ início)^(1/n) − 1`, em 5 e em 10 anos, do exercício n anos antes ao último. Com o início ou o fim zero, negativo ou sem dado, fica vazio com o motivo ("lucro de 2015 negativo"); não se tenta o ano vizinho |
+| Margem líquida: da menor à maior | A maior menos a menor margem líquida da série, em pontos percentuais, com os dois anos |
+| Pior ano da série | O menor lucro e quanto ele representa da média. Com a média zero ou negativa, só o pior ano |
+
+**Pontos de atenção** (`scripts/fundamentos/atencao.mjs`): sete regras automáticas. A página mostra primeiro as acionadas, cada uma com a conta, os anos e o limite usado; depois, fechadas, as sete com o estado de cada uma ("não acionada" ou "não avaliada: motivo"). O destaque usa a cor de aviso, sempre com ícone e texto.
+
+| Regra | Limite padrão | Detalhes |
+|---|---|---|
+| Lucro que não vira caixa | FCO ÷ lucro abaixo de 0,8 em 3 dos últimos 5 exercícios | Só avalia ano com lucro; o ano com prejuízo fica fora, e o texto diz. Precisa de 3 anos avaliáveis |
+| Proventos maiores que o FCL | Soma dos proventos pagos maior que a soma do FCL nos últimos 5 exercícios com dado | Precisa de 3 exercícios com os dois dados. A conta mostra as duas somas, os anos e em quais deles os proventos passaram do FCL. Os 12 meses entram só como contexto |
+| Dívida líquida ÷ EBITDA alta | Acima de 3, hoje | Sem arrendamentos; a conta mostra a versão com arrendamentos ao lado. EBITDA zero ou negativo com dívida líquida aciona a regra. Caixa líquido não aciona |
+| Dívida concentrada no curto prazo | Mais de 50% da dívida bruta no curto prazo **e** dívida líquida positiva | Com o caixa maior que a dívida (WEG), não aciona. Sem dívida bruta, não é avaliada |
+| Capex maior que o FCO | Nos últimos 3 exercícios seguidos | Um ano sem dado na janela deixa a regra sem avaliar |
+| Diluição | Número de ações crescendo mais de 2% ao ano nos últimos 3 exercícios | Precisa de 2 exercícios com o número de ações (que só existe de 2020 em diante). Com desdobramento ou grupamento na janela, não é avaliada |
+| Margem líquida em queda | 3 quedas seguidas (4 exercícios), até o último | Margem igual não é queda |
+
+Os limites ficam em `LIMITES_ATENCAO`, e quatro deles podem ser trocados por variáveis do Actions (veja [Configuração](#configuração)), no mesmo padrão dos alertas do Diário. O limite exato não aciona: 0,8, 3,0, 50% e 2,0% ficam do lado de "não acionada".
+
+**Comparação com o setor** (`scripts/fundamentos/pares.mjs`): a posição da companhia em relação à mediana das outras do mesmo setor, em oito indicadores: margem líquida, ROIC, ROE, dívida líquida ÷ EBITDA, FCO ÷ EBITDA, capex ÷ FCO, crescimento da receita em 5 anos e a parte da série com lucro.
+
+- **Período:** o mesmo exercício anual para todas, que é o último que a maioria do setor já entregou. Quem não tem esse exercício sai da mediana. Os 12 meses ficam de fora, porque as datas dos ITR variam.
+- **Mediana:** só com 3 ou mais empresas com dado naquele indicador. Abaixo disso, a linha diz "setor com menos de 3 empresas com dado". Em Serviços financeiros só há a B3, então não há mediana.
+- **Posição:** "acima da mediana", "abaixo da mediana" ou "na mediana" (no empate), mais o quartil por extenso ("entre os 25% maiores do setor") quando a linha tem 5 ou mais empresas com dado. Com 3 ou 4, a posição vem sozinha: "entre os 25% maiores" seria só "a maior das três". O texto e a cor são os mesmos nos dois lados: dívida acima da mediana não é elogio.
+- **Amostra:** a página diz quantas empresas entraram em cada linha e quais são. Os setores juntam negócios diferentes, e quem lê precisa ver isso.
+
+A ficha em JSON (`dist/fundamentos/dados/<TICKER>.json`) ganha os campos `consistencia`, `atencao` e `pares`. Os pares são calculados depois de montar as 64 fichas.
+
 ### Carimbo de desatualizado
 
 A ficha ganha o carimbo, na cor que o site reserva para dado desatualizado, quando o documento mais recente da companhia é mais antigo do que o último que já deveria ter sido entregue. Os prazos são os da CVM: 45 dias depois do trimestre para o ITR e 90 dias depois do exercício para a DFP. Os trimestres seguem o exercício da própria companhia (quem fecha em março tem ITR em junho, setembro e dezembro). Exemplo: "Dados até o ITR de 30/06/2026. O ITR de 30/09/2026 já deveria ter sido entregue (prazo do ITR: 14/11/2026)." A regra fica em `scripts/fundamentos/carimbo.mjs`.
@@ -294,6 +339,10 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `pagina.mjs` | O HTML da ficha e da lista. Todo texto que vem de dado passa por `escapar()` |
 | `csv.mjs` | O CSV de cada bloco |
 | `carimbo.mjs` | Decide se o dado está desatualizado |
+| `consistencia.mjs` | As métricas do topo da ficha, sobre a série anual |
+| `atencao.mjs` | As sete regras de pontos de atenção e os limites (`LIMITES_ATENCAO`) |
+| `pares.mjs` | A mediana do setor e a posição de cada companhia |
+| `resumo.mjs` | O HTML do topo da ficha |
 
 Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
@@ -438,6 +487,10 @@ Se o token vazar, apague-o na mesma tela (**Delete**) e gere outro.
 | Settings → Variables → Actions | `ALERTA_DESVIOS` | Quantas vezes a oscilação típica do ativo um movimento precisa ter para alertar. O padrão é 2.5. Maior = menos alertas. |
 | Settings → Variables → Actions | `ALERTA_PCT` | Limite fixo, em %, usado enquanto o histórico tem menos de 20 dias. O padrão é 3. |
 | Settings → Variables → Actions | `ALERTA_BPS` | O mesmo para juros, em pontos-base. O padrão é 15. |
+| Settings → Variables → Actions | `ATENCAO_FCO_SOBRE_LUCRO` | Ponto de atenção "lucro que não vira caixa": FCO ÷ lucro abaixo deste valor conta no ano. O padrão é 0.8. |
+| Settings → Variables → Actions | `ATENCAO_DIVIDA_EBITDA` | Ponto de atenção "dívida líquida ÷ EBITDA alta": aciona acima deste valor. O padrão é 3. |
+| Settings → Variables → Actions | `ATENCAO_DIVIDA_CURTO_PRAZO` | Ponto de atenção "dívida concentrada no curto prazo": parcela da dívida bruta, em fração. O padrão é 0.5. |
+| Settings → Variables → Actions | `ATENCAO_DILUICAO_ANUAL` | Ponto de atenção "diluição": crescimento do número de ações ao ano, em fração. O padrão é 0.02. |
 
 Valores vazios, zero, negativos ou que não sejam número voltam para o padrão. Use ponto como separador decimal (`2.5`).
 

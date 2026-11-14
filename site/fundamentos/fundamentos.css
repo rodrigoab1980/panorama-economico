@@ -65,6 +65,56 @@ body.fundamentos .topo { grid-template-columns: 1fr auto; }
 .atalhos a { padding: 5px 10px; font-size: 14.5px; text-decoration: none; color: var(--papel-2); background: var(--elevado); border: 1px solid var(--linha); border-radius: var(--raio); }
 .atalhos a:hover { color: var(--papel); border-color: var(--linha-forte); }
 
+/* ---------- ficha: ao longo dos anos, pontos de atenção e comparação com o setor ---------- */
+/* Cores neutras do tema: nada aqui diz se um número é favorável. Só os pontos de atenção usam a cor de aviso. */
+.resumo { margin: 0 0 8px; }
+.resumo h3 { margin-top: 22px; margin-bottom: 4px; }
+.resumo > h3:first-child { margin-top: 0; }
+.cartoes { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cartao { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--pre-abertura); border: 1px solid var(--linha); border-radius: var(--raio); min-width: 0; }
+.cartao-rotulo { font-size: 13.5px; color: var(--papel-2); line-height: 1.25; }
+.cartao-numero { font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--papel); }
+.cartao-conta { font-size: 13px; color: var(--papel-3); line-height: 1.3; overflow-wrap: anywhere; }
+.prazos { display: flex; gap: 14px; flex-wrap: wrap; }
+.prazo { display: flex; flex-direction: column; }
+.prazo .cartao-numero { font-size: 20px; }
+.prazo small { font-size: 12px; color: var(--papel-3); }
+@media (max-width: 1000px) { .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .cartao { padding: 9px 10px; }
+  .cartao-numero { font-size: 20px; }
+  .prazo .cartao-numero { font-size: 17px; }
+  .prazos { gap: 10px; }
+}
+
+.acionadas, .regras { list-style: none; margin: 8px 0 0; padding: 0; }
+.acionadas li { display: flex; gap: 8px; align-items: baseline; padding: 9px 12px; margin-bottom: 6px; max-width: 100ch; font-size: 14.5px; border: 1px solid var(--aviso); border-radius: var(--raio); color: var(--papel); }
+.acionadas strong { color: var(--aviso); font-weight: 600; }
+.icone { color: var(--aviso); }
+.acionadas small, .regras small { display: block; margin-top: 3px; font-size: 13px; color: var(--papel-3); }
+.nenhuma { margin: 8px 0 0; font-size: 14.5px; color: var(--papel-2); }
+.atencao details, .pares details { margin-top: 8px; font-size: 14.5px; }
+.atencao summary, .pares summary { cursor: pointer; color: var(--papel-2); }
+.regras li { display: grid; grid-template-columns: minmax(150px, 230px) 1fr; gap: 2px 14px; padding: 8px 0; border-top: 1px solid var(--linha); max-width: 110ch; }
+.regras li strong { font-weight: 500; }
+.regras li span { color: var(--papel-2); overflow-wrap: anywhere; }
+.regras li small { grid-column: 2; margin-top: 0; }
+.regras li.acionada > span { color: var(--papel); }
+@media (max-width: 767px) { .regras li { grid-template-columns: 1fr; } .regras li small { grid-column: 1; } }
+.pares .amostra p { margin: 6px 0 0; max-width: 90ch; color: var(--papel-2); font-size: 14px; }
+.comparacao { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.comparacao th, .comparacao td { padding: 7px 10px; border-bottom: 1px solid var(--linha); text-align: left; vertical-align: top; }
+.comparacao thead th { font-weight: 500; color: var(--papel-2); border-bottom-color: var(--linha-forte); white-space: nowrap; }
+.comparacao tbody th { font-weight: 400; min-width: 150px; }
+.comparacao td.n, .comparacao thead th:nth-child(2), .comparacao thead th:nth-child(3) { text-align: right; white-space: nowrap; }
+.comparacao td small { color: var(--papel-3); font-size: 12.5px; }
+.comparacao td:last-child { color: var(--papel-2); min-width: 220px; }
+.comparacao tbody tr:last-child th, .comparacao tbody tr:last-child td { border-bottom: 0; }
+.pares .rolagem { margin-top: 10px; }
+/* No celular a tabela rola para os lados; a posição fica numa linha só, para as linhas não ficarem altas. */
+@media (max-width: 767px) { .comparacao td:last-child { min-width: 320px; } .comparacao tbody th { min-width: 128px; } }
+
 /* ---------- ficha: blocos ---------- */
 .bloco { margin-top: 26px; scroll-margin-top: 110px; }
 .bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
