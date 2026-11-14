@@ -47,7 +47,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/publicar-dados.mjs` | Commit na branch de dados só quando algo mudou, e push com nova tentativa quando é rejeitado. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
 | `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `classificador-dfc.mjs` (lógica pura, testada) acha pela descrição as linhas da DFC que não têm código fixo (capex, juros pagos, arrendamentos e proventos), com as exceções por companhia em `excecoes-dfc.json`. `composicao-capital.mjs` (lógica pura, testada) lê o número de ações. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida, liquidez, fluxo de caixa e por ação de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
-| `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
+| `site/` | A fonte do site: `tokens.css` (cores, tipografia e espaço dos dois temas, comum a todas as páginas), o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
 | `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
 | `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
@@ -70,6 +70,31 @@ As escolhas que moldam o projeto, com a alternativa considerada e o motivo. As m
 8. **Cotações da CNBC no servidor, widgets da TradingView no navegador.** O placar, o mapa, o histórico e os alertas usam a CNBC, porque precisam de números que o script consiga ler. As abas usam widgets prontos, que já atualizam ao vivo. *Por quê:* sem chave de API paga para nenhuma das duas.
 9. **Resumo pelo Claude no máximo de hora em hora** (`SUMMARY_INTERVAL_MIN`), só das 6h às 20h, e só se houver chave. *Por quê:* controla o custo; sem a chave, o resto do site funciona igual.
 10. **Node 24 ou mais novo, CI no 24 e no 26** (#12). *Por quê:* as actions do GitHub deixaram o Node 20; testar também a versão seguinte avisa cedo de incompatibilidades.
+
+## Identidade visual
+
+O site tem dois temas, claro e escuro, desenhados juntos. Ele segue o tema do aparelho (`prefers-color-scheme`); não há botão manual. O trabalho da página é ler 16 anos de números rápido e confiar neles, então a hierarquia e a legibilidade dos números valem mais que a decoração.
+
+- **Tokens num só lugar.** `site/tokens.css` define as cores dos dois temas, a escala tipográfica, os espaços e os raios, e todas as páginas o carregam antes do próprio CSS. O CSS da página Fundamentalista não tem nenhuma cor fixa.
+
+  | Token | Claro | Escuro | Uso |
+  |---|---|---|---|
+  | `--fundo` | #F6F7F5 | #0F1B2A | página |
+  | `--superficie` | #FFFFFF | #16263A | blocos e tabelas |
+  | `--tinta` | #132A3E | #E4EAF0 | texto e números |
+  | `--tinta-suave` | #5B6B7A | #93A3B3 | rótulos, fontes e "—" |
+  | `--linha` | #D8DEE4 | #26394F | divisórias e bordas |
+  | `--acao` | #1F5FAD | #7FB2F0 | links e foco |
+  | `--atencao` | #A35F00 | #F0A64A | só nos pontos de atenção e no dado desatualizado |
+
+- **Contraste AA.** Todo par de texto e fundo dos tokens dá pelo menos 4,5:1 nos dois temas, e `test/regua-tokens.test.mjs` confere. A cor de alta e de baixa de preço do Diário foi ajustada para passar nos dois.
+- **Nenhuma cor diz se um indicador é favorável.** `--atencao` fica nos pontos de atenção e no carimbo de desatualizado; `--alta` e `--baixa`, na variação de preço do Diário e no sinal de menos.
+- **Tipografia.** Uma família só, a Archivo, com a largura como recurso: expandida e pesada no ticker e nos títulos de bloco, condensada no cabeçalho das tabelas (cabem mais anos) e normal no texto. Todo número usa algarismos de largura fixa. Não há rótulo em caixa-alta espaçada.
+- **Régua de anos.** É o elemento próprio da ficha: uma faixa sob o nome da companhia, com um bloco por exercício. Bloco cheio é lucro, vazado é prejuízo e tracejado é sem dado. Os três usam a mesma tinta; só o preenchimento muda, porque é fato e não julgamento. Cada bloco traz o ano e o valor no `title` e num texto para leitor de tela. A lógica fica em `scripts/fundamentos/regua.mjs`.
+- **Estrutura.** A hierarquia vem do tamanho e do espaço. As tabelas ficam numa superfície só, com zebra sutil, a primeira coluna fixa e a coluna dos 12 meses destacada pelo fundo. Só os números do topo da ficha viram cartões. O raio tem hierarquia (6 px na tabela, 10 px no cartão) e quase não há sombra.
+- **Movimento.** Nenhum automático; só o que responde a uma ação. `prefers-reduced-motion` é respeitado.
+
+Este redesenho está em andamento (#65): o protótipo cobre o Diário e a ficha; a lista de empresas já usa os tokens, mas ainda não recebeu o acabamento.
 
 ## Histórico diário
 
@@ -343,6 +368,7 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `atencao.mjs` | As sete regras de pontos de atenção e os limites (`LIMITES_ATENCAO`) |
 | `pares.mjs` | A mediana do setor e a posição de cada companhia |
 | `resumo.mjs` | O HTML do topo da ficha |
+| `regua.mjs` | A régua de anos: um bloco por exercício, cheio (lucro), vazado (prejuízo) ou tracejado (sem dado) |
 
 Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 

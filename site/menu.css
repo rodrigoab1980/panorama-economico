@@ -34,7 +34,7 @@
   .menu-site-gaveta ul {
     position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 200px; padding: 6px;
     background: var(--pre-abertura); border: 1px solid var(--linha-forte); border-radius: var(--raio);
-    box-shadow: 0 14px 40px rgba(4, 8, 16, .6);
+    box-shadow: 0 12px 32px var(--sombra);
   }
   .menu-site-gaveta a { padding: 9px 10px; border-bottom: 0; border-left: 2px solid transparent; }
   .menu-site-gaveta a[aria-current="page"] { border-left-color: var(--linha-forte); }

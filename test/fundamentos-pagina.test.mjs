@@ -229,7 +229,7 @@ describe("ficha da WEG: os números certos, já no HTML", () => {
     const internos = linksInternos(HTML);
     assert.ok(internos.length >= 8);
     for (const l of internos) assert.ok(!l.startsWith("/"), l);
-    assert.ok(internos.includes("../../style.css") && internos.includes("../fundamentos.css") && internos.includes("../ficha.js") && internos.includes("../"));
+    assert.ok(internos.includes("../../tokens.css") && internos.includes("../fundamentos.css") && internos.includes("../ficha.js") && internos.includes("../"));
     const externos = [...HTML.matchAll(/(?:href|src)="(https?:[^"]+)"/g)].map((m) => new URL(m[1].replace(/&amp;/g, "&")).hostname);
     assert.deepEqual([...new Set(externos)].sort(), ["fonts.googleapis.com", "fonts.gstatic.com", "www.rad.cvm.gov.br"]);
   });

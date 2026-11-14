@@ -13,6 +13,7 @@ import { carimbo } from "./carimbo.mjs";
 import { UNIDADE_NO_CSV, montarCsv } from "./csv.mjs";
 import { escapar } from "./html.mjs";
 import { resumoHtml } from "./resumo.mjs";
+import { reguaHtml } from "./regua.mjs";
 
 export { escapar };
 
@@ -266,8 +267,9 @@ function cabecalhoDaFicha(ficha, { hoje }) {
   const antiga = ficha.multiplos?.desatualizado ? `<p class="carimbo">Cotação desatualizada: o preço usado nos múltiplos é de ${e(data(ficha.multiplos.dataPregao))}.</p>` : "";
   return `<header class="ficha-cabecalho">`
     + `<p class="trilha"><a href="../">Todas as empresas</a></p>`
-    + `<h2>${e(ficha.nome)}</h2>`
-    + `<p class="setor">${e(ficha.setor ?? "Setor não informado")}</p>`
+    + `<div class="identidade"><p class="ticker">${e(ficha.ticker)}</p><h2>${e(ficha.nome)}</h2>`
+    + `<p class="setor">${e(ficha.setor ?? "Setor não informado")}</p></div>`
+    + reguaHtml(ficha)
     + `<ul class="cotacoes">${itens}</ul>${fonte}`
     + (selo.desatualizado ? `<p class="carimbo">${e(selo.texto)}</p>` : "")
     + antiga
@@ -321,16 +323,14 @@ export function fichaHtml(ficha, { hoje, coletadoEm = null, menu = "<!-- menu --
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../tokens.css">
 <link rel="stylesheet" href="../fundamentos.css">
 </head>
 <body class="fundamentos">
 
-<header class="topo">
-  <div class="marca">
-    <h1>Fundamentalista</h1>
-    <p>${e(ficha.ticker)} · ${e(periodo)}</p>
-  </div>
+<header class="cabeca">
+  <a class="cabeca-marca" href="../../">Panorama Econômico</a>
+  <h1 class="so-leitor">Fundamentalista: ${e(ficha.ticker)}, ${e(periodo)}</h1>
   ${menu}
 </header>
 

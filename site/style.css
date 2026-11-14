@@ -1,37 +1,8 @@
-/* Direção visual "hora azul": o painel é aberto antes do pregão. Fundo de céu de pré-amanhecer,
-   e o dourado da primeira luz reservado ao que está acontecendo agora. */
-:root {
-  --madrugada: #0E1420;   /* fundo da página */
-  --pre-abertura: #151C2A; /* fundo das caixas */
-  --elevado: #1B2433;      /* botões, campos, destaque interno */
-  --linha: #243044;
-  --linha-forte: #34425A;
-  --papel: #E4E8EE;
-  --papel-2: #A5AFBE;
-  --papel-3: #75819A;
-  --primeira-luz: #F2C14E; /* só para "agora" */
-  --alta: #3CCB7F;
-  --baixa: #F2555A;
-  --aviso: #F2994A;  /* dado desatualizado */
-  --raio: 6px;
-  --largo: 118%;     /* relógio */
-  --estreito: 88%;   /* listas densas */
-  color-scheme: dark;
-}
+/* O Diário: o painel aberto antes do pregão. As cores, a tipografia e a base (body, foco, movimento
+   reduzido) vêm de tokens.css, que tem os dois temas. No escuro é a "hora azul", com o dourado da
+   primeira luz reservado ao que está acontecendo agora; no claro, o mesmo papel, com a tinta escura. */
 
-* { box-sizing: border-box; }
-html, body { margin: 0; }
-body {
-  background: var(--madrugada);
-  color: var(--papel);
-  font: 400 16.5px/1.45 "Archivo", system-ui, sans-serif;
-  font-stretch: 100%;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: inherit; }
-button { font: inherit; color: inherit; }
-[hidden] { display: none !important; }
-:focus-visible { outline: 2px solid var(--primeira-luz); outline-offset: 2px; border-radius: 3px; }
+body { font-size: 16.5px; line-height: 1.45; }
 .num, .tabela td.n, time { font-variant-numeric: tabular-nums; }
 
 /* Sem isto, o navegador pinta de branco o fundo dos widgets transparentes (esquema de cor diferente). */
@@ -43,10 +14,10 @@ button { font: inherit; color: inherit; }
   display: grid; grid-template-columns: auto auto minmax(320px, 1fr) auto; align-items: center; gap: 12px 32px;
   padding: 12px 20px 10px; background: var(--madrugada); border-bottom: 1px solid var(--linha);
 }
-body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
+body.rolou .topo { box-shadow: 0 8px 22px var(--sombra); }
 
-.marca h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.005em; }
-.marca p { margin: 1px 0 0; color: var(--papel-2); font-size: 16.5px; }
+.marca h1 { margin: 0; font-size: var(--t-4); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.01em; line-height: 1.15; }
+.marca p { margin: 2px 0 0; color: var(--tinta-suave); font-size: var(--t-2); }
 
 .relogio-principal { display: flex; flex-direction: column; line-height: 1; }
 .relogio-principal b {
@@ -64,7 +35,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 .faixa-linha.aberta .estado { color: var(--alta); }
 .trilho { position: relative; height: 7px; background: var(--elevado); border-radius: 3px; }
 .sessao { position: absolute; top: 0; bottom: 0; background: var(--linha-forte); border-radius: 3px; }
-.faixa-linha.aberta .sessao { background: rgba(60, 203, 127, .75); }
+.faixa-linha.aberta .sessao { background: color-mix(in srgb, var(--alta) 75%, transparent); }
 .faixa-eixo { display: grid; grid-template-columns: 90px 1fr 138px; gap: 10px; margin-top: 3px; }
 .faixa-eixo .marcas { position: relative; height: 15px; color: var(--papel-3); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .faixa-eixo .marcas span { position: absolute; transform: translateX(-50%); }
@@ -77,7 +48,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 .faixa-sobreposta > div { position: relative; }
 .agora {
   position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px;
-  background: var(--primeira-luz); border-radius: 1px; box-shadow: 0 0 8px rgba(242, 193, 78, .6);
+  background: var(--primeira-luz); border-radius: 1px; box-shadow: 0 0 8px color-mix(in srgb, var(--agora) 60%, transparent);
 }
 .fim-de-semana .sessao { opacity: .4; }
 
@@ -104,7 +75,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
   position: absolute; top: calc(100% + 6px); left: 20px;
   width: min(920px, calc(100vw - 32px)); max-height: 78vh; overflow-y: auto;
   background: var(--pre-abertura); border: 1px solid var(--linha-forte); border-radius: var(--raio);
-  padding: 16px 18px; box-shadow: 0 18px 50px rgba(4, 8, 16, .6);
+  padding: 16px 18px; box-shadow: 0 16px 40px var(--sombra);
 }
 
 /* Relógio flutuante: só no celular, quando o cabeçalho sai da tela. */
@@ -112,7 +83,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
   display: none; position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 40;
   background: var(--pre-abertura); border: 1px solid var(--linha-forte); border-radius: 999px; padding: 3px 14px;
   font-size: 18.5px; font-weight: 500; font-stretch: var(--largo); font-variant-numeric: tabular-nums;
-  box-shadow: 0 6px 20px rgba(4, 8, 16, .5);
+  box-shadow: 0 6px 18px var(--sombra);
 }
 
 .fita { border-bottom: 1px solid var(--linha); min-height: 46px; }
@@ -120,7 +91,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 /* ---------- caixas (GridStack) ---------- */
 .grid-stack { margin: 8px 14px 0; }
 .painel {
-  background: var(--pre-abertura); border: 1px solid transparent; border-radius: var(--raio);
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
   padding: 12px 14px; display: flex; flex-direction: column; overflow: hidden !important;
 }
 .painel-corpo { flex: 1; min-height: 0; position: relative; }
@@ -142,7 +113,7 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 .carimbo { font-size: 14px; color: var(--papel-3); }
 /* Dado sem atualização há mais do que o limite (ver site/atraso.js). */
 .carimbo.atrasado {
-  color: var(--aviso); background: rgba(242, 153, 74, .12); border: 1px solid rgba(242, 153, 74, .45);
+  color: var(--atencao); background: color-mix(in srgb, var(--atencao) 10%, transparent); border: 1px solid color-mix(in srgb, var(--atencao) 45%, transparent);
   border-radius: 999px; padding: 1px 9px; cursor: help;
 }
 .vazio { color: var(--papel-3); margin: 8px 0; }
@@ -152,11 +123,11 @@ body.rolou .topo { box-shadow: 0 10px 28px rgba(4, 8, 16, .55); }
 body.movendo iframe { pointer-events: none; }
 body.movendo { user-select: none; }
 .grid-stack-item.ui-draggable-dragging > .painel,
-.grid-stack-item.ui-resizable-resizing > .painel { border-color: var(--linha-forte); box-shadow: 0 14px 40px rgba(4, 8, 16, .6); }
+.grid-stack-item.ui-resizable-resizing > .painel { border-color: var(--linha-forte); box-shadow: 0 12px 32px var(--sombra); }
 .grid-stack > .grid-stack-placeholder > .placeholder-content {
-  background: rgba(242, 193, 78, .06); border: 1px dashed rgba(242, 193, 78, .5); border-radius: var(--raio);
+  background: color-mix(in srgb, var(--agora) 7%, transparent); border: 1px dashed color-mix(in srgb, var(--agora) 55%, transparent); border-radius: var(--raio);
 }
-.grid-stack-item > .ui-resizable-se { opacity: 0; filter: invert(1); transition: opacity .15s; }
+.grid-stack-item > .ui-resizable-se { opacity: 0; transition: opacity .15s; }
 .grid-stack-item:hover > .ui-resizable-se { opacity: .5; }
 
 /* ---------- resumo ---------- */
@@ -175,8 +146,8 @@ body.movendo { user-select: none; }
 .aviso { border: 1px dashed var(--linha-forte); border-radius: var(--raio); padding: 12px 14px; color: var(--papel-2); }
 
 .tag { font-size: 12.5px; font-weight: 600; padding: 1px 7px; border-radius: 10px; white-space: nowrap; margin-top: 2px; }
-.tag.alto, .tag.alta { background: rgba(242, 85, 90, .14); color: #FF8E91; }
-.tag.medio, .tag.media { background: rgba(165, 175, 190, .12); color: var(--papel-2); }
+.tag.alto, .tag.alta { background: color-mix(in srgb, var(--baixa) 13%, transparent); color: var(--baixa); }
+.tag.medio, .tag.media { background: var(--superficie-2); color: var(--tinta-2); }
 
 /* ---------- tabelas (placar e extras) ---------- */
 .placar-grupo + .placar-grupo { margin-top: 14px; }
@@ -187,14 +158,14 @@ body.movendo { user-select: none; }
 .tabela tr:last-child td { border-bottom: 0; }
 .tabela td.n { text-align: right; white-space: nowrap; padding-left: 12px; }
 /* Faixa "Fora do padrão hoje" no topo do placar (alertas de movimento). */
-.alertas { margin: 0 0 12px; padding: 8px 12px; border: 1px solid rgba(242, 153, 74, .45); border-radius: 8px; background: rgba(242, 153, 74, .08); }
+.alertas { margin: 0 0 12px; padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--atencao) 45%, transparent); border-radius: var(--raio); background: color-mix(in srgb, var(--atencao) 7%, transparent); }
 .alertas h3 { margin: 0 0 4px; font-size: 13px; color: var(--aviso); cursor: help; }
 .alertas ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 2px 18px; font-size: 14px; }
 .alertas li { cursor: help; white-space: nowrap; }
 .alertas .alerta-det { color: var(--papel-2); font-size: 12.5px; }
 
 /* Cabeçalho do placar e colunas de semana/mês (histórico diário): menores, para não competir com o dia. */
-.tabela th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--papel-2); padding: 0 0 4px; border-bottom: 1px solid var(--linha); }
+.tabela th { font-size: var(--t-1); font-weight: 500; font-stretch: var(--estreito); color: var(--tinta-suave); padding: 0 0 4px; border-bottom: 1px solid var(--linha); text-align: left; }
 .tabela th.n { text-align: right; padding-left: 12px; }
 .tabela th.periodo { cursor: help; }
 .tabela td.periodo { font-size: 13.5px; padding-left: 10px; }
@@ -249,7 +220,7 @@ body.movendo { user-select: none; }
   padding: 5px 10px; color: var(--papel); font: inherit; font-size: 15px;
 }
 .filtros input::placeholder { color: var(--papel-3); }
-.filtros input:focus { outline: none; border-color: var(--primeira-luz); }
+.filtros input:focus-visible { outline: 2px solid var(--acao); outline-offset: 1px; border-color: var(--acao); }
 .lista-noticias { list-style: none; margin: 0; padding: 0; overflow-y: auto; font-stretch: var(--estreito); }
 .lista-noticias li { display: grid; grid-template-columns: 46px 1fr; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--linha); }
 .lista-noticias time { font-size: 14.5px; color: var(--papel-3); padding-top: 1px; }
@@ -259,7 +230,7 @@ body.movendo { user-select: none; }
 /* Notícia nova: o horário ganha a cor do "agora" e a linha acende uma vez. */
 .lista-noticias li.nova time { color: var(--primeira-luz); font-weight: 600; }
 .lista-noticias li.nova { animation: chegou 2.4s ease-out 1; }
-@keyframes chegou { from { background: rgba(242, 193, 78, .12); } to { background: transparent; } }
+@keyframes chegou { from { background: color-mix(in srgb, var(--agora) 14%, transparent); } to { background: transparent; } }
 
 /* ---------- agenda ---------- */
 .agenda-painel { position: absolute; inset: 0; }
@@ -275,10 +246,12 @@ body.movendo { user-select: none; }
 .agenda-lista li.passou { opacity: .5; }
 .nota { font-size: 14.5px; color: var(--papel-3); margin: 10px 0 0; }
 
-/* Widgets do Investing são claros; a inversão com giro de 180° escurece o fundo e preserva as cores (bandeiras, alta/baixa). */
-.agenda-painel iframe {
-  width: 100%; height: 100%; border: 0; border-radius: var(--raio); background: #fff;
-  filter: invert(.88) hue-rotate(180deg);
+/* Widgets do Investing são claros. No tema escuro, a inversão com giro de 180° escurece o fundo e
+   preserva as cores (bandeiras, alta/baixa); no claro, ficam como vêm. */
+.agenda-painel iframe { width: 100%; height: 100%; border: 0; border-radius: var(--raio); background: #fff; }
+@media (prefers-color-scheme: dark) {
+  .agenda-painel iframe { filter: invert(.88) hue-rotate(180deg); }
+  .grid-stack-item > .ui-resizable-se { filter: invert(1); }
 }
 
 .rodape { padding: 10px 20px 28px; color: var(--papel-3); font-size: 14px; }
@@ -298,7 +271,4 @@ body.movendo { user-select: none; }
   body.topo-fora .relogio-flutuante { display: block; }
   .grid-stack { margin: 8px 10px 0; }
   .painel { padding: 12px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
 }
