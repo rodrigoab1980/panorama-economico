@@ -1,6 +1,7 @@
 // Critério de aceite da v2.0 (#40): toda fórmula citada na página Fundamentalista está no README.
 // O teste junta os nomes que a página mostra (indicadores, múltiplos, as sete regras de atenção, os
-// cartões de consistência, a comparação com o setor e os números do painel) e confere que cada um é
+// cartões de consistência, a comparação com o setor, os números do painel e os critérios dos
+// rankings) e confere que cada um é
 // a primeira célula de uma linha de uma tabela de fórmulas do README, com a fórmula preenchida.
 // Tabela de fórmulas é a que tem uma coluna cujo título começa com "Fórmula".
 // Quem criar um indicador, uma regra ou um número sem documentar quebra este teste.
@@ -16,6 +17,7 @@ import { consistenciaHtml } from "../scripts/fundamentos/resumo.mjs";
 import { INDICADORES_DE_PARES } from "../scripts/fundamentos/pares.mjs";
 import { montarPainel } from "../scripts/fundamentos/painel.mjs";
 import { painelHtml } from "../scripts/fundamentos/painel-html.mjs";
+import { CRITERIOS } from "../scripts/fundamentos/rankings.mjs";
 import { fichaDaWeg } from "./apoio/ficha.mjs";
 
 const README = readFileSync(new URL("../README.md", import.meta.url), "utf8");
@@ -73,6 +75,8 @@ const NOMES = {
     const numeros = /<ul class="temporada-numeros">([\s\S]*?)<\/ul>/.exec(html)?.[1] ?? "";
     return [...textos(numeros, /<span>([^<]+)<\/span>/g), ...textos(html, /<h3 id="t-(?:variacoes|setores)">([^<]+)<\/h3>/g)];
   })(),
+  // Os critérios da página de rankings (#67).
+  rankings: CRITERIOS.map((c) => c.titulo),
 };
 
 const FORMULAS = formulasDoMarkdown(README);
@@ -86,6 +90,7 @@ describe("README: toda fórmula citada na página está documentada", () => {
     assert.equal(NOMES.consistencia.length, 8);
     assert.equal(NOMES.pares.length, 8);
     assert.equal(NOMES.painel.length, 6);
+    assert.equal(NOMES.rankings.length, 11);
   });
 
   for (const [grupo, nomes] of Object.entries(NOMES)) {
