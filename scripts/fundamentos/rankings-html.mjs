@@ -1,11 +1,13 @@
 // HTML da página de rankings por indicador (#67). Lógica pura: recebe a saída de montarRankings
 // (rankings.mjs) e devolve texto. Tudo é HTML estático, sem JS.
 //
-// Palavras neutras: "Maiores", "Menores" e "posição". Nenhuma cor de favorável ou desfavorável: as
+// Palavras neutras: "maiores valores", "menores valores" e "posição". O título de cada lista diz o
+// que aquela ponta quer dizer ("Mais endividadas"), sem "melhores" nem "piores". Nenhuma cor de favorável ou desfavorável: as
 // duas listas usam a mesma tinta. Os links são relativos a /fundamentos/rankings/: a ficha fica em
 // "../<ticker>/".
 import { escapar as e } from "./html.mjs";
 import { LEGENDA_DA_REGUA, TITULO_DA_REGUA, reguaHtml } from "./regua.mjs";
+import { SETAS } from "./rankings.mjs";
 
 export const LEGENDA_DOS_RANKINGS = "Ordenação simples de cada indicador, calculado dos documentos entregues à CVM. Estar no topo ou no fim de uma lista não diz se a empresa é um bom investimento.";
 export const NOTA_DOS_MULTIPLOS = "Os indicadores que dependem do preço da ação ficam fora desta página, de propósito: ordenar empresas pelo preço se lê como recomendação, e aqui só há ordenação de números das demonstrações.";
@@ -57,15 +59,19 @@ function foraHtml(fora, comPagina) {
   return `<details class="criterio-fora"><summary>Sem dado neste critério: ${plural(fora.length, "empresa", "empresas")}</summary><ul>${itens}</ul></details>`;
 }
 
+// O título de uma lista: o significado em palavras e, menor, de que ponta da ordenação ela é.
+const tituloDaPonta = (significado, ponta) => `${e(significado)} <small>${e(ponta)}</small>`;
+
 function criterioHtml(c, grupo, opcoes) {
   return `<section class="criterio" id="${e(c.id)}" aria-labelledby="t-${e(c.id)}">
 <p class="criterio-grupo">${e(grupo.titulo)}</p>
 <h3 id="t-${e(c.id)}">${e(c.titulo)}</h3>
+<p class="criterio-sentido"><span aria-hidden="true">${e(SETAS[c.sentido.direcao])}</span> ${e(c.sentido.direcao)} = ${e(c.sentido.significa)}</p>
 <p class="criterio-regra">${e(c.regra)}</p>
 <p class="criterio-periodo">Período: ${e(c.periodo)}. ${plural(c.empresas, "empresa", "empresas")} no ranking.</p>
 <div class="criterio-listas">
-${pontaHtml("Maiores", c.maiores, opcoes)}
-${pontaHtml("Menores", c.menores, opcoes)}
+${pontaHtml(tituloDaPonta(c.sentido.maiores, "maiores valores"), c.maiores, opcoes)}
+${pontaHtml(tituloDaPonta(c.sentido.menores, "menores valores"), c.menores, opcoes)}
 </div>
 ${foraHtml(c.fora, opcoes.comPagina)}
 </section>`;
