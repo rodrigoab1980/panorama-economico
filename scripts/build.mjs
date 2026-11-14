@@ -1,8 +1,9 @@
 // Monta dist/ a partir de site/: copia tudo (inclusive site/data/, gerado pelo update.mjs), troca o
 // marcador <!-- menu --> pelo menu comum em cada página de PAGINAS e, a partir dos fatos da branch
 // `dados`, gera a página Fundamentalista: a lista em dist/fundamentos/, uma página por companhia em
-// dist/fundamentos/<ticker>/ (com os CSVs de cada bloco), os JSON em dist/fundamentos/dados/ e o painel
-// da temporada, no topo da lista e em dist/fundamentos/dados/painel.json.
+// dist/fundamentos/<ticker>/ (com os CSVs de cada bloco), os JSON em dist/fundamentos/dados/, o painel
+// da temporada, no topo da lista e em dist/fundamentos/dados/painel.json, e os rankings por indicador,
+// em dist/fundamentos/rankings/ e em dist/fundamentos/dados/rankings.json.
 // Só casca (disco); a lógica está em scripts/paginas.mjs, scripts/cvm/ficha.mjs e scripts/fundamentos/.
 //
 // Uso: node scripts/build.mjs [origem] [destino]   (padrão: site dist)
@@ -20,8 +21,11 @@ import { csvsDaFicha, fichaHtml, inserirLista, listaHtml, pastaDaFicha } from ".
 import { configAtencao } from "./fundamentos/atencao.mjs";
 import { montarPainel } from "./fundamentos/painel.mjs";
 import { inserirPainel, painelHtml } from "./fundamentos/painel-html.mjs";
+import { montarRankings } from "./fundamentos/rankings.mjs";
+import { inserirRankings, rankingsHtml } from "./fundamentos/rankings-html.mjs";
 
 const ARQUIVO_DO_PAINEL = "painel.json";
+const ARQUIVO_DOS_RANKINGS = "rankings.json";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const origem = resolve(RAIZ, process.argv[2] ?? "site");
@@ -127,9 +131,29 @@ async function gerarLista(indice, fichas) {
   await writeFile(arquivo, inserirLista(comPainel, listaHtml(indice, { fichas })));
 }
 
+// Os rankings por indicador, a partir das fichas. Um erro aqui não derruba o resto do site: a página
+// sai com o aviso, e as fichas e a lista continuam. Sem dados, a página diz que a coleta ainda não rodou.
+async function gerarRankings(indice, fichas) {
+  const arquivo = join(destino, arquivoDaPagina(PAGINAS.find((p) => p.id === "rankings")));
+  let corpo;
+  try {
+    const rankings = fichas && indice ? montarRankings(fichas) : null;
+    if (rankings) {
+      await writeFile(join(destino, PASTA_DAS_FICHAS, ARQUIVO_DOS_RANKINGS), JSON.stringify(rankings, null, 1));
+      console.log(`rankings: ${rankings.criterios.length} critérios, ${rankings.empresas} companhias, exercício de referência ${rankings.rotuloDoExercicio ?? "indefinido"}`);
+    }
+    corpo = rankingsHtml(rankings, { fichas, comPagina: indice ? new Set(indice.companhias.filter((c) => c.ficha).map((c) => c.ticker)) : null });
+  } catch (e) {
+    console.warn(`aviso: rankings não gerados: ${e.message}`);
+    corpo = `<h2>Rankings por indicador</h2>\n<p class="sem-dados">Os rankings não puderam ser gerados nesta atualização. As fichas das empresas continuam disponíveis.</p>`;
+  }
+  await writeFile(arquivo, inserirRankings(await readFile(arquivo, "utf8"), corpo));
+}
+
 let resultado = null;
 try { resultado = await gerarFichas(); } catch (e) { console.warn(`aviso: fichas não geradas: ${e.message}`); }
 try { if (resultado) await gerarPaginas(resultado); } catch (e) { console.warn(`aviso: páginas das companhias não geradas: ${e.message}`); }
 await gerarLista(resultado?.indice ?? null, resultado?.fichas ?? null);
+await gerarRankings(resultado?.indice ?? null, resultado?.fichas ?? null);
 
 console.log(`build pronto em ${destino}`);

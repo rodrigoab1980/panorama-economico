@@ -9,6 +9,7 @@
 export const PAGINAS = [
   { id: "diario", titulo: "Diário", subtitulo: "visão de trade", pasta: "" },
   { id: "fundamentos", titulo: "Fundamentalista", subtitulo: "empresas do Ibovespa", pasta: "fundamentos/" },
+  { id: "rankings", titulo: "Rankings", subtitulo: "por indicador", pasta: "fundamentos/rankings/" },
 ];
 
 export const MARCADOR = "<!-- menu -->";

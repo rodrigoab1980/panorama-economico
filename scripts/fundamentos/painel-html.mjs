@@ -132,6 +132,7 @@ function atencaoHtml(p, comPagina) {
 <h3 id="t-atencao">Pontos de atenção nas ${p.fichas}</h3>
 <p class="painel-nota">Quantas companhias acionam cada regra. Regras automáticas sobre os números entregues à CVM. Descrevem fatos, não são recomendação.</p>
 <ol class="atencao-contagem">${p.atencao.map(linha).join("")}</ol>
+<p class="painel-link"><a href="rankings/">Rankings por indicador</a>: os maiores e os menores valores em cada critério.</p>
 </section>`;
 }
 
