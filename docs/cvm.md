@@ -428,6 +428,26 @@ A v2 usa **JSON puro**. O leitor gera um formato intermediário normalizado, com
 
 Motivo: o gargalo é ler os ZIPs, não armazenar (ver Volume acima). E as regras difíceis (classificador de contas, IFRS 16, exercício fora de dezembro) ficam em JS testado.
 
+## O que a série inteira mostra nos pontos de atenção (#39)
+
+Com os dados de 13/11/2026, nas 64 companhias da página (limites padrão):
+
+| Regra | Acionada | Não acionada | Não avaliada |
+|---|---:|---:|---:|
+| Lucro que não vira caixa | 7 | 52 | 5 |
+| Proventos maiores que o FCL | 24 | 39 | 1 |
+| Dívida líquida ÷ EBITDA alta | 14 | 50 | 0 |
+| Dívida concentrada no curto prazo | 1 | 63 | 0 |
+| Capex maior que o FCO | 4 | 60 | 0 |
+| Diluição | 14 | 39 | 11 |
+| Margem líquida em queda | 9 | 55 | 0 |
+
+- 19 companhias não acionam nenhuma regra, 24 acionam uma, 15 acionam duas, 5 acionam três e 1 aciona quatro (Equatorial).
+- **Não avaliadas:** a diluição fica sem avaliar em 11 companhias por desdobramento ou grupamento na janela de três exercícios. "Lucro que não vira caixa" fica sem avaliar em 5, que tiveram prejuízo em três ou mais dos últimos cinco exercícios.
+- **Proventos maiores que o FCL** é a regra que mais aciona (24 de 64). Ela compara o que foi pago com o FCL do mesmo período, e uma companhia em ciclo de investimento ou com FCL negativo cai nela.
+- **Períodos fora das contas:** o Assaí em 2018 (demonstração zerada) e três exercícios de transição (Cosan em 2013, Tenda em 03/2023 e Vivara em 2019).
+- **Comparação com o setor:** todos os 12 setores usam o exercício de 2025, e todas as 64 companhias o têm. Só Serviços financeiros (a B3 sozinha) fica sem mediana. Quatro setores têm exatamente 3 empresas (Alimentos e bebidas, Indústria, Shoppings e Telecom e tecnologia): neles a mediana é a empresa do meio, e os quartis dizem pouco.
+
 ## Fixtures
 
 Em `test/fixtures/cvm/`, recortes dos CSVs reais, byte a byte (latin1, CRLF; preservados pelo `.gitattributes`), com o índice, DRE, BPA, BPP, DFC_MI e DVA consolidados e a composição do capital (da DFP e do ITR):
