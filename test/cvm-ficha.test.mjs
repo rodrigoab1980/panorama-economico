@@ -23,7 +23,7 @@ function extratoDaWeg(documento, ano) {
   for (const nome of readdirSync(new URL("weg/", DIR)).filter((n) => n.startsWith(`${documento}_cia_aberta_`) && n.endsWith(`_${ano}.csv`))) {
     const tipo = tipoDaEntrada(nome);
     if (!tipo) continue;
-    const receber = tipo === "demonstrativo" ? extrator.demonstrativo(nome) : extrator.composicao(nome);
+    const receber = extrator[tipo](nome);
     for (const l of texto("weg", nome).split("\n")) receber(l);
     receber.fechar?.();
   }
@@ -38,7 +38,7 @@ describe("ficha de uma companhia", () => {
   const ficha = montarFicha({ companhia: WEG, arquivo: ARQUIVO, cotacoes: COTACOES, hoje: "2026-11-14" });
 
   test("identificação, documento mais recente e as três partes: anual, 12 meses e múltiplos", () => {
-    assert.deepEqual(Object.keys(ficha), ["ticker", "tickers", "cnpj", "cdCvm", "nome", "setor", "documentoMaisRecente", "anual", "doze", "multiplos", "avisos"]);
+    assert.deepEqual(Object.keys(ficha), ["ticker", "tickers", "cnpj", "cdCvm", "nome", "setor", "documentoMaisRecente", "cotacoes", "anual", "doze", "multiplos", "avisos"]);
     assert.deepEqual([ficha.ticker, ficha.tickers, ficha.cdCvm, ficha.nome, ficha.setor], ["WEGE3", ["WEGE3"], "005410", "WEG S.A.", "Bens industriais"]);
     assert.deepEqual(ficha.documentoMaisRecente, { tipo: "itr", dtRefer: "2026-09-30", versao: 1 });
     assert.deepEqual(ficha.avisos, []);

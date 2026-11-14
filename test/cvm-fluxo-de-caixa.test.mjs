@@ -584,14 +584,15 @@ describe("indicadores de fluxo de caixa: a lista", () => {
     "coberturaJurosPagos", "custoDividaJurosPagos", "proventosPagos", "acoesCirculacao", "diluicao", "lucroPorAcao", "fcoPorAcao", "fclPorAcao"];
 
   test("os 17 indicadores da #36 entram no fim da lista, cada um com fórmula", () => {
-    assert.deepEqual(INDICADORES.map((i) => i.id).slice(-NOVOS.length), NOVOS);
+    // depois deles só vem o valor patrimonial por ação, da #38
+    assert.deepEqual(INDICADORES.map((i) => i.id).slice(-NOVOS.length - 1), [...NOVOS, "valorPatrimonialPorAcao"]);
     for (const id of NOVOS) assert.ok(INDICADORES.find((i) => i.id === id).formula.trim().length > 10, id);
   });
 
   test("unidades: ações em unidades e valores por ação em R$ por ação", () => {
     const unidade = (id) => INDICADORES.find((i) => i.id === id).unidade;
     assert.equal(unidade("acoesCirculacao"), "ações");
-    for (const id of ["lucroPorAcao", "fcoPorAcao", "fclPorAcao"]) assert.equal(unidade(id), "R$ por ação", id);
+    for (const id of ["lucroPorAcao", "fcoPorAcao", "fclPorAcao", "valorPatrimonialPorAcao"]) assert.equal(unidade(id), "R$ por ação", id);
     for (const id of ["fcoSobreEbitda", "capexSobreFco", "coberturaJurosPagos", "custoDividaJurosPagos", "diluicao"]) assert.equal(unidade(id), "razão", id);
     for (const id of ["fco", "fci", "fcf", "capex", "fcl", "fclAposArrendamentos", "jurosPagos", "proventosPagos"]) assert.equal(unidade(id), "R$ mil", id);
   });
@@ -630,6 +631,7 @@ describe("cada indicador de fluxo de caixa, num exercício sintético", () => {
     lucroPorAcao: (90 * 1000) / 1000, // 3.11.01 em R$ mil → R$ por ação
     fcoPorAcao: (300 * 1000) / 1000,
     fclPorAcao: (170 * 1000) / 1000,
+    valorPatrimonialPorAcao: (800 * 1000) / 1000, // PL 800, sem não controladores no sintético
   };
   for (const [id, esperado] of Object.entries(casos)) {
     test(`${id} = ${esperado}`, () => assert.deepEqual(ind[id], { valor: esperado, motivo: null }));

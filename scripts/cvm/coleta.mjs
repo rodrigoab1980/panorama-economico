@@ -19,7 +19,8 @@ export const PRIMEIRO_ANO_DFP = 2010;
 export const PASTA_FUNDAMENTOS = "fundamentos";
 export const ARQUIVO_INDICE = "indice.json";
 // Muda quando o formato do extrato ou do arquivo da companhia muda; entra na chave do cache.
-export const FORMATO = 1;
+// 2 (#38): o extrato passa a guardar os documentos do índice do ZIP, com o link de cada um.
+export const FORMATO = 2;
 
 // ---------- o que baixar ----------
 
@@ -46,13 +47,20 @@ export function arquivosDaColeta(hoje) {
 }
 
 // O que fazer com uma entrada do ZIP, pelo nome: "demonstrativo" (DRE, BPA, BPP, DFC e DVA, consolidado
-// e individual), "composicao" (composição do capital) ou null (índice, DMPL, DRA, parecer).
+// e individual), "composicao" (composição do capital), "indice" (a lista dos documentos do ano, com a
+// data de entrega e o link de cada um) ou null (DMPL, DRA, parecer).
 export function tipoDaEntrada(nome) {
   const base = String(nome).split(/[\\/]/).pop();
   if (interpretarArquivo(base)) return "demonstrativo";
   if (/^(dfp|itr)_cia_aberta_composicao_capital_\d{4}\.csv$/.test(base)) return "composicao";
+  if (/^(dfp|itr)_cia_aberta_\d{4}\.csv$/.test(base)) return "indice";
   return null;
 }
+
+// Colunas do índice de documentos (`dfp_cia_aberta_AAAA.csv` e `itr_cia_aberta_AAAA.csv`).
+const COLUNAS_DO_INDICE = ["CNPJ_CIA", "DT_REFER", "VERSAO", "ID_DOC", "DT_RECEB", "LINK_DOC"];
+// O link só é guardado se for do sistema de documentos da CVM; outra coisa nesse campo fica de fora.
+const LINK_DA_CVM = /^https?:\/\/(www\.)?rad\.cvm\.gov\.br\/[^\s"'<>]+$/i;
 
 // ---------- extrato de um ZIP ----------
 
@@ -98,12 +106,15 @@ export function fatosDosBlocos(blocos, { cnpj, cdCvm }) {
 // Devolve { demonstrativo(nomeDaEntrada), composicao(nomeDaEntrada), extrato() }:
 //   demonstrativo(nome)  → função que recebe uma linha por vez (a primeira é o cabeçalho)
 //   composicao(nome)     → idem, para o CSV de composição do capital
-//   extrato()            → { formato, companhias: { cdCvm: { blocos, composicoes } }, linhas: { lidas, aproveitadas } }
+//   indice(nome)         → idem, para o índice de documentos do ZIP
+//   extrato()            → { formato, companhias: { cdCvm: { blocos, composicoes, documentos } }, linhas: { lidas, aproveitadas } }
+//     documentos: [{ documento, dtRefer, versao, idDoc, recebidoEm, link }], como a CVM informa no índice
 // A linha de outra companhia é descartada pelo CNPJ, que são os 18 primeiros caracteres, antes de virar fato.
 export function criarExtrator(companhias) {
   const porCnpj = new Map(companhias.map((c) => [c.cnpj, c]));
   const fatos = new Map(companhias.map((c) => [c.cdCvm, []]));
   const composicoes = new Map(companhias.map((c) => [c.cdCvm, []]));
+  const documentos = new Map(companhias.map((c) => [c.cdCvm, []]));
   const linhas = { lidas: 0, aproveitadas: 0 };
   const doUniverso = (linha) => porCnpj.get(linha.slice(0, 18));
 
@@ -135,12 +146,44 @@ export function criarExtrator(companhias) {
       };
       return receber;
     },
+    indice(nome) {
+      const documento = /^(dfp|itr)_/.exec(String(nome).split(/[\\/]/).pop())?.[1];
+      let colunas = null;
+      let numero = 0;
+      return (linha) => {
+        linhas.lidas++;
+        numero++;
+        const limpa = linha.endsWith("\r") ? linha.slice(0, -1) : linha;
+        if (limpa === "") return;
+        if (colunas == null) {
+          const cab = limpa.split(";");
+          const faltam = COLUNAS_DO_INDICE.filter((c) => !cab.includes(c));
+          if (faltam.length) throw new Error(`${nome}:1: cabeçalho sem a(s) coluna(s) ${faltam.join(", ")}`);
+          colunas = Object.fromEntries(COLUNAS_DO_INDICE.map((c) => [c, cab.indexOf(c)]));
+          return;
+        }
+        const cia = doUniverso(limpa);
+        if (!cia) return;
+        const campos = limpa.split(";");
+        const versao = Number(campos[colunas.VERSAO]);
+        if (!Number.isInteger(versao) || versao < 1) throw new Error(`${nome}:${numero}: VERSAO inválida: "${campos[colunas.VERSAO]}"`);
+        const link = campos[colunas.LINK_DOC]?.trim() ?? "";
+        documentos.get(cia.cdCvm).push({
+          documento, dtRefer: campos[colunas.DT_REFER], versao,
+          idDoc: campos[colunas.ID_DOC]?.trim() || null,
+          recebidoEm: campos[colunas.DT_RECEB]?.trim() || null,
+          link: LINK_DA_CVM.test(link) ? link : null,
+        });
+        linhas.aproveitadas++;
+      };
+    },
     extrato() {
       const saida = {};
       for (const c of companhias) {
         const blocos = agruparEmBlocos(fatos.get(c.cdCvm));
         const comp = composicoes.get(c.cdCvm);
-        if (blocos.length || comp.length) saida[c.cdCvm] = { blocos, composicoes: comp };
+        const docs = documentos.get(c.cdCvm);
+        if (blocos.length || comp.length || docs.length) saida[c.cdCvm] = { blocos, composicoes: comp, documentos: docs };
       }
       return { formato: FORMATO, companhias: saida, linhas };
     },
@@ -161,15 +204,17 @@ export function dependeDoArquivo(anterior, arquivo, anoCorrente) {
 // Junta os extratos de todos os ZIPs no arquivo de uma companhia.
 //   companhia  { cnpj, cdCvm, tickers } do universo
 //   extratos   [{ arquivo: { nome, lastModified }, extrato }] dos ZIPs que deram certo
-// Devolve { cnpj, cdCvm, tickers, fatos, composicoes, origem, avisos } ou null quando nenhum ZIP traz a companhia.
+// Devolve { cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos } ou null quando nenhum ZIP traz a companhia.
 //   fatos        blocos, já com a maior versão de cada documento e com consolidado × individual resolvido
 //   composicoes  composição do capital de cada documento, como veio (a escala é resolvida no build)
+//   documentos   a maior versão de cada documento, com a data de entrega e o link que a CVM informa
 //   origem       [{ arquivo, lastModified }] dos ZIPs que trouxeram alguma coisa da companhia
 //   avisos       o que merece ser olhado: consolidado zerado tratado como ausente
 export function montarCompanhia(companhia, extratos) {
   const { cnpj, cdCvm } = companhia;
   const fatos = [];
   const composicoes = new Map();
+  const documentos = new Map();
   const origem = [];
   for (const { arquivo, extrato } of extratos) {
     const parte = extrato.companhias?.[cdCvm];
@@ -180,6 +225,11 @@ export function montarCompanhia(companhia, extratos) {
       const atual = composicoes.get(c.dtRefer);
       if (!atual || c.versao > atual.versao) composicoes.set(c.dtRefer, c);
     }
+    for (const d of parte.documentos ?? []) {
+      const k = `${d.dtRefer}|${d.documento}`;
+      const atual = documentos.get(k);
+      if (!atual || d.versao > atual.versao) documentos.set(k, d);
+    }
   }
   if (origem.length === 0) return null;
   const daVersao = escolherVersao(fatos);
@@ -189,6 +239,7 @@ export function montarCompanhia(companhia, extratos) {
     tickers: companhia.tickers.map((t) => t.ticker),
     fatos: agruparEmBlocos(escolherConsolidado(daVersao)),
     composicoes: [...composicoes.values()].sort((a, b) => ordenar(a.dtRefer, b.dtRefer)),
+    documentos: [...documentos.entries()].sort(([a], [b]) => ordenar(a, b)).map(([, d]) => d),
     origem: origem.sort((a, b) => ordenar(a.arquivo, b.arquivo)),
     avisos,
   };

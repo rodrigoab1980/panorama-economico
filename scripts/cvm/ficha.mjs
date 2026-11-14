@@ -21,9 +21,12 @@ export const tickerPrincipal = (companhia) => (companhia.tickers.find((t) => t.i
 //   cotacoes     o arquivo de preços ({ coletadoEm, fonte, precos }) ou null
 //   hoje         "AAAA-MM-DD" do dia do build
 //   excecoesDfc  exceções do classificador da DFC
-// Devolve { ticker, tickers, cnpj, cdCvm, nome, setor, documentoMaisRecente, anual, doze, multiplos, avisos }:
-//   anual      [{ inicio, fim, tipo, indicadores }], um item por exercício, do mais antigo ao mais novo
-//   doze       { fim, tipo, motivo, indicadores }
+// Devolve { ticker, tickers, cnpj, cdCvm, nome, setor, documentoMaisRecente, cotacoes, anual, doze, multiplos, avisos }:
+//   cotacoes   { fonte, coletadoEm, tickers: [{ ticker, preco, dataHora }] }: o preço de cada ticker da companhia
+//   anual      [{ inicio, fim, tipo, meses, origem, composicao, indicadores }], um item por exercício, do
+//              mais antigo ao mais novo. `origem` é o documento de onde saiu a DRE do período:
+//              { documento, dtRefer, versao, consolidado, reapresentado, recebidoEm, link }
+//   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], composicao, indicadores }
 //   multiplos  a saída de calcularMultiplos
 // Só vão os indicadores calculados, não as contas dos demonstrativos: a ficha fica pequena.
 export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoesDfc = [] }) {
@@ -37,14 +40,35 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
     cotacoes, hoje,
   });
   const acoes = (c) => (c ? { dtRefer: c.dtRefer, acoesCirculacao: c.acoesCirculacao, escala: c.escala, escalaPor: c.escalaPor } : null);
+  // Data de entrega e link do documento, como a CVM informa no índice do ZIP (quando a coleta os trouxe).
+  const daCvm = (documento, dtRefer) => {
+    const d = (arquivo.documentos ?? []).find((x) => x.documento === documento && x.dtRefer === dtRefer);
+    return { recebidoEm: d?.recebidoEm ?? null, link: d?.link ?? null };
+  };
+  const origemDoPeriodo = (periodo) => {
+    const o = ["DRE", "DFC", "DVA", "BPA", "BPP"].map((d) => periodo.demonstrativos?.[d]?.origem).find(Boolean);
+    if (!o) return null;
+    return { documento: o.documento, dtRefer: o.dtRefer, versao: o.versao, consolidado: o.consolidado, reapresentado: o.reapresentado ?? null, ...daCvm(o.documento, o.dtRefer) };
+  };
+  const parcelas = Object.entries(series.doze?.parcelas ?? {}).filter(([, x]) => x?.dtRefer).map(([parcela, x]) => ({
+    parcela, documento: x.documento, dtRefer: x.dtRefer, versao: x.versao ?? null, consolidado: x.consolidado ?? null, ...daCvm(x.documento, x.dtRefer),
+  }));
   return {
     ticker: tickerPrincipal(companhia),
     tickers: companhia.tickers.map((t) => t.ticker),
     cnpj: companhia.cnpj, cdCvm: companhia.cdCvm, nome: companhia.nome, setor: companhia.setor ?? null,
     documentoMaisRecente: documentoMaisRecente(arquivo),
-    anual: calculado.anual.map((p) => ({ inicio: p.inicio, fim: p.fim, tipo: p.tipo, composicao: acoes(p.composicao), indicadores: p.indicadores })),
+    cotacoes: {
+      fonte: cotacoes?.fonte ?? null, coletadoEm: cotacoes?.coletadoEm ?? null,
+      tickers: companhia.tickers.map((t) => t.ticker).filter((t) => cotacoes?.precos?.[t]?.preco > 0)
+        .map((t) => ({ ticker: t, preco: cotacoes.precos[t].preco, dataHora: cotacoes.precos[t].dataHora ?? null })),
+    },
+    anual: calculado.anual.map((p, i) => ({
+      inicio: p.inicio, fim: p.fim, tipo: p.tipo, meses: series.anual[i].meses ?? null, origem: origemDoPeriodo(series.anual[i]),
+      composicao: acoes(p.composicao), indicadores: p.indicadores,
+    })),
     doze: {
-      fim: calculado.doze.fim, tipo: calculado.doze.tipo, motivo: series.doze?.motivo ?? null,
+      fim: calculado.doze.fim, tipo: calculado.doze.tipo, motivo: series.doze?.motivo ?? null, origem: parcelas,
       composicao: acoes(calculado.doze.composicao), indicadores: calculado.doze.indicadores,
     },
     multiplos,

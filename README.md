@@ -40,6 +40,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/`, insere o menu em cada página e gera as fichas das companhias em `dist/fundamentos/dados/`. Só lê e grava; a lógica fica em `scripts/paginas.mjs` e em `scripts/cvm/ficha.mjs`. |
 | `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
+| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): `formatar.mjs`, `pagina.mjs` (HTML da ficha e da lista), `csv.mjs` e `carimbo.mjs`. Veja [Página Fundamentalista](#página-fundamentalista). |
 | `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. |
 | `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
 | `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
@@ -141,7 +142,6 @@ Caixa, dívida e liquidez, sempre com o saldo do fim do período:
 | Dívida de curto prazo | (2.01.04 − 2.01.04.03) ÷ dívida bruta |
 | Despesas financeiras | DRE 3.06.02, com o sinal trocado |
 | Cobertura de juros | EBIT ÷ despesas financeiras |
-| Custo aproximado da dívida | Despesas financeiras ÷ dívida bruta |
 | Liquidez corrente | BPA 1.01 ÷ BPP 2.01 |
 | Liquidez imediata | Caixa ÷ BPP 2.01 |
 
@@ -153,7 +153,7 @@ As escolhas por trás das fórmulas:
 4. **O ROIC usa a alíquota nominal de 34%** (IR + CSLL), não a efetiva. A efetiva oscila com JCP, incentivos e prejuízo fiscal, e faria o ROIC variar sem motivo operacional.
 5. **A dívida bruta não inclui arrendamentos (IFRS 16), e as duas versões são sempre calculadas.** O número principal é sem arrendamentos; a dívida bruta e a líquida "com arrendamentos" saem ao lado. Em varejo e telecom o arrendamento passa da dívida (na Raia Drogasil, 4,97 bilhões contra 3,87 bilhões em 2025), então os dois números contam histórias diferentes. Quem lança o arrendamento dentro de empréstimos e financiamentos (contas 2.01.04.03 e 2.02.01.03) tem esse valor tirado da dívida bruta.
 6. **Os arrendamentos são achados pela descrição.** A maioria das companhias não usa a conta fixa: cria uma linha própria em "outras obrigações", sem código fixo. Entram as linhas de 2.01.05 e 2.02.02 cuja descrição contém "arrendament". "Aluguéis" não entra, porque é aluguel a pagar. Se uma linha e uma sublinha dela batem, conta só a de cima. Quando nenhuma linha bate e as duas contas fixas estão zeradas, o indicador fica vazio, com o motivo "nenhuma linha de arrendamento identificada no passivo", e as duas versões "com arrendamentos" ficam vazias junto. Não vira zero, porque a companhia pode ter o arrendamento dentro de outra linha: na DFP de 2025 isso acontece em 12 das 64 companhias da página. A dívida sem arrendamentos não muda.
-7. **"Despesas financeiras" é uma aproximação dos juros.** A conta da DRE inclui variação cambial, juros de arrendamento e outros encargos. Por isso a cobertura de juros e o custo da dívida são aproximados, e o custo pode sair alto demais em quem tem pouca dívida e muito câmbio. Os juros pagos, do fluxo de caixa, entram depois.
+7. **"Despesas financeiras" é uma aproximação dos juros.** A conta da DRE inclui variação cambial, juros de arrendamento e outros encargos. Por isso a cobertura de juros é aproximada. O "custo aproximado da dívida" (despesas financeiras ÷ dívida bruta) saiu da lista: na WEG ele dava de 41% a 64% ao ano, por causa do câmbio e dos derivativos. O custo da dívida que fica é o calculado pelos juros pagos, do fluxo de caixa.
 8. **Dívida lançada em outras obrigações entra pela descrição.** A Allos deixa as contas de empréstimos zeradas e registra a dívida numa linha própria de outras obrigações. Por isso a dívida bruta soma também as linhas sem código fixo de 2.01.05 (curto prazo) e 2.02.02 (longo prazo) cuja descrição tem "empréstimo" e também "financiamento" ou "debênture". O empréstimo compulsório fica de fora: é um passivo com consumidores, não uma dívida financeira. Vale a mesma regra de não contar uma linha e a sublinha dela.
 9. **Dívida fora das contas padrão vira aviso, não zero.** Se, mesmo assim, a dívida bruta dá zero e a despesa financeira passa de 0,5% do ativo total, a dívida e tudo o que depende dela (inclusive o ROIC) ficam vazios, com o motivo "a dívida pode estar fora das contas padrão". O limite de 0,5% separa quem só paga tarifas e IOF de quem tem dívida. Hoje nenhuma das 64 companhias dispara o aviso.
 
@@ -194,7 +194,7 @@ Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o
 
 Quando não dá para calcular, o indicador fica vazio, com o motivo, e nunca vira zero: falta uma conta, a receita é zero ou negativa (margens), o patrimônio, o ativo ou o capital investido é zero ou negativo (retornos), ou a base de 12 meses não fechou. Num exercício de transição, com menos de 12 meses, os valores, as margens e os saldos do balanço saem, mas ROE, ROA, ROIC, dívida líquida ÷ EBITDA, cobertura de juros e custo da dívida não: nada é anualizado. O EBITDA depende da D&A; sem ela na DFC e na DVA, fica vazio, e o EBIT não entra no lugar.
 
-Nos indicadores de dívida, a dívida líquida negativa é um valor válido (caixa líquido), não um vazio. Dívida líquida ÷ EBITDA fica vazia com EBITDA zero ou negativo. Parcela de curto prazo e custo da dívida ficam vazios para quem não tem dívida ("sem dívida financeira"). A cobertura e o custo ficam vazios com despesa financeira zero ou negativa, e também quando a companhia informa só o resultado financeiro líquido, sem abrir receitas e despesas. As duas liquidezes ficam vazias com passivo circulante zero.
+Nos indicadores de dívida, a dívida líquida negativa é um valor válido (caixa líquido), não um vazio. Dívida líquida ÷ EBITDA fica vazia com EBITDA zero ou negativo. A parcela de curto prazo fica vazia para quem não tem dívida ("sem dívida financeira"). A cobertura fica vazia com despesa financeira zero ou negativa, e também quando a companhia informa só o resultado financeiro líquido, sem abrir receitas e despesas. As duas liquidezes ficam vazias com passivo circulante zero.
 
 No fluxo de caixa, capex ÷ FCO fica vazio com FCO zero ou negativo, e FCO ÷ EBITDA, com EBITDA zero ou negativo. O FCL negativo é um valor válido. A cobertura e o custo pelos juros pagos ficam vazios quando os juros não foram identificados, quando são zero, ou quando vêm misturados com os juros de arrendamento. Sem a composição do capital do período, as ações e os valores por ação ficam vazios. A diluição fica vazia no primeiro ano da série e nos 12 meses.
 
@@ -245,6 +245,59 @@ São só dados e regras à vista. Nada aqui é recomendação de investimento.
 - **Falhas:** se nenhuma cotação vier, o arquivo não é tocado e fica valendo o último gravado; o log avisa. Se vier só uma parte, quem não veio continua com o último preço conhecido e com a `dataHora` dele, e a regra de cotação desatualizada marca o que precisar.
 - **Risco registrado:** a CNBC é um endpoint **não oficial**, sem contrato e sem garantia de continuar no ar. A fonte tem de ser revista, com um distribuidor licenciado ou com parecer jurídico, **antes de o site ter qualquer parte paga** (v3). Os dados ficam só para consulta e não são revendidos.
 - **Por que não a B3:** o arquivo oficial de cotações históricas foi testado em 13/11/2026 e o download funciona, mas a página da B3 diz que os dados "destinam-se estritamente à consulta informativa" e veda a coleta automatizada, para qualquer finalidade. Nada desse arquivo entrou no repositório. A consequência é que a CNBC não tem série histórica: o gráfico de lucro × cotação da v3 vai precisar de outra fonte.
+
+## Página Fundamentalista
+
+A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por isso o centro da ficha é a série anual, de 2010 em diante. Os 12 meses e os múltiplos são a coluna de hoje dessa história.
+
+- **`/fundamentos/`** lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
+- **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
+
+**As tabelas vêm prontas no HTML.** O build gera uma página por companhia, e ela funciona sem JavaScript. O JS é só uma camada extra: a busca da lista e o balão que mostra a fórmula, o documento e o motivo de um vazio (sem JS, isso tudo está no `title`). Os links internos são todos relativos, porque o site fica em `/panorama-economico/`.
+
+### A ficha
+
+1. **Cabeçalho:** nome, setor, a cotação de cada ticker com a data e a hora do último negócio, a fonte do preço e, quando for o caso, o carimbo de dado desatualizado.
+2. **Quatro blocos**, nesta ordem: Resultado, Caixa e dívida, Fluxo de caixa e Valuation. A lista de qual indicador vai em qual bloco fica em `BLOCOS` (`scripts/fundamentos/pagina.mjs`).
+3. **Rodapé:** o aviso legal, a fonte e a data da coleta.
+
+Cada bloco é uma tabela com **uma linha por indicador e uma coluna por período**: primeiro os 12 meses, depois o exercício mais recente, e assim até o mais antigo. No celular, rolar para a direita é voltar no tempo. A primeira coluna (o nome do indicador) fica fixa, e quem rola é a tabela, não a página.
+
+- **Sem valor:** a célula mostra "—", com o motivo no `title` e no balão. Nunca 0.
+- **Demonstração zerada:** quando o documento traz o período inteiro em zero (ativo total igual a 0), a coluna fica toda vazia, com o motivo "demonstração zerada no documento". É o caso do Assaí em 2018.
+- **Período de transição** (exercício com menos de 12 meses): o cabeçalho da coluna diz quantos meses tem.
+- **Gráfico de tendência:** um SVG pequeno em cada linha, gerado no build, do exercício mais antigo ao mais recente. Ano sem valor fica como buraco na linha, e não como zero.
+- **Documento de origem:** o rodapé de cada tabela diz de qual documento saiu cada coluna, com o link que a própria CVM informa no índice de documentos do ZIP (`LINK_DOC`). O link baixa o documento entregue.
+- **Negativo:** leva o sinal de menos, e só o sinal ganha a cor de baixa. As faixas de cor ficam para a #39.
+
+No **Valuation**, os múltiplos aparecem só na coluna de hoje: eles dependem do preço, e esta versão não tem preço histórico. Os valores por ação (lucro, valor patrimonial, FCO e FCL por ação) não dependem de preço e têm a série anual, com três ressalvas escritas na página:
+
+- **Antes de 2020** a linha fica vazia, com o motivo "a CVM só informa o número de ações a partir de 2020".
+- **Desdobramento ou grupamento:** quando o número de ações muda mais de 50% de um exercício para o outro, a tabela ganha uma borda tracejada entre os dois anos e uma nota dizendo que os valores por ação antes disso não são comparáveis. Os valores antigos **não são ajustados**.
+- **Escala das ações:** as nove mudanças de escala (unidade ↔ mil) da série foram conferidas uma a uma; em todas a companhia mudou a forma de informar, e o lucro por ação calculado bate com o informado.
+
+### Carimbo de desatualizado
+
+A ficha ganha o carimbo, na cor que o site reserva para dado desatualizado, quando o documento mais recente da companhia é mais antigo do que o último que já deveria ter sido entregue. Os prazos são os da CVM: 45 dias depois do trimestre para o ITR e 90 dias depois do exercício para a DFP. Os trimestres seguem o exercício da própria companhia (quem fecha em março tem ITR em junho, setembro e dezembro). Exemplo: "Dados até o ITR de 30/06/2026. O ITR de 30/09/2026 já deveria ter sido entregue (prazo do ITR: 14/11/2026)." A regra fica em `scripts/fundamentos/carimbo.mjs`.
+
+### CSV
+
+Cada bloco tem um link "baixar CSV" (`/fundamentos/wege3/resultado.csv`, `caixa-e-divida.csv`, `fluxo-de-caixa.csv` e `valuation.csv`). O arquivo é feito para abrir certo no Excel brasileiro: separador `;`, vírgula decimal, UTF-8 com BOM e CRLF. Os valores vão sem abreviação (R$ mil inteiros e razões em fração), a coluna "Unidade" diz qual é, e o que não tem valor fica vazio.
+
+### Como as fichas são geradas
+
+O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de cada companhia (`scripts/cvm/ficha.mjs`) e chama os módulos de `scripts/fundamentos/`, todos puros e testados:
+
+| Módulo | O que faz |
+|---|---|
+| `formatar.mjs` | Números em pt-BR: "R$ 40,8 bi", "33,5%", "12,3x", "R$ 1,52" e "—" |
+| `pagina.mjs` | O HTML da ficha e da lista. Todo texto que vem de dado passa por `escapar()` |
+| `csv.mjs` | O CSV de cada bloco |
+| `carimbo.mjs` | Decide se o dado está desatualizado |
+
+Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
+
+Aqui só há dados e regras à vista. Nada na página é recomendação de investimento.
 
 ## Coleta dos fundamentos
 
@@ -297,12 +350,12 @@ O Diário não é afetado por nenhuma delas: é outro workflow, e o build não f
 
 Na branch de dados:
 
-- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, origem, avisos }`. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
+- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos }`. `documentos` traz, de cada documento, a versão, a data de entrega e o link que a CVM informa. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
 - `fundamentos/indice.json`: `{ coletadoEm, arquivos, companhias }`. De cada ZIP, o `Last-Modified`, o tamanho e o estado. De cada companhia, os tickers, o **documento mais recente** (`{ tipo, dtRefer, versao }`, para o carimbo de desatualizado), o estado (`ok`, `mantido` ou `falhou`), o motivo e os avisos.
 
 No site (`dist/fundamentos/dados/`, gerado pelo build):
 
-- `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores), a base de 12 meses, os múltiplos e os avisos. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
+- `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores e o documento de origem), a base de 12 meses, as cotações, os múltiplos e os avisos. É o que alimenta a página de cada companhia. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
 - `indice.json`: a lista das companhias, com o documento mais recente de cada uma, as datas da coleta e do preço, e o motivo de quem ficou sem ficha.
 
 ### Avisos

@@ -119,7 +119,7 @@ async function extrairDoZip(caminhoDoZip, companhias) {
   for (const entrada of await entradasDoArquivoZip(caminhoDoZip)) {
     const tipo = tipoDaEntrada(entrada.nome);
     if (!tipo) continue;
-    const receber = tipo === "demonstrativo" ? extrator.demonstrativo(entrada.nome) : extrator.composicao(entrada.nome);
+    const receber = extrator[tipo](entrada.nome);
     let n = 0;
     for await (const linha of linhasDaEntrada(caminhoDoZip, entrada)) {
       receber(linha);
