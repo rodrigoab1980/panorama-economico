@@ -465,6 +465,7 @@ export function depreciacaoEAmortizacao(periodo, classes) {
 // `contexto` traz o que não está no período:
 //   composicao          composição do capital do fim do período, JÁ EM UNIDADES de ação ({ acoesCirculacao, ... })
 //   composicaoAnterior  a do exercício anterior, para a diluição (só na série anual)
+//   motivoComposicao    por que a composição não veio, quando há um motivo melhor do que "falta" (12 meses)
 //   primeiroAno         true quando o período é o primeiro da série (a diluição não existe)
 //   excecoesDfc         exceções do classificador da DFC para a companhia
 // calcularIndicadoresDaSerie() monta o contexto de cada período.
@@ -525,7 +526,7 @@ export function calcularIndicadores(periodo, contexto = {}) {
   // Ações em circulação e valores por ação, em R$ (os fluxos estão em R$ mil).
   const composicao = contexto.composicao;
   const acoes = composicao == null
-    ? nulo("falta a composição do capital do período")
+    ? nulo(contexto.motivoComposicao ?? "falta a composição do capital do período")
     : (composicao.acoesCirculacao == null || composicao.acoesCirculacao <= 0 ? nulo("composição do capital sem o número de ações") : ok(composicao.acoesCirculacao));
   const porAcao = (emMil) => combinar([emMil, acoes], (v, n) => (v * 1000) / n);
   const diluicao = () => {
@@ -597,12 +598,21 @@ export function calcularIndicadores(periodo, contexto = {}) {
 // de cada período (composição do capital da data, a do exercício anterior e as exceções da companhia).
 //   composicoes   saída de lerComposicaoCapital, de DFP e de ITR juntas (só as da companhia são usadas)
 //   excecoesDfc   conteúdo de excecoes-dfc.json (`excecoes`)
-// Devolve { anual: [{ inicio, fim, tipo, composicao, indicadores }], doze: { fim, tipo, composicao, indicadores } }.
+// Devolve { anual: [{ inicio, fim, tipo, composicao, indicadores }],
+//           doze: { fim, tipo, composicao, motivoComposicao, indicadores }, avisos: [texto] }.
 // A `composicao` devolvida está em unidades de ação e diz a `escala` em que veio e como ela foi descoberta.
 //   - No anual, a escala sai do lucro por ação informado na DRE do próprio exercício (ou da ordem de grandeza).
 //   - Nos 12 meses, a composição é a da data do ITR mais recente; se o ITR não a trouxer, vale a mais
 //     recente anterior, e a `dtRefer` dela mostra de onde veio. A escala é a do último exercício anual,
 //     desde que o total do ITR seja da mesma ordem; senão, vale a ordem de grandeza.
+//   - Nos 12 meses, se o total de ações da composição diverge mais de LIMITE_DILUICAO (50%, para cima
+//     ou para baixo) do total do documento anterior, a composição não é usada: `composicao` fica null,
+//     `motivoComposicao` diz por quê, e o número de ações e os valores por ação dos 12 meses ficam
+//     null com esse motivo (o valor de mercado também, em multiplos.mjs). É o caso da Vivara, cujo ITR
+//     de 30/09/2026 informa 82 milhões de ações, contra 236 milhões no de junho. Um desdobramento de
+//     verdade também cai aqui, e sai sozinho no trimestre seguinte.
+// `avisos` lista o que merece ser olhado e não é erro: a escala das ações (unidade ou mil) que muda
+// de um documento para outro e a composição divergente.
 export function calcularIndicadoresDaSerie(series, { composicoes = [], excecoesDfc = [] } = {}) {
   const daCompanhia = composicoes.filter((c) => c.cnpj === series.cnpj);
   const excecoes = excecoesDaCompanhia(excecoesDfc, series.cnpj);
@@ -630,9 +640,32 @@ export function calcularIndicadoresDaSerie(series, { composicoes = [], excecoesD
   const escala = !bruta ? null
     : mesmaOrdem ? { escala: ultimoAno.composicao.escala, por: `escala do exercício de ${dataBr(ultimoAno.bruta.dtRefer)}` }
       : escalaDasAcoes({ acoesTotal: bruta.acoesTotal });
-  const composicao = emUnidades(bruta, escala);
+  // Composição que diverge demais do documento anterior não é usada.
+  const anterior = bruta ? daCompanhia.filter((c) => c.dtRefer < bruta.dtRefer && c.acoesTotal > 0).sort((a, b) => (a.dtRefer < b.dtRefer ? 1 : -1))[0] ?? null : null;
+  const variacao = bruta?.acoesTotal > 0 && anterior ? bruta.acoesTotal / anterior.acoesTotal - 1 : null;
+  const diverge = variacao != null && Math.abs(variacao) > LIMITE_DILUICAO;
+  const documento = bruta && series.anual.some((p) => p.fim === bruta.dtRefer) ? "da DFP" : "do ITR";
+  const motivoComposicao = diverge
+    ? `o número de ações ${documento} de ${dataBr(bruta.dtRefer)} diverge ${variacao > 0 ? "+" : "-"}${Math.round(Math.abs(variacao) * 100)}% do documento anterior`
+    : null;
+  const composicao = diverge ? null : emUnidades(bruta, escala);
+
+  const avisos = [];
+  const escalas = [...dosAnos.filter((x) => x.composicao).map((x) => x.composicao), ...(composicao ? [composicao] : [])]
+    .filter((c) => c.escala != null) // a composição que vem sem o total de ações não tem escala
+    .filter((c, i, lista) => lista.findIndex((o) => o.dtRefer === c.dtRefer) === i);
+  for (let i = 1; i < escalas.length; i++) {
+    if (escalas[i].escala !== escalas[i - 1].escala) {
+      avisos.push(`a escala das ações mudou de ${escalas[i - 1].escala} para ${escalas[i].escala} entre ${dataBr(escalas[i - 1].dtRefer)} e ${dataBr(escalas[i].dtRefer)}`);
+    }
+  }
+  if (motivoComposicao) avisos.push(motivoComposicao);
   return {
     anual,
-    doze: { fim, tipo: series.doze?.tipo ?? null, composicao, indicadores: calcularIndicadores(series.doze, { composicao, excecoesDfc: excecoes }) },
+    doze: {
+      fim, tipo: series.doze?.tipo ?? null, composicao, motivoComposicao,
+      indicadores: calcularIndicadores(series.doze, { composicao, motivoComposicao, excecoesDfc: excecoes }),
+    },
+    avisos,
   };
 }

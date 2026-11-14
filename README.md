@@ -38,9 +38,12 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/update.mjs` | Coleta (rede), gravação dos JSON, histórico e chamada ao Claude. Configuração das fontes no início do arquivo. |
 | `scripts/logica.mjs` | Toda a lógica pura: sem rede, sem disco, sem relógio implícito. É o que os testes cobrem. |
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
-| `scripts/build.mjs` | Monta `dist/` a partir de `site/` e insere o menu em cada página. Só lê e grava; a lógica fica em `scripts/paginas.mjs`. |
+| `scripts/build.mjs` | Monta `dist/` a partir de `site/`, insere o menu em cada página e gera as fichas das companhias em `dist/fundamentos/dados/`. Só lê e grava; a lógica fica em `scripts/paginas.mjs` e em `scripts/cvm/ficha.mjs`. |
 | `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
-| `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. Vai servir aos ZIPs da CVM. |
+| `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. |
+| `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
+| `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
+| `scripts/publicar-dados.mjs` | Commit na branch de dados só quando algo mudou, e push com nova tentativa quando é rejeitado. |
 | `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
 | `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `classificador-dfc.mjs` (lógica pura, testada) acha pela descrição as linhas da DFC que não têm código fixo (capex, juros pagos, arrendamentos e proventos), com as exceções por companhia em `excecoes-dfc.json`. `composicao-capital.mjs` (lógica pura, testada) lê o número de ações. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida, liquidez, fluxo de caixa e por ação de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
 | `site/` | A fonte do site: o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
@@ -48,8 +51,9 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
 | `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
 | `.github/workflows/atualizar.yml` | Coleta, histórico, build e deploy de `dist/` no GitHub Pages. |
+| `.github/workflows/fundamentos.yml` | Coleta semanal dos fundamentos da CVM. Grava os fatos na branch de dados; não publica o site e não usa segredos. |
 | `.github/workflows/ci.yml` | Roda os testes e o build em todo PR e na `main`. Não publica nada. |
-| branch `dados` | Histórico diário, resumos arquivados e o preço das ações do universo (`cotacoes-fundamentos.json`). Só o robô escreve nela. |
+| branch `dados` | Histórico diário, resumos arquivados, o preço das ações do universo (`cotacoes-fundamentos.json`) e os fatos das companhias (`fundamentos/`). Só o robô escreve nela. |
 
 ## Decisões de arquitetura
 
@@ -222,6 +226,7 @@ Regras à vista:
 4. **Não controladores.** No P/L e no P/VPA eles ficam de fora, porque o valor de mercado é só das ações da controladora. No EV eles entram, porque o EBITDA consolidado inclui 100% das controladas.
 5. **"Não se aplica" em vez de número negativo.** P/L com lucro zero ou negativo, P/VPA com patrimônio zero ou negativo, preço/EBIT, preço/FCL e EV/EBITDA com o denominador zero ou negativo ficam vazios, com o motivo. O EV/EBITDA também fica vazio quando o EV é zero ou negativo (caixa líquido maior que o valor de mercado). O earnings yield continua saindo com lucro negativo, e sai negativo.
 6. **Cotação desatualizada.** Cada preço carrega a data do seu último negócio. Com mais de 5 dias úteis entre essa data e o dia em que o site é montado (`LIMITE_DIAS_UTEIS_COTACAO`), o múltiplo continua saindo, marcado como desatualizado, com a data ao lado. Os dias úteis são contados de segunda a sexta, sem descontar feriados. A regra de atraso do Diário (`site/atraso.js`) não foi reaproveitada: ela conta minutos dentro da janela do workflow.
+7a. **Número de ações que diverge do documento anterior.** Se o total de ações do documento mais recente diverge mais de 50% do anterior (`LIMITE_DILUICAO`), o valor de mercado e os múltiplos que dependem dele ficam vazios, com o motivo "o número de ações do ITR de dd/mm/aaaa diverge N% do documento anterior". É o caso do ITR de 30/09/2026 da Vivara, que informa 82 milhões de ações contra 236 milhões em junho.
 7. **Sem os 12 meses, sem múltiplos.** Quando a base de 12 meses da companhia está indisponível (TIM), todos os múltiplos ficam vazios com o motivo da série. O valor de mercado, que só depende do preço e do número de ações, continua saindo.
 8. **O número de ações é o do último ITR.** Uma emissão, bonificação ou desdobramento depois dessa data só aparece no ITR seguinte.
 
@@ -240,6 +245,84 @@ São só dados e regras à vista. Nada aqui é recomendação de investimento.
 - **Falhas:** se nenhuma cotação vier, o arquivo não é tocado e fica valendo o último gravado; o log avisa. Se vier só uma parte, quem não veio continua com o último preço conhecido e com a `dataHora` dele, e a regra de cotação desatualizada marca o que precisar.
 - **Risco registrado:** a CNBC é um endpoint **não oficial**, sem contrato e sem garantia de continuar no ar. A fonte tem de ser revista, com um distribuidor licenciado ou com parecer jurídico, **antes de o site ter qualquer parte paga** (v3). Os dados ficam só para consulta e não são revendidos.
 - **Por que não a B3:** o arquivo oficial de cotações históricas foi testado em 13/11/2026 e o download funciona, mas a página da B3 diz que os dados "destinam-se estritamente à consulta informativa" e veda a coleta automatizada, para qualquer finalidade. Nada desse arquivo entrou no repositório. A consequência é que a CNBC não tem série histórica: o gráfico de lucro × cotação da v3 vai precisar de outra fonte.
+
+## Coleta dos fundamentos
+
+Os dados da CVM chegam ao site por este caminho:
+
+```
+CVM (ZIPs de DFP e ITR)
+  → workflow semanal (.github/workflows/fundamentos.yml)
+  → branch de dados: fundamentos/<código CVM>.json e fundamentos/indice.json   (fatos)
+  → build do workflow de 15 minutos (scripts/build.mjs)
+  → dist/fundamentos/dados/<TICKER>.json e indice.json                          (séries, indicadores e múltiplos)
+```
+
+**Na branch de dados ficam os fatos, não os indicadores.** O workflow semanal grava, para cada uma das 64 companhias da página, as linhas dos demonstrativos (com a maior versão de cada documento e com consolidado × individual já resolvidos) e a composição do capital. Quem calcula a série anual, a base de 12 meses, os indicadores e os múltiplos é o build, que roda a cada 15 minutos. Assim, uma fórmula nova ou um preço novo aparecem no site na execução seguinte, sem coletar a CVM de novo.
+
+> **Ensaio.** Enquanto a primeira execução real não for aprovada, a coleta grava na branch `dados-teste`, e não na `dados`. O build lê da `dados`; por isso o site ainda sai sem as fichas. Para valer, troque `BRANCH_DE_DADOS` em `.github/workflows/fundamentos.yml`.
+
+### O que é baixado
+
+- **DFP** de 2010 até o ano corrente (a série anual inteira) e **ITR** só do ano corrente e do anterior, que é tudo o que a base de 12 meses usa. Em 2026 são 19 ZIPs, 229 MB.
+- De cada ZIP entram os demonstrativos (DRE, BPA, BPP, DFC e DVA, consolidado e individual) e a composição do capital. O individual é necessário para quem não entrega consolidado e para o consolidado que vem zerado (TIM).
+- **Leitura em fluxo.** Os ZIPs abrem em 2,9 GB (o ITR de 2025 sozinho, em 464 MB). Nada disso é carregado inteiro: `scripts/zip-fluxo.mjs` lê só o diretório central e descomprime cada arquivo aos pedaços, linha a linha, e a linha de uma companhia de fora da página é descartada pelo CNPJ antes de ser interpretada. O pico de memória medido no Actions foi de 441 MB na leitura de um ZIP e de 969 MB na etapa que junta os 19 extratos.
+
+### As três etapas do workflow
+
+1. **Listar.** Um `HEAD` em cada ZIP traz o `Last-Modified` e o tamanho.
+2. **Extrair**, um ZIP por execução da matriz (quatro por vez). Baixa o ZIP, lê em fluxo e grava o **extrato**: só as companhias da página. O extrato fica em `actions/cache`, com uma chave por arquivo e por `Last-Modified`. ZIP que não mudou não é baixado de novo. As DFPs antigas quase nunca mudam; numa semana comum só os arquivos do ano são baixados. A chave também muda quando muda o código que gera o extrato ou a lista de companhias.
+3. **Montar.** Junta os extratos, monta o arquivo de cada companhia, compara com o que já está gravado e faz o commit **só do que mudou**. A serialização é estável (chaves em ordem alfabética, listas em ordem fixa): o mesmo dado dá os mesmos bytes. Uma segunda execução seguida não baixa nada e não faz commit.
+
+A agenda é domingo, 09:23 de Brasília. A CVM regrava os ZIPs aos domingos entre 07:14 e 07:59 de Brasília (visto no `Last-Modified`), e a coleta vem depois.
+
+### Timeout
+
+A regra do projeto é 20 s por requisição. Para o `HEAD`, vale assim. Para o download de um ZIP, a regra vira **20 s sem receber bytes**, com um teto de **3 minutos por arquivo**: um ZIP de 30 MB pode levar mais de 20 s inteiros sem estar travado.
+
+### O que acontece em cada falha
+
+| Falha | O que acontece |
+|---|---|
+| Um ZIP falha (timeout, 404, ZIP corrompido ou cabeçalho diferente do esperado) | As companhias que dependem dele mantêm o arquivo anterior, e o índice registra a falha e o motivo. Uma companhia depende de um ZIP se o arquivo anterior dela tirou dados dele ou se o ZIP é do ano corrente ou do anterior. Nada é zerado. |
+| Uma companhia dá erro ao montar | Ela mantém o arquivo anterior, e as outras seguem. |
+| Todos os ZIPs falham | Nada é gravado e não há commit. O workflow termina com sucesso e com avisos, para não gerar alerta falso. |
+| O push é rejeitado (o workflow de 15 minutos gravou na mesma branch) | `git pull --rebase` e push de novo, até 3 vezes, com espera crescente. Os arquivos são outros, então não há conflito de conteúdo. Nunca há push forçado. |
+| A pasta `fundamentos/` não existe (primeira execução) | O build segue sem as fichas e não falha. |
+| Uma ficha dá erro no build | A companhia fica sem ficha, o índice do site diz o erro, e as outras saem. |
+
+O Diário não é afetado por nenhuma delas: é outro workflow, e o build não falha por causa dos fundamentos.
+
+### Os arquivos
+
+Na branch de dados:
+
+- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, origem, avisos }`. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
+- `fundamentos/indice.json`: `{ coletadoEm, arquivos, companhias }`. De cada ZIP, o `Last-Modified`, o tamanho e o estado. De cada companhia, os tickers, o **documento mais recente** (`{ tipo, dtRefer, versao }`, para o carimbo de desatualizado), o estado (`ok`, `mantido` ou `falhou`), o motivo e os avisos.
+
+No site (`dist/fundamentos/dados/`, gerado pelo build):
+
+- `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores), a base de 12 meses, os múltiplos e os avisos. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
+- `indice.json`: a lista das companhias, com o documento mais recente de cada uma, as datas da coleta e do preço, e o motivo de quem ficou sem ficha.
+
+### Avisos
+
+Vão para o log, para o resumo da execução e para o índice, sem derrubar nada:
+
+- **Consolidado zerado.** Documento cujo consolidado tem o ativo total igual a zero perde o consolidado e fica com o individual (DFP de 2024 e de 2025 da TIM).
+- **Número de ações que diverge.** Se o total de ações do documento mais recente diverge mais de 50% do documento anterior, as ações, os valores por ação e o valor de mercado dos 12 meses ficam vazios, com o motivo (ITR de 30/09/2026 da Vivara).
+- **Escala das ações que muda.** Quando a escala inferida (unidade ou mil) de uma companhia muda de um exercício para outro.
+
+### Rodar a coleta localmente
+
+```bash
+node scripts/coletar-fundamentos.mjs   # baixa, extrai e grava em dados/fundamentos/
+npm run build                          # gera dist/fundamentos/dados/
+```
+
+A primeira execução baixa os 229 MB e leva cerca de 5 minutos; as seguintes usam os extratos em `.cvm/cache/`. As pastas `dados/` e `.cvm/` ficam fora do git.
+
+A lógica fica em `scripts/cvm/coleta.mjs` (o que baixar, o extrato, o arquivo da companhia, `serializar` e `decidirSaida`) e em `scripts/cvm/ficha.mjs` (`montarFicha`, `montarFichas`), puras e testadas. A rede e o disco ficam em `scripts/coletar-fundamentos.mjs`, `scripts/zip-fluxo.mjs`, `scripts/publicar-dados.mjs` e `scripts/build.mjs`.
 
 ## Atualização confiável (cron-job.org)
 

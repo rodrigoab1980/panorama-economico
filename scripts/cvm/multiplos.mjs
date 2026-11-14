@@ -138,15 +138,16 @@ const precoDe = (precos, ticker) => cotacaoDe(precos, ticker)?.preco ?? null;
 
 // Valor de mercado da companhia, em R$ mil.
 //   composicao  composição do capital em unidades de ação, com `classes` (ver composicao-capital.mjs)
+//   motivoComposicao  por que a composição não veio (ex.: diverge do documento anterior), quando há
 //   tickers     tickers da companhia no universo: [{ ticker, ibovespa }]
 //   precos      { TICKER: { preco em R$, dataHora do último negócio } }
 // Devolve { valor, motivo, aproximado, classes: [{ classe, acoes, ticker, preco, dataHora, aproximado, origem }] }.
 //   - Cada classe com ações em circulação é multiplicada pelo preço do primeiro ticker dela que tem cotação.
 //   - Classe sem cotação usa o preço da outra classe: `aproximado: true`, e a `origem` diz qual preço entrou.
 //   - Nenhuma classe com cotação: null. A unit nunca entra na conta.
-export function valorDeMercado({ composicao, tickers, precos }) {
+export function valorDeMercado({ composicao, motivoComposicao, tickers, precos }) {
   const vazio = (motivo) => ({ ...nulo(motivo), aproximado: false, classes: [] });
-  if (composicao == null) return vazio("falta a composição do capital");
+  if (composicao == null) return vazio(motivoComposicao ?? "falta a composição do capital");
   if (composicao.classes == null) return vazio("a composição do capital não separa ordinárias e preferenciais");
   const candidatos = tickersDasClasses(tickers);
   const classes = [["on", "ordinárias"], ["pn", "preferenciais"]].map(([classe, rotulo]) => {
@@ -224,10 +225,10 @@ export function fundamentosParaMultiplos(periodo, indicadores) {
 //   valorMercado  a saída de valorDeMercado (com as classes e de onde veio cada preço)
 //   multiplos     { [id]: { valor, motivo } }, um item para cada id de MULTIPLOS
 // Cotação desatualizada não apaga nada: os múltiplos saem, e quem mostra põe a data do pregão ao lado.
-export function calcularMultiplos({ fundamentos, composicao, tickers, cotacoes, hoje }) {
+export function calcularMultiplos({ fundamentos, composicao, motivoComposicao, tickers, cotacoes, hoje }) {
   const vm = cotacoes?.precos == null
     ? { ...nulo("sem arquivo de cotações"), aproximado: false, classes: [] }
-    : valorDeMercado({ composicao, tickers, precos: cotacoes.precos });
+    : valorDeMercado({ composicao, motivoComposicao, tickers, precos: cotacoes.precos });
   const mercado = { valor: vm.valor, motivo: vm.motivo };
   const f = (id) => fundamentos?.[id] ?? nulo("sem os fundamentos dos 12 meses");
 

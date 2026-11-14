@@ -81,7 +81,8 @@ describe("build em dist/", () => {
   let dist;
   before(() => {
     dist = mkdtempSync(join(tmpdir(), "dist-"));
-    execFileSync(process.execPath, [join(RAIZ, "scripts", "build.mjs"), "site", dist], { cwd: RAIZ, stdio: "pipe" });
+    // DADOS_DIR aponta para uma pasta que não existe: o teste não depende de haver fundamentos coletados na máquina.
+    execFileSync(process.execPath, [join(RAIZ, "scripts", "build.mjs"), "site", dist], { cwd: RAIZ, stdio: "pipe", env: { ...process.env, DADOS_DIR: join(dist, "sem-dados") } });
   });
   after(() => rmSync(dist, { recursive: true, force: true }));
 
