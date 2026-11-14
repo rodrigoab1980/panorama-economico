@@ -14,27 +14,7 @@ body.fundamentos { overflow-x: hidden; }
 .vazio { color: var(--tinta-suave); }
 .menos { color: var(--baixa); }
 
-/* ---------- cabeçalho do site ---------- */
-.cabeca {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--e-2) var(--e-4); flex-wrap: wrap;
-  padding: var(--e-3) var(--e-4); border-bottom: 1px solid var(--linha); background: var(--fundo);
-}
-.cabeca-marca { font-size: var(--t-3); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.01em; text-decoration: none; }
-/* Nas páginas de fundamentos o menu é sempre a lista em linha: são poucos itens e cabem no celular. */
-/* O menu nunca quebra em duas linhas: se não couber, a lista rola para os lados, sozinha, sem a página rolar. */
-.cabeca .menu-site { min-width: 0; max-width: 100%; }
-.cabeca .menu-site-lista { display: flex; flex-wrap: nowrap; gap: var(--e-4); overflow-x: auto; scrollbar-width: thin; }
-.cabeca .menu-site-lista a { white-space: nowrap; }
-@media (max-width: 767px) {
-  /* No celular, a margem do cabeçalho é a do conteúdo e os itens ficam mais juntos: os quatro cabem em 360 px. */
-  .cabeca { padding-left: var(--e-3); padding-right: var(--e-3); }
-  .cabeca .menu-site-lista { gap: var(--e-3); }
-}
-@media (max-width: 380px) { .cabeca .menu-site-lista { gap: var(--e-2); } }
-.cabeca .menu-site-gaveta { display: none; }
-.cabeca .menu-site a { color: var(--tinta-2); border-bottom-color: transparent; }
-.cabeca .menu-site a:hover { color: var(--tinta); }
-.cabeca .menu-site a[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+/* A barra de topo é a do site inteiro: ../menu.css. */
 
 .lista, .ficha, .rankings, .temporada-pagina { max-width: 1180px; margin: 0 auto; padding: var(--e-4) var(--e-4) var(--e-6); }
 
@@ -487,7 +467,6 @@ span.variacao { font-weight: 400; color: var(--tinta-2); }
 
 @media (max-width: 1000px) { .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 767px) {
-  .cabeca { padding: var(--e-3); }
   .lista, .ficha, .rankings, .temporada-pagina { padding: var(--e-3) var(--e-3) var(--e-6); }
   .ticker { font-size: 2rem; }
   .topo-da-ficha { grid-template-columns: minmax(0, 1fr); }

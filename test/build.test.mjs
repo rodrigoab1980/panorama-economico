@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  PAGINAS, MARCADOR, arquivoDaPagina, hrefPara, inserirMenu, linksInternos, menuHtml, profundidade, removerMenu,
+  LARGURA_DO_BOTAO, NOME_DO_SITE, PAGINAS, MARCADOR, arquivoDaPagina, hrefPara, inserirMenu, linksInternos, menuHtml, profundidade, removerMenu,
 } from "../scripts/paginas.mjs";
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
@@ -43,9 +43,66 @@ describe("menuHtml", () => {
     }
   });
 
-  test("o summary do celular mostra a página atual; página desconhecida dá erro", () => {
-    assert.match(menuHtml(PAGINAS, "fundamentos", 1), /<summary>Fundamentalista<\/summary>/);
+  test("página desconhecida dá erro", () => {
     assert.throws(() => menuHtml(PAGINAS, "overview", 0), /desconhecida/);
+  });
+
+  test("a barra: o nome do site à esquerda (link para a raiz), depois o botão e os quatro itens", () => {
+    const html = menuHtml(PAGINAS, "rankings", 2);
+    assert.match(html, /<header class="barra-site"><a class="barra-marca" href="\.\.\/\.\.\/">Panorama Econômico<\/a><button class="barra-botao"/);
+    assert.equal(NOME_DO_SITE, "Panorama Econômico");
+    assert.deepEqual(hrefs(html).filter((i) => i.texto !== NOME_DO_SITE).map((i) => i.texto), ["Diário", "Fundamentalista", "Rankings", "Temporada"]);
+    assert.equal((html.match(/<header /g) ?? []).length, 1);
+    assert.equal((html.match(/<nav /g) ?? []).length, 1);
+    assert.match(html, /<nav class="barra-nav" id="barra-menu" aria-label="Seções do site"><ul>/);
+  });
+
+  test("o botão de menu é acessível: aria-expanded, aria-controls para a lista, e escondido até o JS ligar", () => {
+    const html = menuHtml(PAGINAS, "diario", 0);
+    assert.match(html, /<button class="barra-botao" type="button" aria-expanded="false" aria-controls="barra-menu" hidden><span class="barra-botao-icone" aria-hidden="true"><\/span>Menu<\/button>/);
+    assert.match(html, /<script src="menu\.js"><\/script>$/);
+    assert.match(menuHtml(PAGINAS, "fundamentos", 1), /<script src="\.\.\/menu\.js"><\/script>$/);
+    // o menu antigo (lista dentro do cabeçalho e gaveta em <details>) saiu
+    assert.ok(!/menu-site|<details|<summary/.test(html));
+  });
+
+  test("a barra é a mesma em toda página: só mudam o item atual e o caminho relativo", () => {
+    const normal = (html) => html.replace(/ aria-current="page"/g, "").replace(/(href|src)="(?:\.\.\/)+/g, '$1="').replace(/href="\.\/"/g, 'href=""');
+    const base = normal(menuHtml(PAGINAS, "diario", 0));
+    for (const p of PAGINAS) {
+      for (const prof of [profundidade(p), profundidade(p) + 1]) assert.equal(normal(menuHtml(PAGINAS, p.id, prof)), base, `${p.id} a ${prof} pastas`);
+    }
+  });
+
+  test("a barra fica no fluxo da página: sem position, para nada se sobrepor a ela", () => {
+    const css = readFileSync(join(RAIZ, "site", "menu.css"), "utf8").replace(/\/\*.*?\*\//gs, "");
+    const daBarra = css.split("}").filter((r) => /\.barra-(site|nav|marca)/.test(r) && !/barra-botao-icone/.test(r)).join("}");
+    assert.ok(!/position\s*:|z-index\s*:/.test(daBarra));
+    // o cabeçalho do Diário não tem mais regra de menu, e o menu antigo saiu do CSS
+    for (const arquivo of ["menu.css", "style.css", "fundamentos/fundamentos.css"]) {
+      assert.ok(!/menu-site|\.cabeca\b/.test(readFileSync(join(RAIZ, "site", arquivo), "utf8")), arquivo);
+    }
+  });
+
+  test("abaixo de 640 px a barra vira o botão: o mesmo número no código, no CSS e no JS", () => {
+    assert.equal(LARGURA_DO_BOTAO, 640);
+    const css = readFileSync(join(RAIZ, "site", "menu.css"), "utf8");
+    const js = readFileSync(join(RAIZ, "site", "menu.js"), "utf8");
+    assert.match(css, new RegExp(`@media \\(max-width: ${LARGURA_DO_BOTAO - 1}px\\)`));
+    assert.match(js, new RegExp(`matchMedia\\("\\(min-width: ${LARGURA_DO_BOTAO}px\\)"\\)`));
+    // sem JS (sem a classe .com-botao), a lista continua à vista e rola se não couber
+    assert.match(css, /\.barra-nav ul \{[^}]*flex-wrap: nowrap;[^}]*overflow-x: auto/);
+    assert.match(css, /\.barra-site\.com-botao \.barra-nav \{ display: none;/);
+    assert.match(css, /\.barra-site\.com-botao\.aberta \.barra-nav \{ display: block; \}/);
+  });
+
+  test("menu.js: liga o botão, alterna o aria-expanded, fecha no Esc e devolve o foco; sem biblioteca", () => {
+    const js = readFileSync(join(RAIZ, "site", "menu.js"), "utf8");
+    assert.match(js, /botao\.hidden = false/);
+    assert.match(js, /setAttribute\("aria-expanded", String\(sim\)\)/);
+    assert.match(js, /e\.key !== "Escape"/);
+    assert.match(js, /botao\.focus\(\)/);
+    assert.ok(!/import |require\(|https?:\/\//.test(js));
   });
 
   test("só lista páginas que existem em site/ (itens da v3 entram quando existirem)", () => {
@@ -91,7 +148,7 @@ describe("build em dist/", () => {
   test("o Diário fica idêntico: dist/index.html sem o bloco do menu é igual a site/index.html, byte a byte", () => {
     const original = readFileSync(join(RAIZ, "site", "index.html"));
     const gerado = readFileSync(join(dist, "index.html"), "utf8");
-    assert.ok(gerado.includes('class="menu-site"'), "o menu foi inserido");
+    assert.ok(gerado.includes('class="barra-site"'), "a barra foi inserida");
     assert.deepEqual(Buffer.from(removerMenu(gerado), "utf8"), original);
   });
 
@@ -101,6 +158,22 @@ describe("build em dist/", () => {
     for (const f of arquivos(dist).filter((a) => !paginas.has(a))) {
       assert.deepEqual(readFileSync(f), readFileSync(join(RAIZ, "site", relative(dist, f))), relative(dist, f));
     }
+  });
+
+  test("todas as páginas usam a mesma barra de topo: a de menuHtml, uma só, logo no início do body", () => {
+    for (const p of PAGINAS) {
+      const html = readFileSync(join(dist, arquivoDaPagina(p)), "utf8");
+      const barra = menuHtml(PAGINAS, p.id, profundidade(p));
+      assert.ok(html.includes(barra), `${p.id}: a barra não é a de menuHtml`);
+      assert.equal(html.split('<header class="barra-site">').length, 2, `${p.id}: uma barra só`);
+      assert.match(html, /<body[^>]*>\s*<!-- menu --><link rel="stylesheet" href="[./]*menu\.css"><header class="barra-site">/, `${p.id}: a barra abre a página`);
+      assert.ok(!/menu-site|class="cabeca"|cabeca-marca/.test(html), `${p.id}: sobrou menu antigo`);
+    }
+    // o Diário não tem mais o menu dentro do cabeçalho dele
+    const diario = readFileSync(join(dist, "index.html"), "utf8");
+    const topo = diario.slice(diario.indexOf('<header class="topo">'), diario.indexOf("</header>", diario.indexOf('<header class="topo">')));
+    assert.ok(!/<nav|barra-|menu/.test(topo));
+    assert.ok(existsSync(join(dist, "menu.js")) && existsSync(join(dist, "menu.css")));
   });
 
   test("cada página marca a si mesma como atual", () => {

@@ -1,45 +1,52 @@
-/* Menu comum entre as páginas (inserido pelo build no lugar de <!-- menu -->).
-   Fica num arquivo próprio, carregado por todas as páginas. Usa os tokens de tokens.css.
-   O menu mora dentro do <header class="topo"> e não pode empurrar nem cobrir a grade:
-   - desktop (> 1100 px): lista em linha, posicionada no canto de cima do cabeçalho, fora do fluxo;
-   - celular (≤ 767 px): <details> na mesma linha do "Restaurar layout", no espaço livre à direita;
-   - entre 768 e 1100 px não há espaço livre no cabeçalho: o <details> ganha uma linha própria (≈ 34 px). */
+/* Barra de topo do site, igual em todas as páginas (o build a põe no lugar de <!-- menu -->; o HTML sai
+   de scripts/paginas.mjs). Fica num arquivo próprio, carregado por todas as páginas. Usa os tokens de
+   tokens.css.
 
-.menu-site { font-size: var(--t-2); line-height: 1.2; }
-.menu-site ul { list-style: none; margin: 0; padding: 0; }
-.menu-site a { display: block; padding: 4px 2px; color: var(--tinta-2); text-decoration: none; border-bottom: 2px solid transparent; }
-.menu-site a:hover { color: var(--tinta); }
-.menu-site a[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--linha-forte); }
+   A barra mora no fluxo da página, antes de tudo: não tem position, então nada se sobrepõe a ela e ela
+   não cobre nada. O nome do site fica à esquerda e os itens, à direita.
 
-/* Desktop: lista em linha, sem ocupar célula da grade do cabeçalho. */
-.topo > .menu-site { position: absolute; top: 8px; right: 20px; }
-.menu-site-lista { display: flex; gap: 18px; }
-.menu-site-gaveta { display: none; }
+   Abaixo de 640 px os itens dão lugar ao botão de menu (site/menu.js liga o botão e põe a classe
+   .com-botao). Aberta, a lista desce dentro da própria barra e empurra a página, sem cobrir o conteúdo.
+   Sem JS não há botão: a lista fica à vista, numa linha, e rola para os lados se não couber. */
 
-@media (max-width: 1100px) {
-  .topo > .menu-site { position: relative; top: auto; right: auto; grid-row: 3; grid-column: 1 / -1; justify-self: end; }
-  .menu-site-lista { display: none; }
-  .menu-site-gaveta { display: block; position: relative; }
-  .menu-site-gaveta summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    padding: 7px 12px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--superficie-2); color: var(--tinta);
-  }
-  .menu-site-gaveta summary::-webkit-details-marker { display: none; }
-  .menu-site-gaveta summary::after {
-    content: ""; width: 7px; height: 7px; margin-top: -4px;
-    border-right: 2px solid var(--tinta-2); border-bottom: 2px solid var(--tinta-2); transform: rotate(45deg);
-  }
-  .menu-site-gaveta[open] summary::after { margin-top: 3px; transform: rotate(-135deg); }
-  /* Aberto, a lista desce por cima do conteúdo só enquanto o usuário a mantém aberta. */
-  .menu-site-gaveta ul {
-    position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 200px; padding: 6px;
-    background: var(--superficie); border: 1px solid var(--linha-forte); border-radius: var(--raio);
-    box-shadow: 0 12px 32px var(--sombra);
-  }
-  .menu-site-gaveta a { padding: 9px 10px; border-bottom: 0; border-left: 2px solid transparent; }
-  .menu-site-gaveta a[aria-current="page"] { border-left-color: var(--linha-forte); }
+.barra-site {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e-2) var(--e-4);
+  padding: var(--e-3) var(--e-4); background: var(--fundo); border-bottom: 1px solid var(--linha);
+  font-size: var(--t-2); line-height: 1.2;
 }
-@media (max-width: 767px) {
-  /* Mesma linha do "Restaurar layout" (grid-row 3 em style.css), encostado à direita. */
-  .topo > .menu-site { grid-column: -2 / -1; }
+.barra-marca { color: var(--tinta); font-size: var(--t-3); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.01em; text-decoration: none; }
+.barra-marca:hover { color: var(--acao); }
+.barra-nav { min-width: 0; max-width: 100%; }
+.barra-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: nowrap; gap: var(--e-4); overflow-x: auto; scrollbar-width: thin; }
+.barra-nav a { display: block; padding: 4px 2px; color: var(--tinta-2); text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; }
+.barra-nav a:hover { color: var(--tinta); }
+.barra-nav a[aria-current="page"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+.barra-botao { display: none; }
+
+@media (max-width: 639px) {
+  .barra-site { padding: var(--e-3); }
+  .barra-nav ul { gap: var(--e-3); }
+
+  /* Com JS: o botão no lugar dos itens. */
+  .barra-site.com-botao .barra-botao {
+    display: inline-flex; align-items: center; gap: var(--e-2); min-height: 40px; padding: 0 var(--e-3); cursor: pointer;
+    border: 1px solid var(--linha-forte); border-radius: var(--raio); background: var(--superficie-2); color: var(--tinta); font-weight: 650;
+  }
+  /* Três traços; aberto, viram um X. */
+  .barra-botao-icone, .barra-botao-icone::before, .barra-botao-icone::after { display: block; width: 16px; height: 2px; background: currentColor; border-radius: 1px; }
+  .barra-botao-icone { position: relative; }
+  .barra-botao-icone::before, .barra-botao-icone::after { content: ""; position: absolute; left: 0; }
+  .barra-botao-icone::before { top: -5px; }
+  .barra-botao-icone::after { top: 5px; }
+  .barra-botao[aria-expanded="true"] .barra-botao-icone { background: transparent; }
+  .barra-botao[aria-expanded="true"] .barra-botao-icone::before { top: 0; transform: rotate(45deg); }
+  .barra-botao[aria-expanded="true"] .barra-botao-icone::after { top: 0; transform: rotate(-45deg); }
+
+  .barra-site.com-botao .barra-nav { display: none; flex-basis: 100%; }
+  .barra-site.com-botao.aberta .barra-nav { display: block; }
+  .barra-site.com-botao .barra-nav ul { flex-direction: column; gap: 0; overflow: visible; }
+  .barra-site.com-botao .barra-nav a { padding: var(--e-3) var(--e-1); font-size: var(--t-3); border-bottom: 1px solid var(--linha); border-left: 3px solid transparent; }
+  .barra-site.com-botao .barra-nav li:last-child a { border-bottom-color: transparent; }
+  .barra-site.com-botao .barra-nav a[aria-current="page"] { padding-left: var(--e-2); border-left-color: var(--tinta); border-bottom-color: var(--linha); font-weight: 700; }
+  .barra-site.com-botao .barra-nav li:last-child a[aria-current="page"] { border-bottom-color: transparent; }
 }

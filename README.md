@@ -27,13 +27,13 @@ GitHub Actions: workflow "Atualizar panorama"
   └─ baixa a branch `dados` (histórico) na pasta dados/
   └─ scripts/update.mjs → site/data/*.json  (notícias, cotações, agenda, resumo)
   └─ a partir das 19h: grava o fechamento do dia e o resumo na branch `dados`
-  └─ scripts/build.mjs → dist/  (cópia de site/, inclusive site/data/, com o menu comum)
+  └─ scripts/build.mjs → dist/  (cópia de site/, inclusive site/data/, com a barra de topo comum)
   └─ publica a pasta dist/ no GitHub Pages
 Navegador
   └─ o Diário (index.html, na raiz) lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
 ```
 
-O site tem mais de uma página, com um menu comum: o **Diário** (visão de trade) continua na raiz, e a **Fundamentalista** fica em `fundamentos/`, com uma página por companhia. O build troca o marcador `<!-- menu -->` de cada página pelo menu, e o resto do HTML fica igual. Todos os links internos são relativos, porque o GitHub Pages serve o site num subcaminho (`/panorama-economico/`): um link que comece com `/` quebraria em produção. As páginas da v3 (Overview e Treinamentos) só entram no menu quando existirem.
+O site tem mais de uma página, com uma [barra de topo](#barra-de-topo) igual em todas: o **Diário** (visão de trade) continua na raiz, e a **Fundamentalista** fica em `fundamentos/`, com uma página por companhia. O build troca o marcador `<!-- menu -->`, no início de cada página, pela barra, e o resto do HTML fica igual. Todos os links internos são relativos, porque o GitHub Pages serve o site num subcaminho (`/panorama-economico/`): um link que comece com `/` quebraria em produção. As páginas da v3 (Overview e Treinamentos) só entram no menu quando existirem.
 
 ### Estrutura do repositório
 
@@ -49,9 +49,9 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
 | `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
 | `scripts/publicar-dados.mjs` | Commit na branch de dados só quando algo mudou, e push com nova tentativa quando é rejeitado. |
-| `scripts/paginas.mjs` | Lista de páginas do menu e funções puras do build: `menuHtml`, `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
+| `scripts/paginas.mjs` | Lista de páginas do site e funções puras do build: `menuHtml` (o único lugar que gera a barra de topo), `inserirMenu`, `removerMenu` e `linksInternos` (usada no teste de links). |
 | `scripts/cvm/` | Dados da CVM. `leitor.mjs` (lógica pura, testada) transforma cada linha dos CSVs de DFP e ITR num fato normalizado, em R$ mil, uma linha por vez. `series.mjs` (lógica pura, testada) monta com esses fatos a série anual e a base de 12 meses de cada companhia, e `tabela-series.mjs` imprime o resultado em R$ milhões para conferência. `classificador-dfc.mjs` (lógica pura, testada) acha pela descrição as linhas da DFC que não têm código fixo (capex, juros pagos, arrendamentos e proventos), com as exceções por companhia em `excecoes-dfc.json`. `composicao-capital.mjs` (lógica pura, testada) lê o número de ações. `indicadores.mjs` (lógica pura, testada) calcula os indicadores de resultado, retorno, caixa, dívida, liquidez, fluxo de caixa e por ação de cada período, com a fórmula de cada um em texto. `universo.mjs` (lógica pura, testada) e `gerar-universo.mjs` montam o `universo.json`, a lista de companhias da página Fundamentalista, a partir do FCA e de três arquivos mantidos à mão (`tickers-ibovespa.json`, `excecoes-tickers.json` e `setores.json`). `fixtures.mjs` (lógica pura, testada) e `gerar-fixtures.mjs` recriam as fixtures a partir de CSVs extraídos; `spike/` guarda os scripts de medição do spike (#29), descritos em `docs/cvm.md`. |
-| `site/` | A fonte do site: `tokens.css` (cores, tipografia e espaço dos dois temas, comum a todas as páginas), o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e o `menu.css`. Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
+| `site/` | A fonte do site: `tokens.css` (cores, tipografia e espaço dos dois temas, comum a todas as páginas), o Diário (`index.html`, `app.js`, `atraso.js` e `style.css`), a página `fundamentos/` e a barra de topo (`menu.css` e `menu.js`). Os JSON vão para `site/data/`, gerados a cada execução e fora do git. |
 | `dist/` | O site pronto para publicar, gerado por `npm run build`. Fora do git. |
 | `test/` | Testes `node:test`, um arquivo por assunto. `test/fixtures/cvm/` guarda recortes reais dos arquivos da CVM, byte a byte. |
 | `docs/cvm.md` | O que foi medido nos dados abertos da CVM (formato, contas, volume e riscos), base da página Fundamentalista da v2.0. |
@@ -83,6 +83,17 @@ As escolhas que moldam o projeto, com a alternativa considerada e o motivo. As m
 14. **JSON puro, com um formato intermediário normalizado** (#29, decidido no checkpoint). O leitor gera uma linha por valor (`cnpj`, `conta`, `início`, `fim`, `valor`, `versão`), o que permite trocar para SQLite depois sem reescrever a lógica. *Alternativa:* SQLite desde já. *Por quê:* o gargalo medido é ler os ZIPs, não armazenar, e o `node:sqlite` ainda é experimental. As medições estão em [docs/cvm.md](docs/cvm.md).
 15. **Universo: ações do Ibovespa, sem bancos e seguradoras** (#32). *Por quê:* o plano de contas de bancos e seguradoras é outro (as contas 3.01 e 2.03 têm outro significado), e as fórmulas da página não valem para eles. As holdings financeiras também ficam de fora. São 64 companhias na carteira de 13/11/2026.
 16. **B3 COTAHIST vetada pelos termos de uso** (#51). O arquivo oficial de cotações históricas da B3 funciona, mas a página dela veda a coleta automatizada, para qualquer finalidade. *Consequência:* o preço do dia vem da CNBC, isolada atrás de um adaptador, e o site não tem série histórica de preço. Veja [Fonte de preço](#fonte-de-preço).
+
+## Barra de topo
+
+Todas as páginas têm a mesma barra de topo (#79): o Diário, a Fundamentalista, os Rankings, a Temporada e as 64 fichas. O nome do site fica à esquerda, com link para a raiz, e os quatro itens, à direita, com o item atual marcado (`aria-current="page"`). Nas fichas, o item marcado é "Fundamentalista".
+
+- **Um só lugar no código:** `menuHtml`, em `scripts/paginas.mjs`. Cada página traz só o marcador `<!-- menu -->` logo depois do `<body>`, e o build o troca pela barra. Entre uma página e outra só mudam o item atual e o caminho relativo dos links; um teste confere isso em todas as páginas do build.
+- **Nada se sobrepõe a ela:** a barra fica no fluxo da página, sem `position`. Antes, o menu do Diário era posicionado por cima do cabeçalho e cobria o quadro de mercados. O cabeçalho do Diário (data, relógio e sessões das bolsas) continua fixo ao rolar; a barra rola com a página.
+- **Abaixo de 640 px, um botão de menu:** os itens dão lugar ao botão "Menu", que substitui a gaveta que o Diário tinha. O botão é um `<button>` com `aria-expanded` e `aria-controls`; abre e fecha com clique, Enter ou espaço, e o Esc fecha e devolve o foco a ele. Aberta, a lista desce dentro da barra e empurra a página, sem cobrir o conteúdo. O comportamento está em `site/menu.js`, sem biblioteca.
+- **Sem JavaScript:** o botão não aparece, e a lista fica à vista numa linha, rolando para os lados se não couber.
+
+O estilo fica em `site/menu.css`, só com os tokens. A largura de 640 px está em `LARGURA_DO_BOTAO` (`scripts/paginas.mjs`), no CSS e no JS; um teste confere que os três dizem o mesmo.
 
 ## Identidade visual
 

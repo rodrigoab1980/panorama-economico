@@ -415,20 +415,17 @@ describe("temporada: card da ficha e link no painel", () => {
 });
 
 // ---------- menu com quatro itens ----------
-describe("menu das páginas de fundamentos: uma linha só", () => {
-  const css = readFileSync(new URL("../site/fundamentos/fundamentos.css", import.meta.url), "utf8").replace(/\/\*.*?\*\//gs, "");
-  const regra = /\.cabeca \.menu-site-lista \{([^}]*)\}/.exec(css)[1];
+// Desde a #79 a barra é a do site inteiro (site/menu.css); o botão de menu está em test/build.test.mjs.
+describe("barra de topo com quatro itens: a lista numa linha só", () => {
+  const css = readFileSync(new URL("../site/menu.css", import.meta.url), "utf8").replace(/\/\*.*?\*\//gs, "");
+  const regra = /\.barra-nav ul \{([^}]*)\}/.exec(css)[1];
 
   test("a lista não quebra em duas linhas: se não couber, rola para os lados, sem a página rolar", () => {
     assert.match(regra, /flex-wrap:\s*nowrap/);
     assert.match(regra, /overflow-x:\s*auto/);
-    assert.match(css, /\.cabeca \.menu-site-lista a \{[^}]*white-space:\s*nowrap/);
-    assert.match(css, /\.cabeca \.menu-site \{[^}]*min-width:\s*0/);
-    assert.ok(!/\.menu-site-lista \{[^}]*flex-wrap:\s*wrap/.test(css));
-  });
-
-  test("no celular os itens ficam mais juntos, para os quatro caberem em 360 px", () => {
-    assert.match(css, /@media \(max-width: 380px\) \{\s*\.cabeca \.menu-site-lista \{\s*gap: var\(--e-2\);/);
+    assert.match(css, /\.barra-nav a \{[^}]*white-space:\s*nowrap/);
+    assert.match(css, /\.barra-nav \{[^}]*min-width:\s*0/);
+    assert.ok(!/\.barra-nav ul \{[^}]*flex-wrap:\s*wrap/.test(css));
   });
 });
 
