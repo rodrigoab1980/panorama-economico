@@ -188,7 +188,7 @@ describe("ficha da WEG: os números certos, já no HTML", () => {
   });
 
   test("o nome do indicador traz a fórmula no title", () => {
-    assert.match(HTML, /<th scope="row" class="fixa" title="EBIT \+ depreciação e amortização">EBITDA<\/th>/);
+    assert.match(HTML, /<th scope="row" class="fixa" title="EBIT \+ depreciação e amortização\. Calculado das demonstrações; pode diferir do EBITDA ajustado divulgado pela companhia">EBITDA<\/th>/);
     for (const { nome, formula } of INDICADORES) assert.ok(HTML.includes(`title="${escapar(formula)}">${escapar(nome)}</th>`), nome);
   });
 

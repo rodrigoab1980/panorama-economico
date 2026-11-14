@@ -121,7 +121,7 @@ export const INDICADORES = [
     id: "da", nome: "Depreciação e amortização", unidade: "R$ mil",
     formula: "Depreciação, amortização e exaustão dos ajustes do lucro na DFC, achadas pela descrição das linhas. Quando não são identificadas, ou quando ficam mais de 15% abaixo da D&A da DVA, vale a da DVA (conta 7.04.01), com o sinal trocado",
   },
-  { id: "ebitda", nome: "EBITDA", unidade: "R$ mil", formula: "EBIT + depreciação e amortização" },
+  { id: "ebitda", nome: "EBITDA", unidade: "R$ mil", formula: "EBIT + depreciação e amortização. Calculado das demonstrações; pode diferir do EBITDA ajustado divulgado pela companhia" },
   { id: "margemEbitda", nome: "Margem EBITDA", unidade: "razão", formula: "EBITDA ÷ receita líquida" },
   { id: "resultadoFinanceiro", nome: "Resultado financeiro", unidade: "R$ mil", formula: "Receitas financeiras menos despesas financeiras (DRE, conta 3.06)" },
   { id: "lucroLiquido", nome: "Lucro líquido", unidade: "R$ mil", formula: "Lucro líquido consolidado do período, com a parte dos minoritários (DRE, conta 3.11)" },
