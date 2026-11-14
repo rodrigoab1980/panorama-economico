@@ -101,7 +101,8 @@ export function numerosDaTemporada(comparadas) {
     lucroMaior: contar(() => true, (c) => c.atual.lucro > c.anterior.lucro),
     receitaMaior: contar(temReceita, (c) => c.atual.receita > c.anterior.receita),
     margemMaior: contar(temMargem, (c) => margem(c.atual) > margem(c.anterior)),
-    prejuizo: contar(() => true, (c) => c.atual.lucro < 0),
+    // Lucro igual a zero não é lucro: conta como prejuízo, como nas listas de variação e na régua de anos.
+    prejuizo: contar(() => true, (c) => c.atual.lucro <= 0),
   };
 }
 

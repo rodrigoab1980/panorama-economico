@@ -325,7 +325,7 @@ Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhi
 - **Período de referência:** o `dtRefer` mais recente entre os documentos das 64. Ele dá nome à temporada: 1T, 2T ou 3T, ou "Exercício de 2026" quando for DFP. A companhia cujo documento mais recente é anterior a esse conta como "ainda não entregou" e fica fora das comparações.
 - **Mesma base:** atual e anterior no consolidado, ou os dois no individual. Se a base não for a mesma, a companhia fica fora da comparação, e a página diz quantas ficaram e por quê. É a regra dos 12 meses.
 - **Sem número não é zero:** quem não tem receita sai do denominador da receita e da margem, não do lucro. Demonstração zerada é falta de dado.
-- **Lucro igual a zero não é lucro:** fica do lado do prejuízo, como na régua de anos.
+- **Lucro igual a zero não é lucro:** fica do lado do prejuízo, como na régua de anos. Vale para o número "prejuízo no acumulado", para as listas de variação e para a soma por setor.
 
 **Os blocos, na ordem da página:**
 
@@ -347,7 +347,7 @@ Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhi
 | Lucro do acumulado maior que o do ano anterior | Companhias com o lucro líquido do acumulado maior que o do mesmo período do ano anterior, sobre as que entregaram e têm a comparação |
 | Receita maior | Companhias com a receita líquida do acumulado maior que a do ano anterior, sobre as que têm receita nos dois períodos |
 | Margem líquida maior | Companhias com lucro ÷ receita do acumulado maior que a do ano anterior, sobre as que têm receita positiva nos dois períodos |
-| Prejuízo no acumulado | Companhias com o lucro líquido do acumulado abaixo de zero, sobre as que têm a comparação |
+| Prejuízo no acumulado | Companhias com o lucro líquido do acumulado menor ou igual a zero (lucro zero não é lucro), sobre as que têm a comparação |
 | Maiores variações do lucro no acumulado | Lucro do acumulado ÷ lucro do mesmo período do ano anterior − 1, só com lucro nos dois períodos e lucro anterior de R$ 50 milhões ou mais |
 | Lucro somado por setor | Soma do lucro do acumulado das companhias do setor com a comparação; a variação é soma atual ÷ soma do ano anterior − 1 |
 

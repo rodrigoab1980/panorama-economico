@@ -111,6 +111,23 @@ describe("temporada: o progresso e os quatro números", () => {
     assert.deepEqual(n.prejuizo, { valor: 1, total: 3 });
   });
 
+  test("lucro igual a zero não é lucro: conta em \"prejuízo no acumulado\", como nas listas e na régua", () => {
+    const fichas = [
+      comLucro("AAAA3", 100_000, 0), // zero: conta
+      comLucro("BBBB3", 100_000, -1), // prejuízo: conta
+      comLucro("CCCC3", 100_000, 1), // lucro de R$ 1 mil: não conta
+      comLucro("DDDD3", 0, 100_000), // zero só no ano anterior: não conta
+    ];
+    const lista = comparadas(fichas);
+    assert.deepEqual(numerosDaTemporada(lista).prejuizo, { valor: 2, total: 4 });
+    // o mesmo lado do zero nas listas de variação
+    const v = variacoesDoLucro(lista);
+    assert.deepEqual(tickers(v.viraramPrejuizo), ["AAAA3", "BBBB3"]);
+    assert.deepEqual(tickers(v.viraramLucro), ["DDDD3"]);
+    // e na página
+    assert.match(painelHtml(montarPainel(fichas)), /<li><strong class="n">2 <small>de 4<\/small><\/strong><span>prejuízo no acumulado<\/span><\/li>/);
+  });
+
   test("sem lucro informado ou com a demonstração zerada num dos períodos: fora da comparação, nunca como zero", () => {
     assert.equal(comparacaoDaCompanhia(cia("AAAA3", { atual: [1000, null] }), REF).motivo, "sem lucro informado no período atual");
     assert.equal(comparacaoDaCompanhia(cia("AAAA3", { anterior: [0, 0] }), REF).motivo, "sem lucro informado no período anterior");
