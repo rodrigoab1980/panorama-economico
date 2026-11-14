@@ -579,5 +579,10 @@ describe("build: a lista e uma página por companhia", () => {
     assert.match(json.hoje, /^\d{4}-\d{2}-\d{2}$/);
     assert.equal(json.dadosAte, "2026-11-08");
     assert.equal(json.entregues.length, 64);
+    // o calendário do ano fica no topo da página, com os 12 meses, e os eventos de cada dia vão no JSON (#77)
+    assert.equal((temporada.match(/<table class="mes">/g) ?? []).length, 12);
+    assert.ok(temporada.indexOf('id="t-calendario"') < temporada.indexOf('id="t-proximas"'));
+    assert.equal(json.calendario.ano, Number(json.hoje.slice(0, 4)));
+    assert.equal(json.calendario.hoje, json.hoje);
   });
 });
