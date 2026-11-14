@@ -1,0 +1,142 @@
+name: Coletar fundamentos
+
+# Coleta semanal dos dados abertos da CVM (DFP, ITR e composição do capital) das companhias da página
+# Fundamentalista. Grava os FATOS de cada companhia na branch de dados; quem calcula indicadores e
+# múltiplos é o build do workflow de atualização. Veja "Coleta dos fundamentos" no README.
+#
+# Não publica o site e não usa segredos. Uma falha da CVM não vira erro: o que estava gravado continua
+# valendo, e o aviso fica no log e no resumo da execução.
+on:
+  schedule:
+    # Domingo, 09:23 de Brasília (12:23 UTC). A CVM regrava os ZIPs aos domingos entre 10:14 e 10:59 UTC
+    # (visto no Last-Modified); a coleta vem depois disso. Minuto quebrado para fugir dos horários cheios.
+    - cron: "23 12 * * 0"
+  # TEMPORÁRIO (#37): primeira execução real, na branch do PR, gravando em dados-teste. Sai antes do merge.
+  push:
+    branches: [feat/workflow-fundamentos]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch onde gravar (dados-teste para ensaio; dados para valer)"
+        type: string
+        default: dados-teste
+
+permissions:
+  contents: write
+
+# Uma coleta por vez; a nova espera a anterior terminar.
+concurrency:
+  group: fundamentos
+  cancel-in-progress: false
+
+env:
+  # ENSAIO: enquanto a primeira execução real não for aprovada, a coleta agendada também grava em
+  # `dados-teste`. Para valer, troque aqui para `dados` (o workflow de atualização lê de lá).
+  BRANCH_DE_DADOS: ${{ inputs.branch || 'dados-teste' }}
+
+jobs:
+  # HEAD em cada ZIP: o Last-Modified vira a chave de cache de cada arquivo.
+  listar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matriz: ${{ steps.listar.outputs.matriz }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - id: listar
+        run: node scripts/coletar-fundamentos.mjs listar
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lista
+          path: .cvm/trabalho/lista.json
+          retention-days: 3
+
+  # Um ZIP por execução da matriz. O que fica em cache é o extrato do ZIP (só as companhias da página),
+  # com uma chave por arquivo e por Last-Modified: ZIP que não mudou não é baixado de novo.
+  extrair:
+    needs: listar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        arquivo: ${{ fromJson(needs.listar.outputs.matriz) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          name: lista
+          path: .cvm/trabalho
+      # A chave também muda quando muda o código que gera o extrato ou a lista de companhias.
+      - id: cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .cvm/cache/${{ matrix.arquivo.nome }}.json
+          key: cvm-extrato-${{ hashFiles('scripts/cvm/coleta.mjs', 'scripts/cvm/leitor.mjs', 'scripts/cvm/composicao-capital.mjs', 'scripts/cvm/universo.json', 'scripts/zip.mjs', 'scripts/zip-fluxo.mjs') }}-${{ matrix.arquivo.nome }}-${{ matrix.arquivo.carimbo }}
+      - id: extrair
+        run: node scripts/coletar-fundamentos.mjs extrair "${{ matrix.arquivo.nome }}"
+      # Só guarda quando o ZIP foi baixado e lido agora, com sucesso.
+      - if: steps.extrair.outputs.salvar == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: .cvm/cache/${{ matrix.arquivo.nome }}.json
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: resultado-${{ matrix.arquivo.nome }}
+          path: .cvm/trabalho/resultados/${{ matrix.arquivo.nome }}.json
+          retention-days: 3
+
+  # Junta os extratos, decide o que mudou e grava na branch de dados.
+  montar:
+    needs: [listar, extrair]
+    # Roda mesmo que algum ZIP tenha falhado: a falha de um não derruba os outros.
+    if: always() && needs.listar.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Baixar a branch de dados
+        id: baixar_dados
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BRANCH_DE_DADOS }}
+          path: dados
+
+      # Só na primeira vez (a branch ainda não existe): cria a branch vazia, sem os arquivos da main.
+      - name: Criar a branch de dados
+        if: steps.baixar_dados.outcome == 'failure'
+        uses: actions/checkout@v7
+        with:
+          path: dados
+      - name: Esvaziar a branch de dados nova
+        if: steps.baixar_dados.outcome == 'failure'
+        working-directory: dados
+        run: |
+          git checkout --orphan "$BRANCH_DE_DADOS"
+          git rm -rfq .
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: resultado-*
+          path: .cvm/trabalho/resultados
+          merge-multiple: true
+
+      - name: Montar os arquivos das companhias e o índice
+        run: node scripts/coletar-fundamentos.mjs montar
+
+      # Commit só quando algo mudou; push com nova tentativa (o workflow de 15 min grava na mesma branch).
+      - name: Gravar na branch de dados
+        run: node scripts/publicar-dados.mjs dados "$BRANCH_DE_DADOS" "dados: fundamentos de $(TZ=America/Sao_Paulo date +%F)"
