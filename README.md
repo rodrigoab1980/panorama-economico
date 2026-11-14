@@ -381,6 +381,22 @@ Os rankings saem das fichas que o build já monta (`consistencia`, `atencao` e `
 | Dívida líquida ÷ EBITDA | Dívida líquida no fim do exercício ÷ EBITDA do exercício, sem os arrendamentos | Exercício de referência |
 | Pontos de atenção acionados | Quantas das sete regras de pontos de atenção a companhia aciona (0 a 7) | As regras da ficha, hoje |
 
+**O sentido de cada critério** (#81): cada critério traz uma linha curta com o que o número quer dizer, e as duas listas levam um título com o significado, ao lado de "maiores valores" e "menores valores". O texto descreve o que o critério mede; não diz se é bom ou ruim, e não usa "melhores" nem "piores". Os 11 sentidos ficam num só lugar, no campo `sentido` de cada item de `CRITERIOS` (`scripts/fundamentos/rankings.mjs`). É só texto: a ordenação, as posições e os valores não dependem dele.
+
+| Critério | Linha do sentido | Lista dos maiores valores | Lista dos menores valores |
+|---|---|---|---|
+| Parte dos anos com lucro | ↑ maior = lucro em mais anos da série | Lucro em mais anos | Lucro em menos anos |
+| Maior sequência de anos com lucro | ↑ maior = mais anos seguidos com lucro | Sequências mais longas com lucro | Sequências mais curtas com lucro |
+| Parte dos anos com FCL positivo | ↑ maior = FCL positivo em mais anos da série | FCL positivo em mais anos | FCL positivo em menos anos |
+| Crescimento da receita em 5 anos | ↑ maior = a receita cresceu mais rápido | Receita cresceu mais | Receita cresceu menos ou caiu |
+| Crescimento do lucro em 5 anos | ↑ maior = o lucro cresceu mais rápido | Lucro cresceu mais | Lucro cresceu menos ou caiu |
+| ROIC | ↑ maior = mais retorno por real de capital investido | Mais retorno sobre o capital investido | Menos retorno sobre o capital investido |
+| ROE | ↑ maior = mais lucro por real de patrimônio líquido | Mais retorno sobre o patrimônio | Menos retorno sobre o patrimônio |
+| Margem líquida | ↑ maior = mais lucro em cada real de receita | Margens mais largas | Margens mais estreitas |
+| FCO ÷ EBITDA | ↑ maior = mais do EBITDA virou caixa | Mais EBITDA virou caixa | Menos EBITDA virou caixa |
+| Dívida líquida ÷ EBITDA | ↓ menor = menos endividada | Mais endividadas | Menos endividadas |
+| Pontos de atenção acionados | ↓ menor = menos pontos de atenção acionados | Mais pontos de atenção acionados | Menos pontos de atenção acionados |
+
 **Regras:**
 
 - **Exercício de referência:** o último exercício anual de 12 meses que a maioria das 64 já entregou. É o mesmo critério da comparação com o setor (`exercicioDoSetor`), aplicado ao universo inteiro. Os 12 meses ficam de fora, porque as datas dos ITR variam de companhia para companhia. Quem não tem esse exercício sai dos critérios que dependem dele, e a página conta quantas ficaram fora.
@@ -398,7 +414,7 @@ Os rankings saem das fichas que o build já monta (`consistencia`, `atencao` e `
 - **Empate em massa:** se mais de 10 companhias empatam na ponta, a lista vira uma linha só, com a contagem e os tickers ("31 empresas com lucro em todos os exercícios da série"). A outra ponta continua em lista, com quem sobrou.
 - **Cada linha:** posição, ticker (com link para a ficha), nome curto, a régua de anos em miniatura e o valor, escrito como na ficha.
 
-**Na tela:** um índice curto no topo, com âncoras, agrupa os critérios em Consistência, Crescimento, Rentabilidade, Caixa, Dívida e Atenção. As duas listas ficam lado a lado no desktop e empilhadas no celular. As palavras são neutras ("Maiores", "Menores", "posição"), e nenhuma lista tem cor de favorável ou desfavorável. A página é HTML estático, sem JavaScript.
+**Na tela:** um índice curto no topo, com âncoras, agrupa os critérios em Consistência, Crescimento, Rentabilidade, Caixa, Dívida e Atenção. As duas listas ficam lado a lado no desktop e empilhadas no celular. As palavras são neutras ("maiores valores", "menores valores", "posição"; o título de cada lista diz o que aquela ponta quer dizer, como "Mais endividadas"), e nenhuma lista tem cor de favorável ou desfavorável. A página é HTML estático, sem JavaScript.
 
 ### Temporada de balanços
 
