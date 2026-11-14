@@ -47,6 +47,8 @@ export function acumuladoDoAno(doze) {
 //   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], acumulado, composicao, indicadores }
 //              `acumulado` é a saída de acumuladoDoAno: o acumulado do ano e o do ano anterior
 //   multiplos  a saída de calcularMultiplos
+//   documentos [{ documento, dtRefer, versao, recebidoEm, primeiraEntrega, link }]: a lista dos documentos
+//              entregues (DFP desde 2010, ITR dos 2 últimos anos), como a coleta guardou
 //   consistencia  o topo da ficha (fundamentos/consistencia.mjs)
 //   atencao       as sete regras de pontos de atenção (fundamentos/atencao.mjs), com os limites usados
 // `pares` (a comparação com o setor) entra depois, em montarFichas, porque precisa de todas as fichas.
@@ -95,6 +97,11 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
       composicao: acoes(calculado.doze.composicao), indicadores: calculado.doze.indicadores,
     },
     multiplos,
+    // Os documentos entregues, do mais antigo ao mais novo, para a temporada de balanços (#68).
+    documentos: (arquivo.documentos ?? []).map((d) => ({
+      documento: d.documento, dtRefer: d.dtRefer, versao: d.versao ?? null,
+      recebidoEm: d.recebidoEm ?? null, primeiraEntrega: d.primeiraEntrega ?? null, link: d.link ?? null,
+    })),
     avisos: [...(arquivo.avisos ?? []), ...calculado.avisos],
   };
   ficha.consistencia = calcularConsistencia(ficha);
