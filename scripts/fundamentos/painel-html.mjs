@@ -83,41 +83,39 @@ ${aParte ? `<ul class="variacoes-a-parte">${aParte}</ul>` : ""}
 
 // ---------- 3. lucro somado por setor ----------
 
-// O texto da variação da soma de um setor. Só a variação entre dois lucros leva a cor.
-export function variacaoDoSetorHtml(s) {
-  switch (s.tipo) {
-    case "lucro": return variacaoHtml(s.variacao);
-    case "prejuizo-menor": return `<span class="variacao">prejuízo menor (${e(comSinal(s.variacao))})</span>`;
-    case "prejuizo-maior": return `<span class="variacao">prejuízo maior (${e(comSinal(s.variacao))})</span>`;
-    case "prejuizo-igual": return `<span class="variacao">prejuízo igual</span>`;
-    case "virou-lucro": return `<span class="variacao">passou de prejuízo a lucro</span>`;
-    case "virou-prejuizo": return `<span class="variacao">passou de lucro a prejuízo</span>`;
-    default: return `<span class="variacao">sem percentual</span>`;
-  }
+const juntar = (itens) => (itens.length <= 1 ? itens.join("") : `${itens.slice(0, -1).join(", ")} e ${itens.at(-1)}`);
+
+// Por que o setor está sem percentual e sem barra: quem mudou de sinal, ou a soma que não é positiva.
+export function notaDoSetor(s, periodo = "acumulado") {
+  const partes = [];
+  if (s.viraramLucro.length) partes.push(`${juntar(s.viraramLucro)} ${s.viraramLucro.length === 1 ? "passou" : "passaram"} de prejuízo a lucro`);
+  if (s.viraramPrejuizo.length) partes.push(`${juntar(s.viraramPrejuizo)} ${s.viraramPrejuizo.length === 1 ? "passou" : "passaram"} de lucro a prejuízo`);
+  if (partes.length) return `${partes.join("; ")}.`;
+  if (!(s.anterior > 0)) return "A soma do ano anterior não é positiva.";
+  return `A soma do ${periodo} não é positiva.`;
 }
 
 function setoresHtml(p) {
-  const comSoma = p.setores.filter((s) => !s.poucas);
-  // As barras partem do zero. Se algum setor soma prejuízo, o zero sai da borda esquerda.
-  const min = Math.min(0, ...comSoma.map((s) => s.atual));
-  const max = Math.max(0, ...comSoma.map((s) => s.atual));
-  const faixa = max - min || 1;
-  const pct = (x) => `${(x * 100).toFixed(1)}%`;
+  // O percentual e a barra só aparecem quando nenhuma companhia do setor mudou de sinal e a soma é
+  // positiva nos dois períodos. As barras partem do zero, na escala da maior soma.
+  const max = Math.max(0, ...p.setores.filter((s) => s.variacao != null).map((s) => s.atual)) || 1;
   const periodo = p.referencia.tipo === "dfp" ? "exercício" : "acumulado";
   const linha = (s) => {
     const cabeca = `<span class="setor-nome">${e(s.setor)} <small>${plural(s.empresas, "empresa", "empresas")}</small></span>`;
     if (s.poucas) return `<li class="poucas" title="${e(`Na comparação: ${s.tickers.join(", ")}`)}">${cabeca}<span class="setor-valor vazio">poucas empresas</span></li>`;
-    const inicio = (Math.min(s.atual, 0) - min) / faixa;
-    const largura = Math.abs(s.atual) / faixa;
     const conta = `Soma do lucro do ${periodo} de ${s.tickers.join(", ")}: ${moeda(s.atual)}, contra ${moeda(s.anterior)} no ano anterior`;
-    return `<li title="${e(conta)}">${cabeca}<span class="setor-valor n">${e(moeda(s.atual))} ${variacaoDoSetorHtml(s)}</span>`
-      + `<span class="setor-barra" aria-hidden="true"><i class="${s.atual < 0 ? "prejuizo" : "lucro"}" style="margin-left:${pct(inicio)};width:${pct(largura)}"></i></span></li>`;
+    if (s.variacao == null) {
+      return `<li class="sem-percentual" title="${e(conta)}">${cabeca}<span class="setor-valor n">de ${e(moeda(s.anterior))} para ${e(moeda(s.atual))}</span>`
+        + `<small class="setor-nota">${e(notaDoSetor(s, periodo))}</small></li>`;
+    }
+    return `<li title="${e(conta)}">${cabeca}<span class="setor-valor n">${e(moeda(s.atual))} ${variacaoHtml(s.variacao)}</span>`
+      + `<span class="setor-barra" aria-hidden="true"><i style="width:${((s.atual / max) * 100).toFixed(1)}%"></i></span></li>`;
   };
   const corpo = p.setores.length ? `<ul class="setores-soma">${p.setores.map(linha).join("")}</ul>` : `<p class="painel-vazio">Nenhuma companhia com a comparação ainda.</p>`;
   return `<section class="painel-bloco setores-painel" aria-labelledby="t-setores">
 <h3 id="t-setores">Lucro somado por setor</h3>
 ${corpo}
-<p class="painel-nota">Soma do lucro do ${periodo} das companhias com a comparação, e a variação contra a soma do ano anterior. Setor com menos de ${p.minimoPorSetor ?? 3} empresas na comparação fica sem soma.</p>
+<p class="painel-nota">Soma do lucro do ${periodo} das companhias com a comparação. A variação contra a soma do ano anterior e a barra só aparecem quando nenhuma companhia do setor mudou de sinal e a soma é positiva nos dois períodos; senão, ficam só as duas somas. Setor com menos de ${p.minimoPorSetor ?? 3} empresas na comparação fica sem soma.</p>
 </section>`;
 }
 

@@ -134,26 +134,15 @@ export function variacoesDoLucro(comparadas, { limite = LIMITE_DA_BASE, tamanho 
   };
 }
 
-// Variação de uma soma contra a do ano anterior: { variacao, tipo }.
-//   "lucro"            as duas somas positivas: variação percentual comum
-//   "prejuizo-menor"   as duas negativas, e o prejuízo diminuiu: variação sobre o valor absoluto (negativa)
-//   "prejuizo-maior"   as duas negativas, e o prejuízo aumentou (positiva)
-//   "prejuizo-igual"   as duas negativas e iguais
-//   "virou-lucro" e "virou-prejuizo"   mudou de sinal: sem percentual
-//   "sem-base"         a soma anterior é zero: sem percentual
-export function variacaoDaSoma(atual, anterior) {
-  if (anterior === 0) return { variacao: null, tipo: "sem-base" };
-  if (anterior > 0 && atual > 0) return { variacao: atual / anterior - 1, tipo: "lucro" };
-  if (anterior < 0 && atual < 0) {
-    const variacao = Math.abs(atual) / Math.abs(anterior) - 1;
-    return { variacao, tipo: variacao < 0 ? "prejuizo-menor" : variacao > 0 ? "prejuizo-maior" : "prejuizo-igual" };
-  }
-  return { variacao: null, tipo: anterior < 0 ? "virou-lucro" : "virou-prejuizo" };
-}
-
 // Lucro somado por setor, do acumulado das companhias com comparação.
-// Devolve [{ setor, empresas, tickers, poucas, atual, anterior, variacao, tipo }], em ordem alfabética.
-// Setor com menos de `minimo` empresas na comparação fica com `poucas: true` e sem soma.
+// Devolve [{ setor, empresas, tickers, poucas, atual, anterior, variacao, viraramLucro, viraramPrejuizo }],
+// em ordem alfabética.
+//   - Setor com menos de `minimo` empresas na comparação fica com `poucas: true` e sem soma.
+//   - `viraramLucro` e `viraramPrejuizo` são os tickers que mudaram de sinal entre os dois períodos
+//     (lucro igual a zero fica do lado do prejuízo).
+//   - `variacao` só existe quando nenhuma companhia do setor mudou de sinal e as duas somas são
+//     positivas. Uma companhia que sai de um prejuízo grande deixa a soma anterior pequena, e o
+//     percentual sobre ela não diz nada (ex.: +2.776%). Sem variação, a página mostra só as duas somas.
 export function lucroPorSetor(comparadas, { minimo = MINIMO_POR_SETOR } = {}) {
   const porSetor = new Map();
   for (const c of [...comparadas].sort(porTicker)) {
@@ -163,10 +152,13 @@ export function lucroPorSetor(comparadas, { minimo = MINIMO_POR_SETOR } = {}) {
   }
   return [...porSetor.entries()].sort(([a], [b]) => a.localeCompare(b, "pt-BR")).map(([setor, lista]) => {
     const comum = { setor, empresas: lista.length, tickers: lista.map((c) => c.ticker) };
-    if (lista.length < minimo) return { ...comum, poucas: true, atual: null, anterior: null, variacao: null, tipo: null };
+    if (lista.length < minimo) return { ...comum, poucas: true, atual: null, anterior: null, variacao: null, viraramLucro: [], viraramPrejuizo: [] };
     const atual = lista.reduce((s, c) => s + c.atual.lucro, 0);
     const anterior = lista.reduce((s, c) => s + c.anterior.lucro, 0);
-    return { ...comum, poucas: false, atual, anterior, ...variacaoDaSoma(atual, anterior) };
+    const viraramLucro = lista.filter((c) => c.atual.lucro > 0 && !(c.anterior.lucro > 0)).map((c) => c.ticker);
+    const viraramPrejuizo = lista.filter((c) => !(c.atual.lucro > 0) && c.anterior.lucro > 0).map((c) => c.ticker);
+    const comPercentual = viraramLucro.length === 0 && viraramPrejuizo.length === 0 && anterior > 0 && atual > 0;
+    return { ...comum, poucas: false, atual, anterior, variacao: comPercentual ? atual / anterior - 1 : null, viraramLucro, viraramPrejuizo };
   });
 }
 

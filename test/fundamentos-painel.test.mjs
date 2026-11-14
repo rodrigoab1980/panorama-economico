@@ -5,9 +5,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   LIMITE_DA_BASE, MINIMO_POR_SETOR, TAMANHO_DA_LISTA, atencaoNasFichas, comparacaoDaCompanhia, entregueAte, lucroPorSetor, montarPainel,
-  nomeCurto, numerosDaTemporada, referenciaDaTemporada, variacaoDaSoma, variacoesDoLucro,
+  nomeCurto, numerosDaTemporada, referenciaDaTemporada, variacoesDoLucro,
 } from "../scripts/fundamentos/painel.mjs";
-import { MARCADOR_DO_PAINEL, NOTA_DO_ACUMULADO, comSinal, inserirPainel, painelHtml, variacaoDoSetorHtml } from "../scripts/fundamentos/painel-html.mjs";
+import { MARCADOR_DO_PAINEL, NOTA_DO_ACUMULADO, comSinal, inserirPainel, notaDoSetor, painelHtml } from "../scripts/fundamentos/painel-html.mjs";
 import { acumuladoDoAno } from "../scripts/cvm/ficha.mjs";
 import { fichaDaWeg } from "./apoio/ficha.mjs";
 
@@ -207,33 +207,82 @@ describe("maiores variações do lucro no acumulado", () => {
 describe("lucro somado por setor", () => {
   test("soma o lucro do acumulado das companhias com a comparação, com a variação contra o ano anterior", () => {
     const s = lucroPorSetor(comparadas([comLucro("AAAA3", 100, 150), comLucro("BBBB3", 200, 150), comLucro("CCCC3", 100, 300), comLucro("DDDD3", 1, 2, { setor: "Saúde" })]));
-    assert.deepEqual(s[0], { setor: "Indústria", empresas: 3, tickers: ["AAAA3", "BBBB3", "CCCC3"], poucas: false, atual: 600, anterior: 400, variacao: 0.5, tipo: "lucro" });
+    assert.deepEqual(s[0], { setor: "Indústria", empresas: 3, tickers: ["AAAA3", "BBBB3", "CCCC3"], poucas: false, atual: 600, anterior: 400, variacao: 0.5, viraramLucro: [], viraramPrejuizo: [] });
     assert.deepEqual(s.map((x) => x.setor), ["Indústria", "Saúde"]);
   });
 
   test("setor com menos de 3 empresas na comparação: 'poucas empresas', sem soma e sem variação", () => {
     assert.equal(MINIMO_POR_SETOR, 3);
     const [s] = lucroPorSetor(comparadas([comLucro("AAAA3", 100, 150), comLucro("BBBB3", 200, 150)]));
-    assert.deepEqual(s, { setor: "Indústria", empresas: 2, tickers: ["AAAA3", "BBBB3"], poucas: true, atual: null, anterior: null, variacao: null, tipo: null });
+    assert.deepEqual(s, { setor: "Indústria", empresas: 2, tickers: ["AAAA3", "BBBB3"], poucas: true, atual: null, anterior: null, variacao: null, viraramLucro: [], viraramPrejuizo: [] });
   });
 
-  test("soma negativa nos dois períodos: a variação é sobre o valor absoluto, e o tipo diz se o prejuízo é menor ou maior", () => {
-    assert.deepEqual(variacaoDaSoma(-70, -100), { variacao: -0.30000000000000004, tipo: "prejuizo-menor" });
-    assert.deepEqual(variacaoDaSoma(-150, -100), { variacao: 0.5, tipo: "prejuizo-maior" });
-    assert.deepEqual(variacaoDaSoma(-100, -100), { variacao: 0, tipo: "prejuizo-igual" });
-    const [s] = lucroPorSetor(comparadas([comLucro("AAAA3", -100, -50), comLucro("BBBB3", -200, -100), comLucro("CCCC3", 100, 60)]));
-    assert.deepEqual([s.atual, s.anterior, s.tipo, s.variacao], [-90, -200, "prejuizo-menor", -0.55]);
-    assert.equal(variacaoDoSetorHtml(s), '<span class="variacao">prejuízo menor (−55,0%)</span>');
-    assert.equal(variacaoDoSetorHtml({ tipo: "prejuizo-maior", variacao: 0.5 }), '<span class="variacao">prejuízo maior (+50,0%)</span>');
+  test("o percentual só existe quando nenhuma companhia do setor mudou de sinal e a soma é positiva nos dois períodos", () => {
+    const setor = (...lucros) => lucroPorSetor(comparadas(lucros.map(([anterior, atual], i) => comLucro(`${"ABCD"[i].repeat(4)}3`, anterior, atual))))[0];
+    // nenhuma mudou de sinal, somas positivas: tem percentual (uma com prejuízo nos dois períodos não impede)
+    const semMudanca = setor([100, 150], [200, 150], [-50, -20]);
+    assert.deepEqual([semMudanca.atual, semMudanca.anterior, semMudanca.variacao.toFixed(4), semMudanca.viraramLucro, semMudanca.viraramPrejuizo], [280, 250, "0.1200", [], []]);
+    // uma passou de prejuízo a lucro: sem percentual, mesmo com as duas somas positivas
+    const a = setor([100, 150], [200, 150], [-50, 20]);
+    assert.deepEqual([a.atual, a.anterior, a.variacao, a.viraramLucro, a.viraramPrejuizo], [320, 250, null, ["CCCC3"], []]);
+    // uma passou de lucro a prejuízo
+    const b = setor([100, 150], [200, 150], [50, -20]);
+    assert.deepEqual([b.variacao, b.viraramLucro, b.viraramPrejuizo], [null, [], ["CCCC3"]]);
+    // as duas direções no mesmo setor
+    const c = setor([-100, 150], [200, -150], [50, 20], [-5, 5]);
+    assert.deepEqual([c.variacao, c.viraramLucro, c.viraramPrejuizo], [null, ["AAAA3", "DDDD3"], ["BBBB3"]]);
   });
 
-  test("a soma mudou de sinal, ou a anterior é zero: sem percentual", () => {
-    assert.deepEqual(variacaoDaSoma(50, -100), { variacao: null, tipo: "virou-lucro" });
-    assert.deepEqual(variacaoDaSoma(-50, 100), { variacao: null, tipo: "virou-prejuizo" });
-    assert.deepEqual(variacaoDaSoma(0, 100), { variacao: null, tipo: "virou-prejuizo" });
-    assert.deepEqual(variacaoDaSoma(50, 0), { variacao: null, tipo: "sem-base" });
-    assert.equal(variacaoDoSetorHtml({ tipo: "virou-lucro", variacao: null }), '<span class="variacao">passou de prejuízo a lucro</span>');
-    assert.equal(variacaoDoSetorHtml({ tipo: "sem-base", variacao: null }), '<span class="variacao">sem percentual</span>');
+  test("soma anterior negativa ou zero, ou soma atual não positiva: sem percentual, mesmo sem ninguém mudar de sinal", () => {
+    const setor = (...lucros) => lucroPorSetor(comparadas(lucros.map(([anterior, atual], i) => comLucro(`${"ABCD"[i].repeat(4)}3`, anterior, atual))))[0];
+    // prejuízo nos dois períodos em todas: antes saía "prejuízo menor (−55%)"; agora só as duas somas
+    const negativo = setor([-100, -50], [-200, -100], [100, 60]);
+    assert.deepEqual([negativo.atual, negativo.anterior, negativo.variacao, negativo.viraramLucro, negativo.viraramPrejuizo], [-90, -200, null, [], []]);
+    assert.equal(notaDoSetor(negativo), "A soma do ano anterior não é positiva.");
+    const zero = setor([-100, -50], [50, 60], [50, 60]);
+    assert.deepEqual([zero.anterior, zero.variacao], [0, null]);
+    const caiu = setor([-100, -300], [50, 40], [60, 50]);
+    assert.deepEqual([caiu.anterior, caiu.atual, caiu.variacao], [10, -210, null]);
+    assert.equal(notaDoSetor(caiu), "A soma do acumulado não é positiva.");
+    assert.equal(notaDoSetor(caiu, "exercício"), "A soma do exercício não é positiva.");
+  });
+
+  test("lucro igual a zero fica do lado do prejuízo: de zero a lucro é mudança de sinal", () => {
+    const [s] = lucroPorSetor(comparadas([comLucro("AAAA3", 0, 150), comLucro("BBBB3", 200, 0), comLucro("CCCC3", 100, 100)]));
+    assert.deepEqual([s.variacao, s.viraramLucro, s.viraramPrejuizo], [null, ["AAAA3"], ["BBBB3"]]);
+  });
+
+  test("a nota diz quem mudou de sinal, no singular e no plural", () => {
+    const s = (viraramLucro, viraramPrejuizo) => ({ viraramLucro, viraramPrejuizo, anterior: 1, atual: 1 });
+    assert.equal(notaDoSetor(s(["AXIA3"], [])), "AXIA3 passou de prejuízo a lucro.");
+    assert.equal(notaDoSetor(s(["AAAA3", "BBBB3"], [])), "AAAA3 e BBBB3 passaram de prejuízo a lucro.");
+    assert.equal(notaDoSetor(s(["AAAA3", "BBBB3", "CCCC3"], ["DDDD3"])), "AAAA3, BBBB3 e CCCC3 passaram de prejuízo a lucro; DDDD3 passou de lucro a prejuízo.");
+    assert.equal(notaDoSetor(s([], ["AAAA3", "BBBB3"])), "AAAA3 e BBBB3 passaram de lucro a prejuízo.");
+  });
+
+  // O caso real que motivou a regra: os três de Energia e saneamento que tinham entregue o ITR de
+  // 30/09/2026 na coleta de 13/11/2026. Valores em R$ mil, como nas fichas (receita, lucro).
+  test("Energia e saneamento (AXIA3 saiu de prejuízo de R$ 7,1 bi): sem o +2.776%, só as duas somas e a nota", () => {
+    const energia = { setor: "Energia e saneamento" };
+    const fichas = [
+      cia("AXIA3", { ...energia, atual: [33_936_708, 4_934_255], anterior: [30_615_636, -7_126_839] }),
+      cia("ISAE4", { ...energia, atual: [7_441_969, 2_244_205], anterior: [6_403_885, 1_759_777] }),
+      cia("SBSP3", { ...energia, atual: [30_314_585, 4_601_199], anterior: [26_815_621, 5_776_619] }),
+    ];
+    const painel = montarPainel(fichas, { total: 64 });
+    const [s] = painel.setores;
+    assert.deepEqual(s, {
+      setor: "Energia e saneamento", empresas: 3, tickers: ["AXIA3", "ISAE4", "SBSP3"], poucas: false,
+      atual: 11_779_659, anterior: 409_557, variacao: null, viraramLucro: ["AXIA3"], viraramPrejuizo: [],
+    });
+    // a conta que a página deixou de mostrar
+    assert.equal(((s.atual / s.anterior - 1) * 100).toFixed(1), "2776.2");
+    const html = painelHtml(painel);
+    assert.match(html, /<li class="sem-percentual" title="Soma do lucro do acumulado de AXIA3, ISAE4, SBSP3: R\$ 11,8 bi, contra R\$ 410 mi no ano anterior"><span class="setor-nome">Energia e saneamento <small>3 empresas<\/small><\/span><span class="setor-valor n">de R\$ 410 mi para R\$ 11,8 bi<\/span><small class="setor-nota">AXIA3 passou de prejuízo a lucro\.<\/small><\/li>/);
+    const bloco = html.slice(html.indexOf('id="t-setores"'), html.indexOf('id="t-atencao"'));
+    assert.ok(!bloco.includes("%") && !bloco.includes("setor-barra") && !bloco.includes("2.776"));
+    // na lista das companhias a AXIA3 continua na linha à parte, sem percentual
+    assert.match(html, /<li>Passaram de prejuízo a lucro: <a href="axia3\/">AXIA3<\/a>\.<\/li>/);
   });
 
   test("companhia sem setor entra em 'Outros'", () => {
@@ -362,16 +411,22 @@ describe("HTML do painel", () => {
   });
 
   test("setores: a soma, a variação, a barra a partir do zero e o número de empresas; com poucas empresas, sem barra", () => {
-    assert.match(html, /<li title="Soma do lucro do acumulado de AAAA3, BBBB3, CCCC3: R\$ 300 mi, contra R\$ 120 mi no ano anterior"><span class="setor-nome">Indústria <small>3 empresas<\/small><\/span><span class="setor-valor n">R\$ 300 mi <b class="variacao alta">\+150,0%<\/b><\/span><span class="setor-barra" aria-hidden="true"><i class="lucro" style="margin-left:0\.0%;width:100\.0%"><\/i><\/span><\/li>/);
+    // CCCC3 passou de prejuízo a lucro: o setor fica sem percentual e sem barra, só com as duas somas e a nota
+    assert.match(html, /<li class="sem-percentual" title="Soma do lucro do acumulado de AAAA3, BBBB3, CCCC3: R\$ 300 mi, contra R\$ 120 mi no ano anterior"><span class="setor-nome">Indústria <small>3 empresas<\/small><\/span><span class="setor-valor n">de R\$ 120 mi para R\$ 300 mi<\/span><small class="setor-nota">CCCC3 passou de prejuízo a lucro\.<\/small><\/li>/);
+    assert.ok(!html.includes("setor-barra"));
     assert.match(html, /<li class="poucas" title="Na comparação: DDDD3"><span class="setor-nome">Saúde <small>1 empresa<\/small><\/span><span class="setor-valor vazio">poucas empresas<\/span><\/li>/);
   });
 
-  test("setor com soma negativa: a barra é vazada e fica à esquerda do zero", () => {
-    const negativo = ["AAAA3", "BBBB3", "CCCC3"].map((t) => comLucro(t, -100_000, -50_000));
-    const positivo = ["DDDD3", "EEEE3", "FFFF3"].map((t) => comLucro(t, 100_000, 100_000, { setor: "Saúde" }));
-    const h = painelHtml(montarPainel([...negativo, ...positivo]));
-    assert.match(h, /<span class="setor-valor n">−R\$ 150 mi <span class="variacao">prejuízo menor \(−50,0%\)<\/span><\/span><span class="setor-barra" aria-hidden="true"><i class="prejuizo" style="margin-left:0\.0%;width:33\.3%"><\/i>/);
-    assert.match(h, /<i class="lucro" style="margin-left:33\.3%;width:66\.7%"><\/i>/);
+  test("setor com percentual: a soma, a variação com o sinal e a barra a partir do zero, na escala da maior soma", () => {
+    const maior = ["AAAA3", "BBBB3", "CCCC3"].map((t) => comLucro(t, 100_000, 200_000));
+    const menor = ["DDDD3", "EEEE3", "FFFF3"].map((t) => comLucro(t, 100_000, 50_000, { setor: "Saúde" }));
+    const negativo = ["GGGG3", "HHHH3", "IIII3"].map((t) => comLucro(t, -100_000, -50_000, { setor: "Shoppings" }));
+    const h = painelHtml(montarPainel([...maior, ...menor, ...negativo]));
+    assert.match(h, /<span class="setor-valor n">R\$ 600 mi <b class="variacao alta">\+100,0%<\/b><\/span><span class="setor-barra" aria-hidden="true"><i style="width:100\.0%"><\/i><\/span><\/li>/);
+    assert.match(h, /<span class="setor-valor n">R\$ 150 mi <b class="variacao baixa">−50,0%<\/b><\/span><span class="setor-barra" aria-hidden="true"><i style="width:25\.0%"><\/i><\/span><\/li>/);
+    // prejuízo nos dois períodos: sem percentual e sem barra, e a soma negativa não entra na escala
+    assert.match(h, /<li class="sem-percentual" title="[^"]+"><span class="setor-nome">Shoppings <small>3 empresas<\/small><\/span><span class="setor-valor n">de −R\$ 300 mi para −R\$ 150 mi<\/span><small class="setor-nota">A soma do ano anterior não é positiva\.<\/small><\/li>/);
+    assert.equal((h.match(/class="setor-barra"/g) ?? []).length, 2);
   });
 
   test("pontos de atenção: o número de cada regra leva à lista dos tickers, num details; regra sem acionadas fica sem details", () => {

@@ -301,9 +301,10 @@ Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhi
    - A variação percentual só existe quando os dois lucros são positivos.
    - Lucro anterior abaixo de R$ 50 milhões fica fora do percentual, para não aparecer "+700%" sobre base minúscula. O limite é a constante `LIMITE_DA_BASE`, e a página o informa.
    - Quem passou de prejuízo a lucro, ou o contrário, vai numa linha à parte, sem percentual.
-3. **Lucro somado por setor.** A soma do lucro do acumulado das companhias com a comparação, a variação contra a soma do ano anterior e uma barra horizontal a partir do zero.
+3. **Lucro somado por setor.** A soma do lucro do acumulado das companhias com a comparação. Quando dá para comparar, vêm também a variação contra a soma do ano anterior e uma barra horizontal a partir do zero.
    - Setor com menos de 3 empresas na comparação mostra "poucas empresas" e fica sem soma e sem barra (`MINIMO_POR_SETOR`).
-   - Se a soma é negativa nos dois períodos, a variação é calculada sobre o valor absoluto, e o texto diz "prejuízo menor" ou "prejuízo maior". Se a soma mudou de sinal, não há percentual.
+   - O percentual e a barra só aparecem quando **nenhuma companhia do setor mudou de sinal** entre os dois períodos e a soma é positiva nos dois. Senão, a linha mostra só "de R$ X para R$ Y" e uma nota com os tickers que mudaram de sinal ("AXIA3 passou de prejuízo a lucro", ou o contrário).
+   - O motivo: uma companhia que sai de um prejuízo grande deixa a soma do ano anterior pequena, e o percentual sobre ela não diz nada. No 3T26, Energia e saneamento sairia com +2.776%, de R$ 410 mi para R$ 11,8 bi, só porque a AXIA3 tinha prejuízo de R$ 7,1 bi no ano anterior. O limite de R$ 50 milhões das companhias não pega esse caso, porque a soma anterior do setor está acima dele.
 4. **Pontos de atenção nas 64.** Quantas companhias acionam cada uma das sete regras, em ordem decrescente. Cada número abre a lista dos tickers, num `<details>`. Aqui entram todas as fichas, inclusive as de quem ainda não entregou o documento do período.
 
 **Na tela:** a temporada abre a página em largura total; os outros três blocos dividem a linha no desktop e empilham no celular. O verde e o vermelho do Diário só aparecem na variação percentual do lucro, sempre junto do sinal (+ ou −) e do número. As palavras são neutras: "maiores altas", "maiores quedas", "maior" e "menor". Não há logotipo de empresa; o ticker faz esse papel. O carimbo "dados de documentos entregues até DD/MM/AAAA" traz a data de entrega mais recente entre os documentos usados.
