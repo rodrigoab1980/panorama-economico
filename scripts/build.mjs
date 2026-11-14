@@ -26,6 +26,7 @@ import { montarRankings } from "./fundamentos/rankings.mjs";
 import { inserirRankings, rankingsHtml } from "./fundamentos/rankings-html.mjs";
 import { montarTemporada } from "./fundamentos/temporada.mjs";
 import { inserirTemporada, temporadaHtml } from "./fundamentos/temporada-html.mjs";
+import { eventosDoAno, montarCalendario } from "./fundamentos/calendario.mjs";
 
 const ARQUIVO_DO_PAINEL = "painel.json";
 const ARQUIVO_DOS_RANKINGS = "rankings.json";
@@ -160,16 +161,22 @@ async function gerarTemporada(indice, fichas) {
   const arquivo = join(destino, arquivoDaPagina(PAGINAS.find((p) => p.id === "temporada")));
   let corpo;
   try {
+    const hoje = diaBR(new Date());
     const temporada = fichas && indice ? montarTemporada(fichas, {
-      hoje: diaBR(new Date()),
+      hoje,
       dadosAte: indice.dadosAte,
       semFicha: indice.companhias.filter((c) => !c.ficha),
     }) : null;
+    // O calendário do ano (#77): os eventos de cada dia vão no JSON, e a grade dos 12 meses, na página.
+    const eventos = temporada ? eventosDoAno(fichas, { hoje }) : null;
     if (temporada) {
-      await writeFile(join(destino, PASTA_DAS_FICHAS, ARQUIVO_DA_TEMPORADA), JSON.stringify(temporada, null, 1));
+      await writeFile(join(destino, PASTA_DAS_FICHAS, ARQUIVO_DA_TEMPORADA), JSON.stringify({ ...temporada, calendario: eventos }, null, 1));
       console.log(`temporada: ${temporada.referencia.documento}, ${temporada.entregaram} de ${temporada.total} entregaram, ${temporada.faltam.length} com data provável, hoje ${temporada.hoje}`);
     }
-    corpo = temporadaHtml(temporada, { comPagina: indice ? new Set(indice.companhias.filter((c) => c.ficha).map((c) => c.ticker)) : null });
+    corpo = temporadaHtml(temporada, {
+      comPagina: indice ? new Set(indice.companhias.filter((c) => c.ficha).map((c) => c.ticker)) : null,
+      calendario: eventos ? montarCalendario(eventos) : null,
+    });
   } catch (e) {
     console.warn(`aviso: temporada não gerada: ${e.message}`);
     corpo = `<h2>Temporada de balanços</h2>

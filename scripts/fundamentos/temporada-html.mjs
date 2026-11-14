@@ -8,6 +8,7 @@
 import { escapar as e } from "./html.mjs";
 import { data } from "./formatar.mjs";
 import { PRAZO_DFP_MESES, PRAZO_ITR_DIAS } from "./temporada.mjs";
+import { calendarioHtml } from "./calendario-html.mjs";
 
 export const LEGENDA_DA_TEMPORADA = "A data provável é uma estimativa deste site, não uma data oficial: é o dia em que a empresa entregou o mesmo documento no ano anterior. A empresa pode divulgar antes ou depois.";
 export const REGRA_DA_TEMPORADA = `Prazo legal: o ITR sai em até ${PRAZO_ITR_DIAS} dias do fim do trimestre, e a DFP, em até ${PRAZO_DFP_MESES} meses do fim do exercício. `
@@ -130,11 +131,14 @@ ${corpo}
 // A página inteira, para dentro de /fundamentos/temporada/index.html.
 //   temporada  a saída de montarTemporada, ou null (sem dados)
 //   comPagina  Set com os tickers que têm página; sem ele, todo ticker ganha link
-export function temporadaHtml(temporada, { comPagina = null } = {}) {
+//   calendario a saída de montarCalendario (calendario.mjs): o calendário do ano, logo abaixo do topo;
+//              sem ele, a página sai só com as listas
+export function temporadaHtml(temporada, { comPagina = null, calendario = null } = {}) {
   if (!temporada) {
     return `<h2>Temporada de balanços</h2>\n<p class="temporada-legenda">${e(LEGENDA_DA_TEMPORADA)}</p>\n<p class="sem-dados">Os dados das companhias ainda não foram coletados. A coleta roda aos domingos.</p>`;
   }
   return `${topoHtml(temporada)}
+${calendarioHtml(calendario, { comPagina })}
 ${faltamHtml(temporada, comPagina)}
 ${entreguesHtml(temporada, comPagina)}`;
 }
