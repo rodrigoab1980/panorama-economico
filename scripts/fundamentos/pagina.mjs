@@ -11,6 +11,10 @@ import { MULTIPLOS } from "../cvm/multiplos.mjs";
 import { SEM_VALOR, data, dataHora, formatar, instanteBR, preco, sinal } from "./formatar.mjs";
 import { carimbo } from "./carimbo.mjs";
 import { UNIDADE_NO_CSV, montarCsv } from "./csv.mjs";
+import { escapar } from "./html.mjs";
+import { resumoHtml } from "./resumo.mjs";
+
+export { escapar };
 
 export const AVISO_LEGAL = "Dados para estudo, extraídos dos documentos entregues à CVM. Não é recomendação de investimento.";
 
@@ -58,10 +62,6 @@ export const MOTIVO_SEM_ACOES = "a CVM só informa o número de ações a partir
 
 // ---------- texto ----------
 
-// Escapa texto para dentro do HTML (conteúdo e atributo).
-export function escapar(texto) {
-  return String(texto ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
 const e = escapar;
 
 // Pasta da ficha: o ticker em minúsculas, só com letras e números.
@@ -336,7 +336,9 @@ export function fichaHtml(ficha, { hoje, coletadoEm = null, menu = "<!-- menu --
 
 <main class="ficha" data-ticker="${e(ficha.ticker)}">
 ${cabecalhoDaFicha(ficha, { hoje })}
-<section class="resumo" id="resumo-consistencia" hidden></section>
+<section class="resumo" id="resumo-consistencia"${ficha.consistencia || ficha.atencao || ficha.pares ? "" : " hidden"}>
+${resumoHtml(ficha)}
+</section>
 <nav class="atalhos" aria-label="Blocos da ficha">${atalhos}</nav>
 ${avisos}
 ${BLOCOS.map((b) => blocoHtml(b, ficha, colunas)).join("\n")}

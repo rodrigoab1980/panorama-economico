@@ -38,7 +38,7 @@ describe("ficha de uma companhia", () => {
   const ficha = montarFicha({ companhia: WEG, arquivo: ARQUIVO, cotacoes: COTACOES, hoje: "2026-11-14" });
 
   test("identificação, documento mais recente e as três partes: anual, 12 meses e múltiplos", () => {
-    assert.deepEqual(Object.keys(ficha), ["ticker", "tickers", "cnpj", "cdCvm", "nome", "setor", "documentoMaisRecente", "cotacoes", "anual", "doze", "multiplos", "avisos"]);
+    assert.deepEqual(Object.keys(ficha), ["ticker", "tickers", "cnpj", "cdCvm", "nome", "setor", "documentoMaisRecente", "cotacoes", "anual", "doze", "multiplos", "avisos", "consistencia", "atencao"]);
     assert.deepEqual([ficha.ticker, ficha.tickers, ficha.cdCvm, ficha.nome, ficha.setor], ["WEGE3", ["WEGE3"], "005410", "WEG S.A.", "Bens industriais"]);
     assert.deepEqual(ficha.documentoMaisRecente, { tipo: "itr", dtRefer: "2026-09-30", versao: 1 });
     assert.deepEqual(ficha.avisos, []);

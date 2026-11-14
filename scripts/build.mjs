@@ -16,6 +16,7 @@ import { ARQUIVO_INDICE, PASTA_FUNDAMENTOS } from "./cvm/coleta.mjs";
 import { ARQUIVO_COTACOES } from "./precos/fonte.mjs";
 import { diaBR } from "./logica.mjs";
 import { csvsDaFicha, fichaHtml, inserirLista, listaHtml, pastaDaFicha } from "./fundamentos/pagina.mjs";
+import { configAtencao } from "./fundamentos/atencao.mjs";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const origem = resolve(RAIZ, process.argv[2] ?? "site");
@@ -60,6 +61,8 @@ async function gerarFichas() {
     cotacoes: await lerJson(join(dados, ARQUIVO_COTACOES)),
     hoje: diaBR(new Date()),
     excecoesDfc: excecoes,
+    // Limites dos pontos de atenção: os padrões, ou as variáveis ATENCAO_* do Actions.
+    limitesAtencao: configAtencao(process.env),
   });
   const saida = join(destino, PASTA_DAS_FICHAS);
   await mkdir(saida, { recursive: true });

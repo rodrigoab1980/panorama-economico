@@ -209,8 +209,9 @@ describe("ficha da WEG: os números certos, já no HTML", () => {
     for (const m of MULTIPLOS) assert.ok(HTML.includes(`>${escapar(m.nome)}</th>`), m.id);
   });
 
-  test("o espaço do resumo de consistência (#39) existe, vazio e escondido", () => {
-    assert.match(HTML, /<section class="resumo" id="resumo-consistencia" hidden><\/section>/);
+  test("o espaço do resumo de consistência existe e, com a #39, vem preenchido e visível, antes dos blocos", () => {
+    assert.match(HTML, /<section class="resumo" id="resumo-consistencia">\n<h3>Ao longo dos anos<\/h3>/);
+    assert.ok(HTML.indexOf('id="resumo-consistencia"') < HTML.indexOf('<section class="bloco" id="resultado">'));
   });
 
   test("aviso legal fixo, com a fonte e a data da coleta", () => {
