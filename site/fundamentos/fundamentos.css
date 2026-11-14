@@ -1,0 +1,139 @@
+/* Página Fundamentalista: a lista das empresas e a ficha de cada uma (#38).
+   Usa as variáveis de cor de style.css (tema "hora azul"); nenhuma cor nova.
+   A página não rola para os lados: quem rola é a tabela, dentro de .rolagem. */
+
+body.fundamentos { overflow-x: hidden; }
+/* O cabeçalho do Diário tem quatro colunas (relógio e faixa do dia); aqui é só a marca e o menu. */
+body.fundamentos .topo { grid-template-columns: 1fr auto; }
+@media (max-width: 767px) { body.fundamentos .topo { grid-template-columns: 1fr; } }
+
+.lista, .ficha { max-width: 1280px; margin: 0 auto; padding: 20px 20px 48px; }
+@media (max-width: 767px) { .lista, .ficha { padding: 14px 12px 40px; } }
+
+.fundamentos h2 { margin: 0 0 4px; font-size: 26px; font-weight: 650; letter-spacing: -.01em; line-height: 1.15; overflow-wrap: anywhere; }
+.fundamentos h3 { margin: 0; font-size: 19px; font-weight: 600; }
+.fundamentos h4 { margin: 22px 0 4px; font-size: 16.5px; font-weight: 600; color: var(--papel); }
+.fundamentos a { text-decoration-color: var(--linha-forte); text-underline-offset: 3px; }
+.fundamentos a:hover { text-decoration-color: var(--papel-2); }
+.fundamentos .n { font-variant-numeric: tabular-nums; }
+.vazio { color: var(--papel-3); }
+.menos { color: var(--baixa); }
+
+/* ---------- lista ---------- */
+.lista .abre { max-width: 72ch; margin: 0 0 18px; color: var(--papel-2); }
+.busca { margin: 0 0 14px; max-width: 420px; }
+.busca label { display: block; margin-bottom: 4px; font-size: 14px; color: var(--papel-3); }
+.busca input {
+  width: 100%; padding: 9px 12px; font: inherit; color: var(--papel);
+  background: var(--elevado); border: 1px solid var(--linha-forte); border-radius: var(--raio);
+}
+.busca input::placeholder { color: var(--papel-3); }
+.busca-vazia { margin: 10px 0 0; color: var(--papel-2); }
+.contagem { margin: 0 0 16px; font-size: 14.5px; color: var(--papel-3); }
+.sem-dados { padding: 14px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); color: var(--papel-2); }
+
+.setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; align-items: start; }
+.setor { padding: 12px 14px 8px; background: var(--pre-abertura); border: 1px solid var(--linha); border-radius: var(--raio); }
+.setor h3 { margin-bottom: 6px; font-size: 16px; color: var(--papel-2); display: flex; justify-content: space-between; gap: 8px; }
+.setor h3 small { font-weight: 400; font-size: 13.5px; color: var(--papel-3); font-variant-numeric: tabular-nums; }
+.setor ul { list-style: none; margin: 0; padding: 0; }
+.setor li { border-top: 1px solid var(--linha); }
+.setor li a, .setor li.sem-ficha { display: grid; grid-template-columns: 68px 1fr; gap: 8px; align-items: baseline; padding: 7px 2px; text-decoration: none; }
+.setor li.sem-ficha { grid-template-columns: 68px 1fr auto; color: var(--papel-3); }
+.setor li strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.setor li span { color: var(--papel-2); font-size: 14.5px; font-stretch: var(--estreito); overflow-wrap: anywhere; }
+.setor li em { font-style: normal; font-size: 13px; }
+.setor li a:hover span { color: var(--papel); }
+
+/* ---------- ficha: cabeçalho ---------- */
+.trilha { margin: 0 0 10px; font-size: 14.5px; color: var(--papel-2); }
+.ficha-cabecalho { margin-bottom: 16px; }
+.ficha-cabecalho .setor { margin: 0 0 10px; padding: 0; background: none; border: 0; color: var(--papel-2); }
+.cotacoes { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.cotacoes li { display: flex; align-items: baseline; gap: 7px; }
+.cotacoes strong { font-weight: 600; }
+.cotacoes .n { font-size: 18px; }
+.cotacoes time { font-size: 13.5px; color: var(--papel-3); }
+.fonte { margin: 0; font-size: 13.5px; color: var(--papel-3); max-width: 80ch; }
+/* Dado desatualizado: a cor que o site reserva para isso. */
+.carimbo {
+  margin: 10px 0 0; padding: 8px 12px; max-width: 80ch; font-size: 14.5px; color: var(--aviso);
+  border: 1px solid var(--aviso); border-radius: var(--raio);
+}
+
+.atalhos { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0 0 6px; }
+.atalhos a { padding: 5px 10px; font-size: 14.5px; text-decoration: none; color: var(--papel-2); background: var(--elevado); border: 1px solid var(--linha); border-radius: var(--raio); }
+.atalhos a:hover { color: var(--papel); border-color: var(--linha-forte); }
+
+/* ---------- ficha: blocos ---------- */
+.bloco { margin-top: 26px; scroll-margin-top: 110px; }
+.bloco-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.csv { font-size: 14px; color: var(--papel-2); white-space: nowrap; }
+.explica { margin: 0 0 8px; max-width: 80ch; font-size: 14.5px; color: var(--papel-2); }
+.notas { margin: 10px 0 0; padding-left: 18px; max-width: 86ch; font-size: 14px; color: var(--papel-2); }
+.notas li { margin-bottom: 4px; }
+.notas.avisos { color: var(--aviso); }
+
+/* A tabela rola para os lados dentro desta caixa; o nome do indicador fica fixo à esquerda. */
+.rolagem { overflow-x: auto; max-width: 100%; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); -webkit-overflow-scrolling: touch; }
+.serie { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 14.5px; }
+.serie th, .serie td { padding: 6px 10px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+.serie tbody tr:last-child th, .serie tbody tr:last-child td { border-bottom-color: var(--linha-forte); }
+.serie thead th { font-weight: 500; color: var(--papel-2); text-align: right; vertical-align: bottom; background: var(--pre-abertura); border-bottom-color: var(--linha-forte); }
+.serie thead th small { display: block; font-size: 12px; font-weight: 400; color: var(--papel-3); }
+.serie td.n { text-align: right; }
+.serie .fixa {
+  position: sticky; left: 0; z-index: 2; text-align: left; font-weight: 400; color: var(--papel);
+  background: var(--pre-abertura); border-right: 1px solid var(--linha-forte);
+  white-space: normal; min-width: 176px; max-width: 230px; line-height: 1.25;
+}
+.serie thead .fixa { color: var(--papel-2); font-weight: 500; z-index: 3; }
+.serie tbody .fixa[title], .serie tfoot .fixa[title] { cursor: help; }
+.serie .tend { padding: 2px 8px; text-align: center; }
+.serie thead .tend { text-align: center; font-size: 12.5px; color: var(--papel-3); }
+/* A coluna de hoje (12 meses) tem o fundo um tom acima. */
+.serie .hoje { background: var(--elevado); }
+.serie thead .hoje { color: var(--papel); }
+.serie td.vazio[title] { cursor: help; }
+/* Quebra no número de ações: borda entre o ano em que mudou e o anterior (que fica à direita). */
+.serie .quebra { border-right: 2px dashed var(--aviso); }
+.serie tfoot td, .serie tfoot th { font-size: 12.5px; color: var(--papel-3); border-bottom: 0; text-align: right; line-height: 1.35; vertical-align: top; }
+.serie tfoot .fixa { text-align: left; color: var(--papel-3); }
+.serie tbody tr:hover th, .serie tbody tr:hover td { background: var(--elevado); }
+.serie.multiplos { width: 100%; }
+.serie.multiplos .motivo { text-align: left; white-space: normal; color: var(--papel-3); font-size: 13.5px; min-width: 200px; }
+.serie.multiplos thead .motivo { color: var(--papel-2); font-size: 14.5px; }
+
+.tendencia { display: block; }
+.tendencia polyline { fill: none; stroke: var(--papel-2); stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.tendencia circle { fill: var(--papel-2); }
+.tendencia circle.fim { fill: var(--papel); }
+.tendencia .zero { stroke: var(--linha-forte); stroke-width: 1; stroke-dasharray: 2 2; }
+
+@media (max-width: 767px) {
+  .fundamentos h2 { font-size: 22px; }
+  .serie { font-size: 13.5px; }
+  .serie th, .serie td { padding: 6px 8px; }
+  /* No celular, o nome e o gráfico ficam estreitos para a coluna dos 12 meses caber na primeira tela. */
+  .serie .fixa { min-width: 112px; max-width: 112px; font-size: 13px; padding-left: 8px; padding-right: 6px; }
+  .serie .tend { padding: 2px 4px; }
+  .tendencia { width: 52px; height: auto; }
+  .serie thead .tend { font-size: 0; }
+  .bloco { scroll-margin-top: 150px; }
+}
+
+/* Balão com a fórmula, o documento e o motivo (ficha.js). Sem JS, tudo isso está no title. */
+.balao {
+  position: absolute; z-index: 50; max-width: min(360px, calc(100vw - 24px)); padding: 10px 12px;
+  background: var(--elevado); border: 1px solid var(--linha-forte); border-radius: var(--raio);
+  box-shadow: 0 14px 40px rgba(4, 8, 16, .6); font-size: 14px; line-height: 1.4; color: var(--papel);
+}
+.balao b { display: block; margin-bottom: 4px; font-weight: 600; }
+.balao p { margin: 0 0 6px; color: var(--papel-2); }
+.balao p:last-child { margin-bottom: 0; }
+.balao .motivo { color: var(--aviso); }
+
+.aviso-legal { margin-top: 32px; padding: 12px 14px; border: 1px solid var(--linha); border-radius: var(--raio); background: var(--pre-abertura); font-size: 14px; max-width: 100%; }
+.aviso-legal p { margin: 0 0 6px; color: var(--papel-3); }
+.aviso-legal p:last-child { margin-bottom: 0; }
+.aviso-legal strong { color: var(--papel-2); font-weight: 500; }
