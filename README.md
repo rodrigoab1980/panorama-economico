@@ -303,7 +303,7 @@ Antes dos quatro blocos, a ficha responde "a empresa é boa e sempre foi?" só c
 | Regra | Limite padrão | Detalhes |
 |---|---|---|
 | Lucro que não vira caixa | FCO ÷ lucro abaixo de 0,8 em 3 dos últimos 5 exercícios | Só avalia ano com lucro; o ano com prejuízo fica fora, e o texto diz. Precisa de 3 anos avaliáveis |
-| Proventos maiores que o FCL | Proventos pagos maiores que o FCL, hoje | Como contexto, diz em quantos dos últimos 5 exercícios aconteceu |
+| Proventos maiores que o FCL | Soma dos proventos pagos maior que a soma do FCL nos últimos 5 exercícios com dado | Precisa de 3 exercícios com os dois dados. A conta mostra as duas somas, os anos e em quais deles os proventos passaram do FCL. Os 12 meses entram só como contexto |
 | Dívida líquida ÷ EBITDA alta | Acima de 3, hoje | Sem arrendamentos; a conta mostra a versão com arrendamentos ao lado. EBITDA zero ou negativo com dívida líquida aciona a regra. Caixa líquido não aciona |
 | Dívida concentrada no curto prazo | Mais de 50% da dívida bruta no curto prazo **e** dívida líquida positiva | Com o caixa maior que a dívida (WEG), não aciona. Sem dívida bruta, não é avaliada |
 | Capex maior que o FCO | Nos últimos 3 exercícios seguidos | Um ano sem dado na janela deixa a regra sem avaliar |
@@ -316,7 +316,7 @@ Os limites ficam em `LIMITES_ATENCAO`, e quatro deles podem ser trocados por var
 
 - **Período:** o mesmo exercício anual para todas, que é o último que a maioria do setor já entregou. Quem não tem esse exercício sai da mediana. Os 12 meses ficam de fora, porque as datas dos ITR variam.
 - **Mediana:** só com 3 ou mais empresas com dado naquele indicador. Abaixo disso, a linha diz "setor com menos de 3 empresas com dado". Em Serviços financeiros só há a B3, então não há mediana.
-- **Posição:** "acima da mediana", "abaixo da mediana" ou "na mediana" (no empate), mais o quartil por extenso ("entre os 25% maiores do setor"). O texto e a cor são os mesmos nos dois lados: dívida acima da mediana não é elogio.
+- **Posição:** "acima da mediana", "abaixo da mediana" ou "na mediana" (no empate), mais o quartil por extenso ("entre os 25% maiores do setor") quando a linha tem 5 ou mais empresas com dado. Com 3 ou 4, a posição vem sozinha: "entre os 25% maiores" seria só "a maior das três". O texto e a cor são os mesmos nos dois lados: dívida acima da mediana não é elogio.
 - **Amostra:** a página diz quantas empresas entraram em cada linha e quais são. Os setores juntam negócios diferentes, e quem lê precisa ver isso.
 
 A ficha em JSON (`dist/fundamentos/dados/<TICKER>.json`) ganha os campos `consistencia`, `atencao` e `pares`. Os pares são calculados depois de montar as 64 fichas.

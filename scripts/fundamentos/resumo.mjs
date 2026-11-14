@@ -81,7 +81,7 @@ export function paresHtml(p) {
     return `<section class="pares" id="comparacao-com-o-setor">${titulo}<p class="explica">Setor: ${e(p.setor)}. ${p.exercicio ? `No exercício de ${e(rotuloDoAno(p.exercicio))} há ${plural(p.empresas, "empresa", "empresas")} do setor com dados` : "Não há um exercício em comum no setor"}: setor com menos de 3 empresas com dado, então não há mediana.</p></section>`;
   }
   const linhas = p.itens.map((i) => {
-    const posicao = i.posicao ? `${e(maiuscula(i.posicao))}; ${e(i.faixa)}` : `<span class="vazio">${e(maiuscula(i.motivo))}</span>`;
+    const posicao = i.posicao ? `${e(maiuscula(i.posicao))}${i.faixa ? `; ${e(i.faixa)}` : ""}` : `<span class="vazio">${e(maiuscula(i.motivo))}</span>`;
     const amostra = i.mediana == null ? "" : ` title="${e(`Mediana de ${i.empresas} empresas: ${i.tickers.join(", ")}`)}"`;
     return `<tr><th scope="row">${e(i.nome)}</th><td class="n">${e(escrever(i.valor, i.formato))}</td><td class="n"${amostra}>${e(escrever(i.mediana, i.formato))}${i.mediana == null ? "" : ` <small>(${i.empresas})</small>`}</td><td>${posicao}</td></tr>`;
   }).join("");
@@ -89,7 +89,7 @@ export function paresHtml(p) {
   return `<section class="pares" id="comparacao-com-o-setor">
 ${titulo}
 <p class="explica">Mediana de ${p.empresas} empresas do setor ${e(p.setor)}, no exercício de ${e(rotuloDoAno(p.exercicio))}. Estar acima ou abaixo da mediana é só uma posição: não diz se o número é favorável.${semExercicio}</p>
-<details class="amostra"><summary>As ${p.empresas} empresas da amostra</summary><p>${e(p.tickers.join(", "))}. Os setores juntam negócios diferentes; a mediana só aparece com 3 ou mais empresas com dado, e o número entre parênteses diz quantas entraram em cada linha.</p></details>
+<details class="amostra"><summary>As ${p.empresas} empresas da amostra</summary><p>${e(p.tickers.join(", "))}. Os setores juntam negócios diferentes; a mediana só aparece com 3 ou mais empresas com dado, o quartil só com 5 ou mais, e o número entre parênteses diz quantas entraram em cada linha.</p></details>
 <div class="rolagem"><table class="comparacao"><thead><tr><th scope="col">Indicador</th><th scope="col">Empresa</th><th scope="col">Mediana do setor</th><th scope="col">Posição</th></tr></thead><tbody>${linhas}</tbody></table></div>
 </section>`;
 }

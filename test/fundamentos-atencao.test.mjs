@@ -9,7 +9,7 @@ import {
   LIMITES_ATENCAO, VARIAVEIS_ATENCAO, calcularAtencao, capexMaiorQueFco, configAtencao, diluicao, dividaLiquidaAlta, dividaNoCurtoPrazo,
   fonteDeHoje, lucroQueNaoViraCaixa, margemEmQueda, proventosMaioresQueFcl,
 } from "../scripts/fundamentos/atencao.mjs";
-import { INDICADORES_DE_PARES, MINIMO_DE_EMPRESAS, calcularPares, exercicioDoSetor, mediana, posicaoNaAmostra, quartil } from "../scripts/fundamentos/pares.mjs";
+import { INDICADORES_DE_PARES, MINIMO_DE_EMPRESAS, MINIMO_PARA_QUARTIL, calcularPares, exercicioDoSetor, mediana, posicaoNaAmostra, quartil } from "../scripts/fundamentos/pares.mjs";
 import { LEGENDA_DA_ATENCAO, atencaoHtml, consistenciaHtml, paresHtml, resumoHtml } from "../scripts/fundamentos/resumo.mjs";
 import { fichaHtml } from "../scripts/fundamentos/pagina.mjs";
 import { montarFichas } from "../scripts/cvm/ficha.mjs";
@@ -200,7 +200,7 @@ describe("limites dos pontos de atenção", () => {
   test("os padrões", () => {
     assert.deepEqual(LIMITES_ATENCAO, {
       fcoSobreLucro: 0.8, fcoSobreLucroAnos: 3, fcoSobreLucroJanela: 5, dividaLiquidaSobreEbitda: 3, dividaCurtoPrazo: 0.5,
-      capexAnos: 3, diluicaoAnual: 0.02, diluicaoJanela: 3, margemQuedas: 3, proventosJanela: 5,
+      capexAnos: 3, diluicaoAnual: 0.02, diluicaoJanela: 3, margemQuedas: 3, proventosJanela: 5, proventosMinimo: 3,
     });
   });
 
@@ -274,44 +274,85 @@ describe("regra 1: lucro que não vira caixa", () => {
 });
 
 describe("regra 2: proventos maiores que o FCL", () => {
-  const anual = [[60, 100], [120, 100], [80, 100], [150, 100], [90, 100]].map(([prov, fcl], i) => ano(2021 + i, { proventosPagos: prov, fcl }));
+  // [proventos, FCL] de cada exercício, a partir de 2021.
+  const serieDe = (pares, inicio = 2021) => pares.map(([prov, fcl], k) => ano(inicio + k, { proventosPagos: prov, fcl }));
+  const regra = (pares, doze = null, inicio = 2021) => { const f = ficha(serieDe(pares, inicio), doze); return proventosMaioresQueFcl(f, anosDe(f)); };
 
-  test("usa os 12 meses e mostra, como contexto, em quantos dos últimos 5 anos aconteceu", () => {
-    const f = ficha(anual, { proventosPagos: 130, fcl: 100 });
+  test("soma dos proventos maior que a soma do FCL nos últimos 5 exercícios: acionada, com as duas somas e os anos", () => {
+    const r = regra([[60, 100], [120, 100], [80, 100], [150, 100], [100, 100]]);
+    assert.equal(r.acionada, true); // 510 contra 500
+    assert.deepEqual(r.anos, ["2021", "2022", "2023", "2024", "2025"]);
+    assert.equal(r.conta, "proventos pagos de R$ 510 mil e FCL de R$ 500 mil, somados os 5 exercícios de 2021 a 2025; ano a ano, os proventos passaram do FCL em 2022 e 2024");
+    assert.equal(r.limite, "soma dos proventos pagos maior que a soma do FCL nos últimos 5 exercícios com dado (mínimo de 3)");
+  });
+
+  test("limite exato: somas iguais não acionam; um real a mais aciona", () => {
+    assert.equal(regra([[60, 100], [120, 100], [80, 100], [150, 100], [90, 100]]).acionada, false); // 500 contra 500
+    assert.equal(regra([[60, 100], [120, 100], [80, 100], [150, 100], [90.01, 100]]).acionada, true);
+  });
+
+  test("um ano só acima do FCL não aciona quando a soma dos cinco fica abaixo", () => {
+    const r = regra([[10, 100], [10, 100], [10, 100], [10, 100], [300, 100]]);
+    assert.equal(r.acionada, false); // 340 contra 500
+    assert.match(r.conta, /ano a ano, os proventos passaram do FCL em 2025$/);
+  });
+
+  test("os 12 meses viram contexto: aparecem na conta e não decidem a regra", () => {
+    const cincoAbaixo = [[50, 100], [50, 100], [50, 100], [50, 100], [50, 100]];
+    const r = regra(cincoAbaixo, { proventosPagos: 130, fcl: 100 });
+    assert.equal(r.acionada, false); // nos 12 meses os proventos passam do FCL, mas a soma dos cinco anos não
+    assert.equal(r.conta, "proventos pagos de R$ 250 mil e FCL de R$ 500 mil, somados os 5 exercícios de 2021 a 2025; ano a ano, os proventos passaram do FCL em nenhum ano. Nos 12 meses até 30/09/2026: proventos de R$ 130 mil e FCL de R$ 100 mil");
+    // e o contrário: 12 meses folgados não desligam a regra
+    const cincoAcima = [[150, 100], [150, 100], [150, 100], [150, 100], [150, 100]];
+    assert.equal(regra(cincoAcima, { proventosPagos: 10, fcl: 100 }).acionada, true);
+  });
+
+  test("12 meses sem o dado (TIM): a regra avalia do mesmo jeito, só sem a frase dos 12 meses", () => {
+    const r = regra([[50, 100], [50, 100], [50, 100], [50, 100], [50, 100]]);
+    assert.equal(r.acionada, false);
+    assert.ok(!r.conta.includes("12 meses"));
+    const soFcl = regra([[50, 100], [50, 100], [50, 100]], { proventosPagos: null, fcl: 100 });
+    assert.ok(!soFcl.conta.includes("12 meses"));
+  });
+
+  test("só os últimos 5 exercícios com dado entram na soma", () => {
+    const r = regra([[900, 1], [900, 1], [10, 100], [10, 100], [10, 100], [10, 100], [10, 100]], null, 2019);
+    assert.equal(r.acionada, false);
+    assert.deepEqual(r.anos, ["2021", "2022", "2023", "2024", "2025"]);
+  });
+
+  test("ano sem dado não conta como zero: sai da janela, e a soma busca um ano mais antigo com dado", () => {
+    const r = regra([[200, 100], [50, 100], [null, 100], [50, 100], [50, null], [50, 100], [50, 100]], null, 2019);
+    assert.deepEqual(r.anos, ["2019", "2020", "2022", "2024", "2025"]);
+    assert.equal(r.acionada, false); // 400 contra 500
+    assert.equal(r.conta, "proventos pagos de R$ 400 mil e FCL de R$ 500 mil, somados os 5 exercícios de 2019 a 2025 (2019, 2020, 2022, 2024 e 2025); ano a ano, os proventos passaram do FCL em 2019");
+  });
+
+  test("mínimo de 3 exercícios com dado: com 3 avalia; com 2, não avaliada", () => {
+    const tres = regra([[150, 100], [150, 100], [150, 100]]);
+    assert.equal(tres.acionada, true);
+    assert.match(tres.conta, /^proventos pagos de R\$ 450 mil e FCL de R\$ 300 mil, somados os 3 exercícios de 2021 a 2023;/);
+    const dois = regra([[150, 100], [150, 100]]);
+    assert.deepEqual([dois.acionada, dois.motivo], [null, "só 2 exercícios com proventos e FCL (mínimo: 3); série curta (2 anos)"]);
+  });
+
+  test("série longa, mas com menos de 3 anos com os dois dados: não avaliada, com o motivo do dado que falta", () => {
+    const f = ficha([2021, 2022, 2023, 2024].map((a) => ano(a, { proventosPagos: { motivo: "não identificado" }, fcl: 100 })).concat([ano(2025, { proventosPagos: 50, fcl: 100 })]));
     const r = proventosMaioresQueFcl(f, anosDe(f));
-    assert.equal(r.acionada, true);
-    assert.equal(r.conta, "proventos pagos de R$ 130 mil e FCL de R$ 100 mil nos 12 meses até 30/09/2026. Nos últimos 5 exercícios com dado, isso aconteceu em 2 (2022 e 2024)");
-    assert.deepEqual(r.anos, ["2022", "2024"]);
+    assert.deepEqual([r.acionada, r.motivo], [null, "só 1 exercício com proventos e FCL (mínimo: 3): não identificado"]);
   });
 
-  test("limite exato: proventos iguais ao FCL não acionam", () => {
-    const igual = ficha(anual, { proventosPagos: 100, fcl: 100 });
-    assert.equal(proventosMaioresQueFcl(igual, anosDe(igual)).acionada, false);
-    const acima = ficha(anual, { proventosPagos: 100.01, fcl: 100 });
-    assert.equal(proventosMaioresQueFcl(acima, anosDe(acima)).acionada, true);
+  test("FCL somado negativo com proventos pagos: acionada", () => {
+    const r = regra([[10, -50], [10, -50], [10, 20]]);
+    assert.equal(r.acionada, true); // 30 contra −80
+    assert.match(r.conta, /^proventos pagos de R\$ 30 mil e FCL de −R\$ 80 mil, somados/);
   });
 
-  test("12 meses sem o dado (TIM): usa o último exercício e diz isso", () => {
-    const f = ficha(anual);
-    const r = proventosMaioresQueFcl(f, anosDe(f));
-    assert.equal(r.acionada, false); // 2025: 90 contra 100
-    assert.match(r.conta, /^proventos pagos de R\$ 90 mil e FCL de R\$ 100 mil no exercício de 2025 \(os 12 meses não têm esse dado\)\./);
-  });
-
-  test("12 meses com o FCL mas sem os proventos: também cai para o último exercício", () => {
-    const f = ficha(anual, { proventosPagos: null, fcl: 100 });
-    assert.match(proventosMaioresQueFcl(f, anosDe(f)).conta, /no exercício de 2025/);
-  });
-
-  test("FCL negativo com proventos pagos: acionada", () => {
-    const f = ficha(anual, { proventosPagos: 10, fcl: -50 });
+  test("o tamanho da janela e o mínimo vêm dos limites", () => {
+    const f = ficha(serieDe([[900, 1], [10, 100], [10, 100]]));
     assert.equal(proventosMaioresQueFcl(f, anosDe(f)).acionada, true);
-  });
-
-  test("sem dado nos 12 meses nem no último exercício: não avaliada, com o motivo do dado que falta", () => {
-    const f = ficha([ano(2025, { proventosPagos: { motivo: "não identificado" }, fcl: 100 })]);
-    const r = proventosMaioresQueFcl(f, anosDe(f));
-    assert.deepEqual([r.acionada, r.motivo], [null, "sem dado nos 12 meses nem no último exercício: não identificado"]);
+    const curto = proventosMaioresQueFcl(f, anosDe(f), { ...LIMITES_ATENCAO, proventosJanela: 2, proventosMinimo: 2 });
+    assert.deepEqual([curto.acionada, curto.anos], [false, ["2022", "2023"]]);
   });
 });
 
@@ -548,16 +589,19 @@ describe("casos reais: Assaí, Ambev e TIM", () => {
     assert.equal(margemEmQueda(anosDe(ficha(anual.slice(0, 4)))).motivo, "sem margem líquida em 2011 e 2012");
   });
 
-  test("TIM: os 12 meses são null, então as regras de hoje usam o último exercício e dizem isso", () => {
+  test("TIM: os 12 meses são null, então as regras de hoje usam o último exercício e dizem isso; a dos proventos soma os exercícios", () => {
     const motivo = "a companhia passou a consolidar";
     const anual = serie(2021, "lucroLiquido", [2957, 1671, 2837, 3154, 4312], { proventosPagos: 5400, fcl: 8900, dividaLiquida: -3100, ebitda: 13_422, dividaBruta: 9000, dividaCurtoPrazo: 0.333, fco: 13_400, capex: 4500 });
     const f = { ...ficha(anual), doze: { fim: "2026-06-30", tipo: "indisponivel", motivo, indicadores: ind(Object.fromEntries(["proventosPagos", "fcl", "dividaLiquida", "ebitda", "dividaBruta", "dividaCurtoPrazo"].map((id) => [id, { motivo }]))) } };
     const a = calcularAtencao(f);
-    for (const id of ["proventosMaioresQueFcl", "dividaLiquidaAlta", "dividaNoCurtoPrazo"]) {
+    for (const id of ["dividaLiquidaAlta", "dividaNoCurtoPrazo"]) {
       const r = a.regras.find((x) => x.id === id);
       assert.equal(r.acionada, false, id);
       assert.match(r.conta, /no exercício de 2025 \(os 12 meses não têm esse dado\)/, id);
     }
+    const proventos = a.regras.find((x) => x.id === "proventosMaioresQueFcl");
+    assert.equal(proventos.acionada, false);
+    assert.equal(proventos.conta, "proventos pagos de R$ 27 mi e FCL de R$ 45 mi, somados os 5 exercícios de 2021 a 2025; ano a ano, os proventos passaram do FCL em nenhum ano");
   });
 });
 
@@ -580,8 +624,23 @@ describe("pares: mediana, quartil e posição", () => {
   });
 
   test("empate com a mediana: 'na mediana'", () => {
-    assert.deepEqual(posicaoNaAmostra(4, [1, 4, 9]), { posicao: "na mediana", faixa: "no meio do setor" });
+    assert.deepEqual(posicaoNaAmostra(4, [1, 2, 4, 9, 10]), { posicao: "na mediana", faixa: "no meio do setor" });
     assert.equal(posicaoNaAmostra(5, [5, 5, 5, 5]).posicao, "na mediana");
+    assert.equal(posicaoNaAmostra(5, [5, 5, 5, 5, 5]).posicao, "na mediana");
+  });
+
+  test("amostra com menos de 5 empresas: só 'acima', 'abaixo' ou 'na mediana', sem a frase do quartil", () => {
+    assert.equal(MINIMO_PARA_QUARTIL, 5);
+    // 3 empresas
+    assert.deepEqual(posicaoNaAmostra(9, [1, 4, 9]), { posicao: "acima da mediana", faixa: null });
+    assert.deepEqual(posicaoNaAmostra(1, [1, 4, 9]), { posicao: "abaixo da mediana", faixa: null });
+    assert.deepEqual(posicaoNaAmostra(4, [1, 4, 9]), { posicao: "na mediana", faixa: null });
+    // 4 empresas
+    assert.deepEqual(posicaoNaAmostra(9, [1, 4, 6, 9]), { posicao: "acima da mediana", faixa: null });
+    // 5 empresas: o quartil volta
+    assert.deepEqual(posicaoNaAmostra(9, [1, 4, 6, 8, 9]), { posicao: "acima da mediana", faixa: "entre os 25% maiores do setor" });
+    assert.deepEqual(posicaoNaAmostra(1, [1, 4, 6, 8, 9]), { posicao: "abaixo da mediana", faixa: "entre os 25% menores do setor" });
+    assert.deepEqual(posicaoNaAmostra(10, [1, 4, 6, 8, 10, 11, 12]).faixa, "na metade de cima do setor, fora dos 25% maiores");
   });
 
   test("a lista de indicadores é curta e o mínimo é de 3 empresas", () => {
@@ -609,6 +668,33 @@ describe("pares: comparação com o setor", () => {
     assert.equal(e.conta, "40,0%, acima da mediana (20,0%); entre os 25% maiores do setor; mediana de 5 empresas (S)");
     assert.equal(item(p, "CCCC3").posicao, "na mediana");
     assert.equal(item(p, "AAAA3").posicao, "abaixo da mediana");
+  });
+
+  test("setor com 3 empresas: mediana e posição, sem a frase do quartil na conta", () => {
+    const p = calcularPares(fichas([par("AAAA3", "S", 0.1), par("BBBB3", "S", 0.2), par("CCCC3", "S", 0.4)]));
+    const maior = item(p, "CCCC3");
+    assert.deepEqual([maior.mediana, maior.empresas, maior.posicao, maior.faixa], [0.2, 3, "acima da mediana", null]);
+    assert.equal(maior.conta, "40,0%, acima da mediana (20,0%); mediana de 3 empresas (S)");
+    assert.deepEqual([item(p, "AAAA3").posicao, item(p, "AAAA3").faixa], ["abaixo da mediana", null]);
+    assert.deepEqual([item(p, "BBBB3").posicao, item(p, "BBBB3").faixa], ["na mediana", null]);
+    assert.ok(p.CCCC3.itens.every((i) => i.faixa === null));
+  });
+
+  test("setor com 5 empresas: a posição vem com a frase do quartil", () => {
+    const p = calcularPares(fichas([par("AAAA3", "S", 0.05), par("BBBB3", "S", 0.1), par("CCCC3", "S", 0.2), par("DDDD3", "S", 0.3), par("EEEE3", "S", 0.4)]));
+    assert.deepEqual([item(p, "EEEE3").posicao, item(p, "EEEE3").faixa], ["acima da mediana", "entre os 25% maiores do setor"]);
+    assert.deepEqual([item(p, "DDDD3").posicao, item(p, "DDDD3").faixa], ["acima da mediana", "entre os 25% maiores do setor"]); // 0,3 é o terceiro quartil
+    assert.deepEqual([item(p, "AAAA3").posicao, item(p, "AAAA3").faixa], ["abaixo da mediana", "entre os 25% menores do setor"]);
+    assert.deepEqual([item(p, "CCCC3").posicao, item(p, "CCCC3").faixa], ["na mediana", "no meio do setor"]);
+  });
+
+  test("o quartil depende das empresas com dado em cada linha, não do tamanho do setor", () => {
+    // 5 empresas no setor, mas só 4 com a margem: a linha fica sem o quartil
+    const p = calcularPares(fichas([par("AAAA3", "S", 0.1), par("BBBB3", "S", 0.2), par("CCCC3", "S", 0.3), par("DDDD3", "S", 0.4), par("EEEE3", "S", null)]));
+    assert.deepEqual([item(p, "DDDD3").empresas, item(p, "DDDD3").faixa, item(p, "DDDD3").posicao], [4, null, "acima da mediana"]);
+    // a linha "anos com lucro" tem as 5: nela o quartil aparece
+    assert.equal(item(p, "DDDD3", "anosComLucro").empresas, 5);
+    assert.ok(item(p, "DDDD3", "anosComLucro").faixa !== null);
   });
 
   test("setor com 2 empresas não mostra mediana", () => {
@@ -730,15 +816,19 @@ describe("HTML do topo da ficha", () => {
     const pares = {
       setor: "Bens industriais", exercicio: "2025-12-31", empresas: 3, tickers: ["EMBJ3", "POMO4", "WEGE3"], temExercicio: true,
       itens: [
-        { id: "margemLiquida", nome: "Margem líquida", formato: "pct", valor: 0.166, mediana: 0.136, empresas: 3, tickers: ["EMBJ3", "POMO4", "WEGE3"], posicao: "acima da mediana", faixa: "entre os 25% maiores do setor", motivo: null },
-        { id: "dividaLiquidaSobreEbitda", nome: "Dívida líquida ÷ EBITDA", formato: "vezes", valor: -0.3, mediana: 0, empresas: 3, tickers: ["EMBJ3", "POMO4", "WEGE3"], posicao: "abaixo da mediana", faixa: "entre os 25% menores do setor", motivo: null },
+        { id: "margemLiquida", nome: "Margem líquida", formato: "pct", valor: 0.166, mediana: 0.136, empresas: 3, tickers: ["EMBJ3", "POMO4", "WEGE3"], posicao: "acima da mediana", faixa: null, motivo: null },
+        { id: "dividaLiquidaSobreEbitda", nome: "Dívida líquida ÷ EBITDA", formato: "vezes", valor: -0.3, mediana: 0, empresas: 3, tickers: ["EMBJ3", "POMO4", "WEGE3"], posicao: "abaixo da mediana", faixa: null, motivo: null },
+        { id: "roe", nome: "ROE", formato: "pct", valor: 0.365, mediana: 0.2, empresas: 5, tickers: ["A", "B", "C", "D", "WEGE3"], posicao: "acima da mediana", faixa: "entre os 25% maiores do setor", motivo: null },
         { id: "roic", nome: "ROIC", formato: "pct", valor: 0.33, mediana: null, empresas: 2, tickers: ["POMO4", "WEGE3"], posicao: null, faixa: null, motivo: "setor com menos de 3 empresas com dado" },
       ],
     };
     const html = paresHtml(pares);
     assert.match(html, /Mediana de 3 empresas do setor Bens industriais, no exercício de 2025\. Estar acima ou abaixo da mediana é só uma posição: não diz se o número é favorável\./);
     assert.match(html, /<details class="amostra"><summary>As 3 empresas da amostra<\/summary><p>EMBJ3, POMO4, WEGE3\./);
-    assert.match(html, /<tr><th scope="row">Margem líquida<\/th><td class="n">16,6%<\/td><td class="n" title="Mediana de 3 empresas: EMBJ3, POMO4, WEGE3">13,6% <small>\(3\)<\/small><\/td><td>Acima da mediana; entre os 25% maiores do setor<\/td><\/tr>/);
+    assert.match(html, /<tr><th scope="row">Margem líquida<\/th><td class="n">16,6%<\/td><td class="n" title="Mediana de 3 empresas: EMBJ3, POMO4, WEGE3">13,6% <small>\(3\)<\/small><\/td><td>Acima da mediana<\/td><\/tr>/);
+    // com 3 empresas a posição vem sem o quartil; com 5, com ele
+    assert.match(html, /<th scope="row">Dívida líquida ÷ EBITDA<\/th>.*?<td>Abaixo da mediana<\/td><\/tr>/s);
+    assert.match(html, /<th scope="row">ROE<\/th>.*?<small>\(5\)<\/small><\/td><td>Acima da mediana; entre os 25% maiores do setor<\/td><\/tr>/s);
     assert.match(html, /<th scope="row">ROIC<\/th><td class="n">33,0%<\/td><td class="n">—<\/td><td><span class="vazio">Setor com menos de 3 empresas com dado<\/span><\/td>/);
     // a mesma marcação para acima e abaixo: nenhuma classe de cor na posição
     assert.ok(!/class="(pos|neg|alta|baixa)"/.test(html));
@@ -796,8 +886,8 @@ describe("ficha: os campos novos", () => {
     assert.equal(outros.fichas.WEGE3.atencao.limites.dividaLiquidaSobreEbitda, 1);
   });
 
-  test("WEG com a série curta da fixture (2 anos): as regras de janela ficam não avaliadas, as de hoje avaliam", () => {
+  test("WEG com a série curta da fixture (2 anos): as regras de janela (inclusive a dos proventos) ficam não avaliadas, as de hoje avaliam", () => {
     const estado = Object.fromEntries(weg.atencao.regras.map((r) => [r.id, r.acionada]));
-    assert.deepEqual(estado, { lucroQueNaoViraCaixa: null, proventosMaioresQueFcl: true, dividaLiquidaAlta: false, dividaNoCurtoPrazo: false, capexMaiorQueFco: null, diluicao: null, margemEmQueda: null });
+    assert.deepEqual(estado, { lucroQueNaoViraCaixa: null, proventosMaioresQueFcl: null, dividaLiquidaAlta: false, dividaNoCurtoPrazo: false, capexMaiorQueFco: null, diluicao: null, margemEmQueda: null });
   });
 });

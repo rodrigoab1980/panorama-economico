@@ -8,10 +8,14 @@
 //     meses ficam de fora, porque as datas dos ITR variam de companhia para companhia.
 //   - Mediana só com 3 ou mais companhias com dado naquele indicador e naquele exercício.
 //   - Empate com a mediana: a companhia fica "na mediana".
+//   - O quartil por extenso ("entre os 25% maiores do setor") só aparece com 5 ou mais companhias com dado.
 import { percentual, vezes } from "./formatar.mjs";
 import { rotuloDoAno } from "./consistencia.mjs";
 
 export const MINIMO_DE_EMPRESAS = 3;
+// Com menos empresas do que isto na amostra, a posição diz só "acima", "abaixo" ou "na mediana", sem
+// a frase do quartil: com 3 ou 4 empresas, "entre os 25% maiores" é só "a maior das três".
+export const MINIMO_PARA_QUARTIL = 5;
 
 // Os indicadores comparados: poucos, e não os 45. `de` diz de onde sai o valor de cada companhia:
 // do exercício escolhido ("indicador") ou da consistência da série ("consistencia").
@@ -48,9 +52,12 @@ export function quartil(valores, p) {
 
 // Posição de um valor na amostra: { posicao, faixa }.
 //   posicao  "acima da mediana", "abaixo da mediana" ou "na mediana"
-//   faixa    o quartil por extenso
+//   faixa    o quartil por extenso, ou null quando a amostra tem menos de MINIMO_PARA_QUARTIL empresas
 export function posicaoNaAmostra(valor, valores) {
   const m = mediana(valores);
+  if (valores.length < MINIMO_PARA_QUARTIL) {
+    return { posicao: valor === m ? "na mediana" : valor > m ? "acima da mediana" : "abaixo da mediana", faixa: null };
+  }
   const q1 = quartil(valores, 0.25);
   const q3 = quartil(valores, 0.75);
   if (valor === m) return { posicao: "na mediana", faixa: "no meio do setor" };
@@ -130,7 +137,7 @@ export function calcularPares(fichas) {
         const { posicao, faixa } = posicaoNaAmostra(valor, valores);
         return {
           ...base, valor, mediana: m, empresas: dados.length, tickers, posicao, faixa, motivo: null,
-          conta: `${escrever(valor, indicador.formato)}, ${posicao} (${escrever(m, indicador.formato)}); ${faixa}; ${amostra}`,
+          conta: `${escrever(valor, indicador.formato)}, ${posicao} (${escrever(m, indicador.formato)})${faixa ? `; ${faixa}` : ""}; ${amostra}`,
         };
       });
       resultado[ficha.ticker] = { setor, exercicio, empresas: comExercicio.length, tickers: tickersDoSetor, temExercicio, itens };

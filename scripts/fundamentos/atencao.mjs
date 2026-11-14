@@ -24,7 +24,8 @@ export const LIMITES_ATENCAO = {
   diluicaoAnual: 0.02, // crescimento anual composto do número de ações acima disto
   diluicaoJanela: 3, // exercícios da janela da diluição
   margemQuedas: 3, // quedas seguidas da margem líquida
-  proventosJanela: 5, // exercícios do contexto de "proventos maiores que o FCL"
+  proventosJanela: 5, // exercícios com dado somados em "proventos maiores que o FCL"
+  proventosMinimo: 3, // mínimo de exercícios com dado para avaliar essa regra
 };
 
 // Variável do Actions de cada limite.
@@ -94,20 +95,33 @@ export function lucroQueNaoViraCaixa(anos, L = LIMITES_ATENCAO) {
   return regra("lucroQueNaoViraCaixa", "Lucro que não vira caixa", limite, fazer());
 }
 
-// 2. Proventos maiores que o FCL, hoje. Como contexto, em quantos dos últimos exercícios isso aconteceu.
+// 2. Proventos maiores que o FCL: a soma dos proventos pagos nos últimos N exercícios com dado é maior
+// que a soma do FCL nos mesmos anos. Olhar vários anos tira o efeito de um ano só (um dividendo
+// extraordinário, um ano de investimento pesado). Precisa de um mínimo de exercícios com os dois
+// dados. Os 12 meses entram só como contexto, na conta.
 export function proventosMaioresQueFcl(ficha, anos, L = LIMITES_ATENCAO) {
-  const limite = "proventos pagos maiores que o fluxo de caixa livre";
+  const limite = `soma dos proventos pagos maior que a soma do FCL nos últimos ${L.proventosJanela} exercícios com dado (mínimo de ${L.proventosMinimo})`;
   const fazer = () => {
-    const fonte = fonteDeHoje(ficha, anos, ["proventosPagos", "fcl"]);
-    if (!fonte) return naoAvaliada(motivoSemFonte(ficha, anos, ["proventosPagos", "fcl"]));
-    const prov = fonte.indicadores.proventosPagos.valor;
-    const fcl = fonte.indicadores.fcl.valor;
-    const janela = anos.slice(-L.proventosJanela).filter((a) => temValor(a.indicadores.proventosPagos?.valor) && temValor(a.indicadores.fcl?.valor));
-    const vezesNaJanela = janela.filter((a) => a.indicadores.proventosPagos.valor > a.indicadores.fcl.valor);
-    const contexto = janela.length ? `. Nos últimos ${janela.length} exercícios com dado, isso aconteceu em ${vezesNaJanela.length}${vezesNaJanela.length ? ` (${lista(vezesNaJanela.map((a) => a.rotulo))})` : ""}` : "";
+    const comDado = anos.filter((a) => temValor(a.indicadores.proventosPagos?.valor) && temValor(a.indicadores.fcl?.valor));
+    if (comDado.length < L.proventosMinimo) {
+      const semDado = anos.find((a) => !temValor(a.indicadores.proventosPagos?.valor) || !temValor(a.indicadores.fcl?.valor));
+      const porque = semDado ? `: ${(!temValor(semDado.indicadores.proventosPagos?.valor) ? semDado.indicadores.proventosPagos : semDado.indicadores.fcl)?.motivo ?? "sem dado"}` : "";
+      return naoAvaliada(`só ${comDado.length} ${comDado.length === 1 ? "exercício" : "exercícios"} com proventos e FCL (mínimo: ${L.proventosMinimo})${anos.length < L.proventosMinimo ? `; ${serieCurta(anos.length)}` : porque}`);
+    }
+    const janela = comDado.slice(-L.proventosJanela);
+    const proventos = janela.reduce((soma, a) => soma + a.indicadores.proventosPagos.valor, 0);
+    const fcl = janela.reduce((soma, a) => soma + a.indicadores.fcl.valor, 0);
+    const maiores = janela.filter((a) => a.indicadores.proventosPagos.valor > a.indicadores.fcl.valor);
+    const rotulos = janela.map((a) => a.rotulo);
+    const periodo = janela.length === 1 ? rotulos[0] : `${rotulos[0]} a ${rotulos.at(-1)}`;
+    const pulados = Number(janela.at(-1).fim.slice(0, 4)) - Number(janela[0].fim.slice(0, 4)) + 1 !== janela.length ? ` (${lista(rotulos)})` : "";
+    const anoAAno = `ano a ano, os proventos passaram do FCL em ${maiores.length ? lista(maiores.map((a) => a.rotulo)) : "nenhum ano"}`;
+    const d = ficha?.doze?.indicadores;
+    const hoje = ficha?.doze?.fim && temValor(d?.proventosPagos?.valor) && temValor(d?.fcl?.valor)
+      ? `. Nos 12 meses até ${data(ficha.doze.fim)}: proventos de ${moeda(d.proventosPagos.valor)} e FCL de ${moeda(d.fcl.valor)}` : "";
     return {
-      acionada: prov > fcl, anos: vezesNaJanela.map((a) => a.rotulo),
-      conta: `proventos pagos de ${moeda(prov)} e FCL de ${moeda(fcl)} ${fonte.quando}${contexto}`,
+      acionada: proventos > fcl, anos: rotulos,
+      conta: `proventos pagos de ${moeda(proventos)} e FCL de ${moeda(fcl)}, somados os ${janela.length} exercícios de ${periodo}${pulados}; ${anoAAno}${hoje}`,
     };
   };
   return regra("proventosMaioresQueFcl", "Proventos maiores que o FCL", limite, fazer());
