@@ -175,8 +175,15 @@ const TOKENS = readFileSync(new URL("../site/tokens.css", import.meta.url), "utf
 // Os tokens de cor de cada tema: { nome: "#RRGGBB" }.
 function tema(qual) {
   const inicioDoEscuro = TOKENS.indexOf("@media (prefers-color-scheme: dark)");
-  const fimDoEscuro = TOKENS.indexOf("\n}\n", inicioDoEscuro) + 3;
-  const trecho = qual === "escuro" ? TOKENS.slice(inicioDoEscuro, fimDoEscuro) : TOKENS.slice(0, inicioDoEscuro);
+  return temaDoCss(TOKENS, qual);
+}
+// O bloco do tema escuro vai do @media até a chave que o fecha, sozinha numa linha. O fim de linha
+// pode ser LF ou CRLF: o teste não depende da configuração do git de cada máquina.
+function temaDoCss(css, qual) {
+  const inicioDoEscuro = css.indexOf("@media (prefers-color-scheme: dark)");
+  const fecho = /\r?\n}\r?\n/.exec(css.slice(inicioDoEscuro));
+  const fimDoEscuro = fecho ? inicioDoEscuro + fecho.index + fecho[0].length : css.length;
+  const trecho = qual === "escuro" ? css.slice(inicioDoEscuro, fimDoEscuro) : css.slice(0, inicioDoEscuro);
   return Object.fromEntries([...trecho.matchAll(/--([a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})\b/g)].map((m) => [m[1], m[2]]));
 }
 // Contraste WCAG 2 entre duas cores "#RRGGBB".
@@ -203,6 +210,15 @@ describe("tokens de cor: dois temas, com contraste AA", () => {
     for (const nome of CORES) {
       assert.match(claro[nome] ?? "", /^#[0-9A-F]{6}$/i, `claro: ${nome}`);
       assert.match(escuro[nome] ?? "", /^#[0-9A-F]{6}$/i, `escuro: ${nome}`);
+    }
+  });
+
+  test("a leitura dos temas dá o mesmo resultado com LF e com CRLF", () => {
+    const lf = TOKENS.replace(/\r\n/g, "\n");
+    const crlf = lf.replace(/\n/g, "\r\n");
+    for (const qual of ["claro", "escuro"]) {
+      assert.deepEqual(temaDoCss(crlf, qual), temaDoCss(lf, qual), qual);
+      assert.ok(Object.keys(temaDoCss(lf, qual)).length >= CORES.length, qual);
     }
   });
 
