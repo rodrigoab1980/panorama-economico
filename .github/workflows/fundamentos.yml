@@ -11,9 +11,6 @@ on:
     # Domingo, 09:23 de Brasília (12:23 UTC). A CVM regrava os ZIPs aos domingos entre 10:14 e 10:59 UTC
     # (visto no Last-Modified); a coleta vem depois disso. Minuto quebrado para fugir dos horários cheios.
     - cron: "23 12 * * 0"
-  # TEMPORÁRIO (#37): primeira execução real, na branch do PR, gravando em dados-teste. Sai antes do merge.
-  push:
-    branches: [feat/workflow-fundamentos]
   workflow_dispatch:
     inputs:
       branch:

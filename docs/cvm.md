@@ -238,6 +238,18 @@ O lucro por ação informado só serve para isso. Nenhum indicador é calculado 
 
 **Lucro da controladora (3.11.01).** Três companhias deixam 3.11.01 e 3.11.02 zeradas na DFP de 2025 e informam só o 3.11 (Klabin, Sabesp e Vamos): para elas o lucro por ação fica `null`. O Assaí só entrega a demonstração individual, que não tem a conta: vale o 3.11.
 
+### Número de ações que diverge do documento anterior (#37)
+
+Nos 12 meses, a composição do capital é a do documento mais recente. Se o **total de ações dela diverge mais de 50%**, para cima ou para baixo, do total do documento imediatamente anterior, a composição não é usada: o número de ações, os valores por ação e o valor de mercado ficam `null`, com o motivo "o número de ações do ITR de dd/mm/aaaa diverge N% do documento anterior". O limite é o mesmo da diluição (`LIMITE_DILUICAO`).
+
+- **Quem cai:** a Vivara. O ITR de 30/09/2026 informa 82.118.477 ações, contra 236.197.769 no de 30/06/2026 e na DFP de 2025. Com o número errado, o valor de mercado dela sairia 1,4 bilhão em vez de 4,0 bilhões.
+- **Um desdobramento de verdade também cai**, e sai sozinho no trimestre seguinte, quando os dois documentos já trazem o número novo.
+- A série anual não é afetada: nela, a variação grande já deixa a diluição `null` (decisão 19 do README).
+
+**A composição do capital só existe de 2020 em diante.** Os ZIPs de DFP de 2010 a 2019 não trazem o arquivo. Por isso o número de ações, a diluição e os valores por ação ficam `null` nos exercícios até 2019 (545 dos 929 períodos anuais das 64 companhias), com o motivo "falta a composição do capital do período".
+
+**Escala que muda de um exercício para outro.** A escala (unidade ou mil) é descoberta de novo a cada documento. Quando ela muda entre dois exercícios seguidos da mesma companhia, a coleta registra um aviso. Na série de 2020 a 2025 são nove mudanças em oito companhias: Assaí (2024 e 2025), Axia (2021), Azzas (2022), Iguatemi (2021), Petrobras (2021), Localiza (2023), SmartFit (2021) e Vivo (2022). Não conferi caso a caso se a companhia mudou a forma de informar ou se a regra errou.
+
 ## Base de 12 meses pelo ITR
 
 - **Não existe ITR do 4º trimestre:** o ano fecha na DFP.
@@ -298,6 +310,30 @@ A pasta pode ser qualquer uma com os CSVs de DFP e ITR de **uma** companhia.
   - Equatorial, Totvs, Copel, Cosan, Marfrig e outras com ajustes menores.
   - **Decisão a tomar (#33):** usar sempre o valor mais recente de cada período (o `PENÚLTIMO` do documento seguinte, quando houver). Assim a série fica comparável ano a ano.
 - **Consolidado × individual:** em 2024 havia 468 empresas com DRE consolidada e 705 com individual. Todas as 81 empresas da amostra têm consolidado. Empresas sem controladas só publicam o individual, então o leitor deve usar o individual quando faltar o consolidado.
+
+### Consolidado zerado conta como ausente (#37)
+
+Um documento cujo consolidado tem o **ativo total (BPA, conta 1) do próprio exercício igual a 0** tem o consolidado tratado como ausente, e vale o individual daquele documento. A regra é estreita de propósito: toda companhia aberta tem ativo maior que zero, então o zero só aparece quando o formulário consolidado foi entregue em branco. Fica em `escolherConsolidado` (`scripts/cvm/leitor.mjs`), e `consolidadosZerados` diz quais documentos caíram nela.
+
+- **Quem cai:** nas 64 companhias da página, só a TIM, nas DFPs de 2024 e de 2025. O consolidado vem inteiro em zero (ativo, receita e o resto) e o individual vem preenchido.
+- **O que conta é o ÚLTIMO.** No ITR de 2026 da TIM o consolidado do período vem preenchido e só a coluna do ano anterior (PENÚLTIMO) vem em zero. Esse documento não cai na regra.
+- **É por documento.** O zerado de um ano não tira o consolidado de outro.
+
+A série anual da TIM, depois da regra (R$ milhões):
+
+| Exercício | Base | Receita | EBITDA | Lucro líquido | Ativo total |
+|---|---|---:|---:|---:|---:|
+| 2017 | individual | 736 | 225 | 102 | 2.039 |
+| 2018 | individual | 3.368 | 1.516 | 1.534 | 31.368 |
+| 2019 | individual | 17.377 | 9.716 | 3.860 | 39.857 |
+| 2020 | consolidado | 17.268 | 8.342 | 1.844 | 41.654 |
+| 2021 | individual | 18.058 | 9.448 | 2.957 | 49.819 |
+| 2022 | consolidado | 21.531 | 9.987 | 1.671 | 56.408 |
+| 2023 | consolidado | 23.834 | 11.834 | 2.837 | 55.260 |
+| 2024 | individual | 25.448 | 12.533 | 3.154 | 56.327 |
+| 2025 | individual | 26.625 | 13.422 | 4.312 | 56.939 |
+
+Antes da regra, 2024 e 2025 saíam do consolidado zerado: receita, EBITDA, lucro e ativo iguais a 0. Os anos de 2017 a 2019 e 2021 já eram individuais, porque a TIM S.A. não entregou consolidado neles. A base de 12 meses dela continua indisponível: a DFP de 2025 é individual e o ITR de 2026 é consolidado, e as três parcelas têm de estar na mesma base.
 
 ## Ticker → CNPJ (FCA)
 
