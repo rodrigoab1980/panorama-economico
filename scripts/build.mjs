@@ -1,7 +1,8 @@
 // Monta dist/ a partir de site/: copia tudo (inclusive site/data/, gerado pelo update.mjs), troca o
 // marcador <!-- menu --> pelo menu comum em cada página de PAGINAS e, a partir dos fatos da branch
 // `dados`, gera a página Fundamentalista: a lista em dist/fundamentos/, uma página por companhia em
-// dist/fundamentos/<ticker>/ (com os CSVs de cada bloco) e os JSON em dist/fundamentos/dados/.
+// dist/fundamentos/<ticker>/ (com os CSVs de cada bloco), os JSON em dist/fundamentos/dados/ e o painel
+// da temporada, no topo da lista e em dist/fundamentos/dados/painel.json.
 // Só casca (disco); a lógica está em scripts/paginas.mjs, scripts/cvm/ficha.mjs e scripts/fundamentos/.
 //
 // Uso: node scripts/build.mjs [origem] [destino]   (padrão: site dist)
@@ -17,6 +18,10 @@ import { ARQUIVO_COTACOES } from "./precos/fonte.mjs";
 import { diaBR } from "./logica.mjs";
 import { csvsDaFicha, fichaHtml, inserirLista, listaHtml, pastaDaFicha } from "./fundamentos/pagina.mjs";
 import { configAtencao } from "./fundamentos/atencao.mjs";
+import { montarPainel } from "./fundamentos/painel.mjs";
+import { inserirPainel, painelHtml } from "./fundamentos/painel-html.mjs";
+
+const ARQUIVO_DO_PAINEL = "painel.json";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const origem = resolve(RAIZ, process.argv[2] ?? "site");
@@ -99,10 +104,27 @@ async function gerarPaginas({ fichas, indice }) {
   console.log(`páginas das companhias: ${prontas} em ${Date.now() - inicio} ms`);
 }
 
-// A lista entra em fundamentos/index.html mesmo sem dados (com o aviso de que ainda não foram coletados).
+// O painel da temporada, a partir das fichas. Um erro aqui não derruba a lista: a página sai sem o painel.
+async function gerarPainel(indice, fichas) {
+  if (!fichas || !indice) return "";
+  try {
+    const painel = montarPainel(fichas, { total: indice.companhias.length });
+    if (!painel) return "";
+    await writeFile(join(destino, PASTA_DAS_FICHAS, ARQUIVO_DO_PAINEL), JSON.stringify(painel, null, 1));
+    console.log(`painel: temporada do ${painel.referencia.nome}, ${painel.entregaram} de ${painel.total} entregaram, ${painel.comparadas} com a comparação`);
+    return painelHtml(painel, { comPagina: new Set(indice.companhias.filter((c) => c.ficha).map((c) => c.ticker)) });
+  } catch (e) {
+    console.warn(`aviso: painel não gerado: ${e.message}`);
+    return "";
+  }
+}
+
+// O painel e a lista entram em fundamentos/index.html mesmo sem dados (o painel sai vazio, e a lista,
+// com o aviso de que os dados ainda não foram coletados).
 async function gerarLista(indice, fichas) {
   const arquivo = join(destino, arquivoDaPagina(PAGINAS.find((p) => p.id === "fundamentos")));
-  await writeFile(arquivo, inserirLista(await readFile(arquivo, "utf8"), listaHtml(indice, { fichas })));
+  const comPainel = inserirPainel(await readFile(arquivo, "utf8"), await gerarPainel(indice, fichas));
+  await writeFile(arquivo, inserirLista(comPainel, listaHtml(indice, { fichas })));
 }
 
 let resultado = null;

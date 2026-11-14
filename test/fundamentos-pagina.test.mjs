@@ -498,6 +498,8 @@ describe("build: a lista e uma página por companhia", () => {
     const lista = readFileSync(join(dist, "fundamentos", "index.html"), "utf8");
     assert.match(lista, /Os dados das companhias ainda não foram coletados/);
     assert.ok(!lista.includes(MARCADOR_DA_LISTA));
+    // sem dados não há painel: o marcador some e nada entra no lugar
+    assert.ok(!lista.includes("<!-- painel -->") && !lista.includes('class="painel"'));
     assert.ok(lista.includes('class="menu-site"'));
     for (const f of ["fundamentos.css", "ficha.js", "lista.js"]) assert.ok(existsSync(join(dist, "fundamentos", f)), f);
     assert.deepEqual(readdirSync(join(dist, "fundamentos")).sort(), ["ficha.js", "fundamentos.css", "index.html", "lista.js"]);
@@ -534,7 +536,14 @@ describe("build: a lista e uma página por companhia", () => {
 
     const lista = readFileSync(join(dist, "fundamentos", "index.html"), "utf8");
     assert.equal((lista.match(/<li data-busca=/g) ?? []).length, 64);
-    assert.equal((lista.match(/<a href="[a-z0-9]+\/">/g) ?? []).length, 64);
+    // cada linha da lista tem o link para a ficha (o painel da temporada, acima da lista, tem os seus)
+    assert.equal((lista.match(/<li data-busca="[^"]*"><a href="[a-z0-9]+\/">/g) ?? []).length, 64);
+    // o painel (#66) vem antes da busca e da lista, e o seu JSON fica junto das fichas
+    assert.match(saida, /painel: temporada do 3T26, 64 de 64 entregaram, 64 com a comparação/);
+    assert.ok(lista.indexOf('<div class="painel">') > 0 && lista.indexOf('<div class="painel">') < lista.indexOf('<div class="busca"'));
+    assert.ok(!lista.includes("<!-- painel -->"));
+    const painel = JSON.parse(readFileSync(join(dist, "fundamentos", "dados", "painel.json"), "utf8"));
+    assert.deepEqual([painel.referencia.nome, painel.entregaram, painel.total, painel.comparadas], ["3T26", 64, 64, 64]);
 
     // nenhum link interno quebrado nem absoluto, na lista e nas fichas
     const conferir = (arquivo) => {
@@ -548,7 +557,7 @@ describe("build: a lista e uma página por companhia", () => {
     };
     conferir(join(dist, "fundamentos", "index.html"));
     for (const p of pastas.slice(0, 5)) conferir(join(dist, "fundamentos", p, "index.html"));
-    // os JSON das fichas continuam saindo
-    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 65);
+    // os JSON das fichas continuam saindo: as 64, o índice e o painel
+    assert.equal(readdirSync(join(dist, "fundamentos", "dados")).length, 66);
   });
 });

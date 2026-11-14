@@ -276,10 +276,38 @@ São só dados e regras à vista. Nada aqui é recomendação de investimento.
 
 A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por isso o centro da ficha é a série anual, de 2010 em diante. Os 12 meses e os múltiplos são a coluna de hoje dessa história.
 
-- **`/fundamentos/`** lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
+- **`/fundamentos/`** abre com o [painel da temporada](#o-painel-da-temporada) e, logo abaixo, lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
 - **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
 
 **As tabelas vêm prontas no HTML.** O build gera uma página por companhia, e ela funciona sem JavaScript. O JS é só uma camada extra: a busca da lista e o balão que mostra a fórmula, o documento e o motivo de um vazio (sem JS, isso tudo está no `title`). Os links internos são todos relativos, porque o site fica em `/panorama-economico/`.
+
+### O painel da temporada
+
+Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhias na temporada atual. O painel sai do que o build já tem (as fichas); nada novo vem de fora. A lógica fica em `scripts/fundamentos/painel.mjs` e o HTML em `painel-html.mjs`, os dois puros e testados. O build também grava `dist/fundamentos/dados/painel.json`.
+
+**O que é comparado.** O acumulado do ano até a data do documento, contra o mesmo período do ano anterior, como entregue à CVM, sem ajuste de não recorrentes. São as parcelas `acumuladoAtual` e `acumuladoAnterior` da base de 12 meses; a ficha as expõe em `doze.acumulado`, com a receita e o lucro de cada uma. Quando o documento mais recente for a DFP, a comparação passa a ser a do exercício contra o exercício anterior.
+
+**Regras gerais:**
+
+- **Período de referência:** o `dtRefer` mais recente entre os documentos das 64. Ele dá nome à temporada: 1T, 2T ou 3T, ou "Exercício de 2026" quando for DFP. A companhia cujo documento mais recente é anterior a esse conta como "ainda não entregou" e fica fora das comparações.
+- **Mesma base:** atual e anterior no consolidado, ou os dois no individual. Se a base não for a mesma, a companhia fica fora da comparação, e a página diz quantas ficaram e por quê. É a regra dos 12 meses.
+- **Sem número não é zero:** quem não tem receita sai do denominador da receita e da margem, não do lucro. Demonstração zerada é falta de dado.
+- **Lucro igual a zero não é lucro:** fica do lado do prejuízo, como na régua de anos.
+
+**Os blocos, na ordem da página:**
+
+1. **Temporada.** A barra de progresso ("29 de 64 já entregaram o ITR de 30/09/2026") e quatro números sobre quem entregou e tem a comparação, cada um com o denominador à vista: lucro do acumulado maior que o do ano anterior, receita maior, margem líquida maior e prejuízo no acumulado. Empate entra no denominador e não entra no numerador.
+2. **Maiores variações do lucro no acumulado.** Duas listas de 5, as maiores altas e as maiores quedas, com link para a ficha.
+   - A variação percentual só existe quando os dois lucros são positivos.
+   - Lucro anterior abaixo de R$ 50 milhões fica fora do percentual, para não aparecer "+700%" sobre base minúscula. O limite é a constante `LIMITE_DA_BASE`, e a página o informa.
+   - Quem passou de prejuízo a lucro, ou o contrário, vai numa linha à parte, sem percentual.
+3. **Lucro somado por setor.** A soma do lucro do acumulado das companhias com a comparação. Quando dá para comparar, vêm também a variação contra a soma do ano anterior e uma barra horizontal a partir do zero.
+   - Setor com menos de 3 empresas na comparação mostra "poucas empresas" e fica sem soma e sem barra (`MINIMO_POR_SETOR`).
+   - O percentual e a barra só aparecem quando **nenhuma companhia do setor mudou de sinal** entre os dois períodos e a soma é positiva nos dois. Senão, a linha mostra só "de R$ X para R$ Y" e uma nota com os tickers que mudaram de sinal ("AXIA3 passou de prejuízo a lucro", ou o contrário).
+   - O motivo: uma companhia que sai de um prejuízo grande deixa a soma do ano anterior pequena, e o percentual sobre ela não diz nada. No 3T26, Energia e saneamento sairia com +2.776%, de R$ 410 mi para R$ 11,8 bi, só porque a AXIA3 tinha prejuízo de R$ 7,1 bi no ano anterior. O limite de R$ 50 milhões das companhias não pega esse caso, porque a soma anterior do setor está acima dele.
+4. **Pontos de atenção nas 64.** Quantas companhias acionam cada uma das sete regras, em ordem decrescente. Cada número abre a lista dos tickers, num `<details>`. Aqui entram todas as fichas, inclusive as de quem ainda não entregou o documento do período.
+
+**Na tela:** a temporada abre a página em largura total; os outros três blocos dividem a linha no desktop e empilham no celular. O verde e o vermelho do Diário só aparecem na variação percentual do lucro, sempre junto do sinal (+ ou −) e do número. As palavras são neutras: "maiores altas", "maiores quedas", "maior" e "menor". Não há logotipo de empresa; o ticker faz esse papel. O carimbo "dados de documentos entregues até DD/MM/AAAA" traz a data de entrega mais recente entre os documentos usados.
 
 ### A ficha
 
@@ -370,6 +398,8 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `pares.mjs` | A mediana do setor e a posição de cada companhia |
 | `resumo.mjs` | O HTML do topo da ficha |
 | `regua.mjs` | A régua de anos: um bloco por exercício, cheio (lucro), vazado (prejuízo) ou tracejado (sem dado) |
+| `painel.mjs` | O painel da temporada: o progresso, os quatro números, as variações do lucro, a soma por setor e os pontos de atenção nas 64 |
+| `painel-html.mjs` | O HTML do painel, no topo de `/fundamentos/` |
 
 Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
@@ -433,6 +463,7 @@ No site (`dist/fundamentos/dados/`, gerado pelo build):
 
 - `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores e o documento de origem), a base de 12 meses, as cotações, os múltiplos e os avisos. É o que alimenta a página de cada companhia. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
 - `indice.json`: a lista das companhias, com o documento mais recente de cada uma, as datas da coleta e do preço, e o motivo de quem ficou sem ficha.
+- `painel.json`: o painel da temporada, como a página o mostra: o período de referência, quantas entregaram, os quatro números, as listas de variação, a soma por setor e a contagem dos pontos de atenção.
 
 ### Avisos
 
