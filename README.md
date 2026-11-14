@@ -432,9 +432,27 @@ O dia até onde vão os dados (`dadosAte`) é o `Last-Modified` mais recente ent
 
 **Primeira entrega e reapresentação:** a data que vale é a da primeira entrega do documento. A coleta guarda, em cada documento, o campo `primeiraEntrega` (a data de entrega mais antiga entre as versões), ao lado da data e do link da versão mais nova. Sem esse campo (arquivo gravado antes da #68) e com o documento reapresentado, a página usa a data da reapresentação e escreve "estimada pela reapresentação do ano anterior".
 
-**Na página:** o topo repete o progresso do painel ("29 de 64 já entregaram o ITR de 30/09/2026"). "Próximas entregas" lista quem ainda não entregou, pela data provável, agrupado pela semana dela. "Já entregaram" vem da entrega mais recente para a mais antiga, com o link do documento e o próximo documento de cada uma. A companhia cujo exercício mudou de mês, ou cujo último exercício é de transição, traz a observação na linha.
+**Na página:** o topo repete o progresso do painel ("29 de 64 já entregaram o ITR de 30/09/2026"). Logo abaixo vem o [calendário do ano](#o-calendário-do-ano). "Próximas entregas" lista quem ainda não entregou, pela data provável, agrupado pela semana dela. "Já entregaram" vem da entrega mais recente para a mais antiga, com o link do documento e o próximo documento de cada uma. A companhia cujo exercício mudou de mês, ou cujo último exercício é de transição, traz a observação na linha.
 
 O build grava `dist/fundamentos/temporada/index.html` e `dist/fundamentos/dados/temporada.json`, com a data do dia do build. Como o build roda a cada 15 minutos, a situação muda de um dia para o outro sem nova coleta. Um erro na temporada não derruba o resto do site.
+
+#### O calendário do ano
+
+No topo da página (#77), um calendário de parede do ano corrente: os 12 meses, todos os dias, com a semana começando no domingo. No desktop são 4 × 3 meses; no celular, um mês por linha.
+
+Cada dia com balanço leva até três marcas, cada uma com a quantidade de empresas:
+
+| Marca | O que é | Fato ou estimativa |
+|---|---|---|
+| Cheia | Entrega feita: documentos que chegaram à CVM naquele dia (a data da primeira entrega) | Fato |
+| Vazada | Data provável de um documento que ainda não saiu | Estimativa, pela regra acima |
+| Contorno tracejado | Prazo legal de um documento que ainda não saiu | Fato |
+
+As marcas se distinguem pelo desenho, com a mesma tinta, como na régua de anos; não há cor de julgamento. O dia de hoje tem o fundo de destaque e a moldura. Passar o mouse sobre o dia mostra os tickers (`title`); tocar ou clicar abre um painel com os tickers, por documento, com link para a ficha (`<details>`, sem JS). Abrir um dia fecha o outro.
+
+A temporada estima só o próximo documento de cada companhia. O calendário segue a mesma regra adiante, documento a documento, enquanto a data provável ou o prazo legal cair dentro do ano: em janeiro, as datas prováveis do ano inteiro já aparecem. As entregas de anos anteriores e as datas do ano seguinte ficam fora.
+
+A lógica fica em `scripts/fundamentos/calendario.mjs` (pura, com a data de hoje injetada) e o HTML em `calendario-html.mjs`. Os eventos de cada dia vão também em `dist/fundamentos/dados/temporada.json`, no campo `calendario`.
 
 **Data oficial:** as companhias entregam à CVM o "Calendário de Eventos Corporativos", pelo IPE. Ele ainda não é lido. Quando for, a data oficial entra identificada como oficial, e a estimativa continua valendo para quem não tiver o calendário.
 
@@ -548,6 +566,8 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `rankings-html.mjs` | O HTML da página `/fundamentos/rankings/` |
 | `temporada.mjs` | A temporada de balanços: o último documento, o próximo, o prazo legal, a data provável e a situação |
 | `temporada-html.mjs` | O HTML da página `/fundamentos/temporada/` e o card do próximo balanço na ficha |
+| `calendario.mjs` | O calendário do ano da temporada: a grade dos 12 meses e as entregas, as datas prováveis e os prazos legais de cada dia |
+| `calendario-html.mjs` | O HTML do calendário, no topo de `/fundamentos/temporada/` |
 
 Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão), `lista.js` (a busca), `rankings/index.html` (o molde da página de rankings) e `temporada/index.html` (o molde da página da temporada). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
