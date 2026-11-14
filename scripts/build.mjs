@@ -97,7 +97,7 @@ async function gerarPaginas({ fichas, indice }) {
   for (const [ticker, ficha] of Object.entries(fichas)) {
     const item = indice.companhias.find((c) => c.ticker === ticker);
     try {
-      const html = inserirMenu(fichaHtml(ficha, { hoje, coletadoEm: indice.coletadoEm }), menu);
+      const html = inserirMenu(fichaHtml(ficha, { hoje, coletadoEm: indice.coletadoEm, dadosAte: indice.dadosAte }), menu);
       const csvs = csvsDaFicha(ficha);
       const pasta = join(destino, pagina.pasta, pastaDaFicha(ticker));
       await mkdir(pasta, { recursive: true });
@@ -162,7 +162,7 @@ async function gerarTemporada(indice, fichas) {
   try {
     const temporada = fichas && indice ? montarTemporada(fichas, {
       hoje: diaBR(new Date()),
-      coletadoEm: indice.coletadoEm ? diaBR(new Date(indice.coletadoEm)) : null,
+      dadosAte: indice.dadosAte,
       semFicha: indice.companhias.filter((c) => !c.ficha),
     }) : null;
     if (temporada) {

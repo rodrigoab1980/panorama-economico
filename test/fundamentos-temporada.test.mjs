@@ -13,6 +13,7 @@ import { fichaHtml } from "../scripts/fundamentos/pagina.mjs";
 import { painelHtml } from "../scripts/fundamentos/painel-html.mjs";
 import { montarPainel } from "../scripts/fundamentos/painel.mjs";
 import { criarExtrator, montarCompanhia } from "../scripts/cvm/coleta.mjs";
+import { dadosAte } from "../scripts/cvm/ficha.mjs";
 import { HOJE, fichaDaWeg } from "./apoio/ficha.mjs";
 
 // ---------- fichas de teste ----------
@@ -207,7 +208,7 @@ describe("temporada: o próximo documento de uma companhia", () => {
 // ---------- situação ----------
 describe("temporada: situação do próximo documento", () => {
   // ITR de 30/09/2026: no ano anterior saiu em 05/11/2025; a data provável é 05/11/2026 e o prazo, 16/11.
-  const situacao = (hoje, coletadoEm = null) => temporadaDaCompanhia(aindaNao("AAAA3"), hoje, { coletadoEm }).proximo.situacao;
+  const situacao = (hoje, dadosAte = null) => temporadaDaCompanhia(aindaNao("AAAA3"), hoje, { dadosAte }).proximo.situacao;
 
   test("antes da data provável, e no dia dela: previsto", () => {
     assert.deepEqual(situacao("2026-11-01"), { id: "previsto", texto: "previsto para 05/11" });
@@ -228,14 +229,14 @@ describe("temporada: situação do próximo documento", () => {
     for (const hoje of ["2026-11-01", "2026-11-10", "2026-11-17", "2027-01-10"]) assert.ok(!/atras/i.test(situacao(hoje).texto), hoje);
   });
 
-  test("a data passou depois da última coleta: a página não afirma que a empresa não entregou", () => {
-    // coleta de 08/11 (domingo), hoje 14/11: quem tinha a data provável em 05/11 não entregou até a coleta
+  test("a data passou depois da última atualização dos dados: a página não afirma que a empresa não entregou", () => {
+    // dados de 08/11 (domingo), hoje 14/11: quem tinha a data provável em 05/11 não entregou até os dados
     assert.equal(situacao("2026-11-14", "2026-11-08").id, "aguardando");
-    // quem tinha a data provável em 12/11 pode ter entregado depois da coleta
-    const depois = temporadaDaCompanhia(aindaNao("AAAA3", comItrDe2025Em("2025-11-12")), "2026-11-14", { coletadoEm: "2026-11-08" }).proximo.situacao;
-    assert.deepEqual(depois, { id: "sem-coleta", texto: "data provável em 12/11, depois da última coleta (08/11)" });
-    // prazo legal vencido só é fato quando a coleta é posterior a ele
-    assert.deepEqual(situacao("2026-11-20", "2026-11-15"), { id: "sem-coleta", texto: "prazo legal em 16/11, depois da última coleta (15/11)" });
+    // quem tinha a data provável em 12/11 pode ter entregado depois dos dados
+    const depois = temporadaDaCompanhia(aindaNao("AAAA3", comItrDe2025Em("2025-11-12")), "2026-11-14", { dadosAte: "2026-11-08" }).proximo.situacao;
+    assert.deepEqual(depois, { id: "sem-coleta", texto: "data provável em 12/11, depois da última atualização dos dados (08/11)" });
+    // prazo legal vencido só é fato quando os dados são posteriores a ele
+    assert.deepEqual(situacao("2026-11-20", "2026-11-15"), { id: "sem-coleta", texto: "prazo legal em 16/11, depois da última atualização dos dados (15/11)" });
     assert.equal(situacao("2026-11-25", "2026-11-22").id, "vencido");
   });
 
@@ -256,7 +257,7 @@ describe("temporada: todas as companhias", () => {
     aindaNao("FALT5", ANO_ANTERIOR.filter((d) => d.dtRefer !== "2025-09-30")), // prazo legal, 16/11
     aindaNao("FALT6"), // 05/11, empata com FALT3
   ];
-  const T = montarTemporada(FICHAS, { hoje: "2026-11-14", coletadoEm: "2026-11-08", semFicha: [{ ticker: "SEMF3", nome: "Sem Ficha S.A.", motivo: "sem dados coletados" }] });
+  const T = montarTemporada(FICHAS, { hoje: "2026-11-14", dadosAte: "2026-11-08", semFicha: [{ ticker: "SEMF3", nome: "Sem Ficha S.A.", motivo: "sem dados coletados" }] });
 
   test("o progresso é o mesmo do painel da página inicial", () => {
     const painel = montarPainel(FICHAS, { total: 8 });
@@ -277,9 +278,9 @@ describe("temporada: todas as companhias", () => {
     assert.deepEqual(T.entregues.map((i) => [i.ticker, i.ultimo.entregueEm]), [["ENTR4", "2026-11-04"], ["ENTR3", "2026-10-21"], ["ENTR5", "2026-10-21"]]);
   });
 
-  test("leva a data de hoje, a da coleta, as regras e as companhias sem ficha", () => {
+  test("leva a data de hoje, a dos dados, as regras e as companhias sem ficha", () => {
     assert.equal(T.hoje, "2026-11-14");
-    assert.equal(T.coletadoEm, "2026-11-08");
+    assert.equal(T.dadosAte, "2026-11-08");
     assert.deepEqual(T.regras, { prazoItrDias: 45, prazoDfpMeses: 3, fimDeSemana: "passa para a segunda-feira", feriados: "não entram na conta" });
     assert.deepEqual(T.semFicha, [{ ticker: "SEMF3", nome: "Sem Ficha S.A.", motivo: "sem dados coletados" }]);
   });
@@ -303,10 +304,10 @@ describe("temporada: todas as companhias", () => {
   // ---------- HTML da página ----------
   const HTML = temporadaHtml(T, { comPagina: new Set(FICHAS.map((f) => f.ticker).filter((t) => t !== "FALT6")) });
 
-  test("topo: a temporada, o progresso, a data da coleta e a legenda da estimativa", () => {
+  test("topo: a temporada, o progresso, a data dos dados e a legenda da estimativa", () => {
     assert.match(HTML, /<h2 id="t-temporada">Temporada do 3T26<\/h2>/);
     assert.match(HTML, /<strong class="n">3 de 8<\/strong> já entregaram o ITR de 30\/09\/2026/);
-    assert.match(HTML, /coleta de 08\/11\/2026; entregas depois dessa data ainda não aparecem/);
+    assert.match(HTML, /dados da CVM de 08\/11\/2026, atualizados uma vez por semana; entregas depois dessa data ainda não aparecem/);
     assert.ok(HTML.includes(LEGENDA_DA_TEMPORADA));
     assert.match(LEGENDA_DA_TEMPORADA, /estimativa deste site, não uma data oficial/);
   });
@@ -318,7 +319,7 @@ describe("temporada: todas as companhias", () => {
     assert.match(HTML, /<small>ITR de 30\/09\/2026, data provável<\/small> <b class="n">05\/11\/2026<\/b>/);
     assert.match(HTML, /Estimada pela entrega do ano anterior \(ITR de 30\/09\/2025, em 05\/11\/2025\)\. Prazo legal: <span class="n">16\/11\/2026<\/span>\./);
     assert.match(HTML, /Ainda não entregou; no ano anterior entregou em 05\/11/);
-    assert.match(HTML, /Data provável em 12\/11, depois da última coleta \(08\/11\)/);
+    assert.match(HTML, /Data provável em 12\/11, depois da última atualização dos dados \(08\/11\)/);
     assert.match(HTML, /Prazo legal: sem o ITR de 30\/09\/2025 na coleta\. Prazo legal: <span class="n">16\/11\/2026<\/span>\./);
     assert.ok(HTML.includes(REGRA_DA_TEMPORADA));
     assert.match(REGRA_DA_TEMPORADA, /45 dias.*3 meses.*feriado não entra na conta/);
@@ -381,7 +382,7 @@ describe("temporada: todas as companhias", () => {
 // ---------- card da ficha e painel ----------
 describe("temporada: card da ficha e link no painel", () => {
   test("WEG (fixture): próximo balanço DFP de 2026, data provável 25/02/2027, com a origem e o prazo legal", () => {
-    const html = fichaHtml(fichaDaWeg(), { hoje: HOJE, coletadoEm: "2026-11-08T12:23:00.000Z" });
+    const html = fichaHtml(fichaDaWeg(), { hoje: HOJE, dadosAte: "2026-11-08" });
     assert.match(html, /<aside class="proximo-balanco" aria-label="Próximo balanço"><p><span class="proximo-rotulo">Próximo balanço<\/span> <strong>DFP de 2026<\/strong>, data provável <strong class="n">25\/02\/2027<\/strong> <span class="proximo-origem">\(estimada pela entrega do ano anterior \(DFP de 2025, em 25\/02\/2026\); prazo legal 31\/03\/2027\)<\/span><\/p>/);
     assert.match(html, /Previsto para 25\/02\. Último entregue: <a href="[^"]+" rel="noopener external" title="ITR de 30\/09\/2026, na CVM">ITR de 30\/09\/2026<\/a>, em 21\/10\/2026\./);
     assert.match(html, /<a href="\.\.\/temporada\/">Temporada de balanços<\/a>/);
@@ -409,6 +410,27 @@ describe("temporada: card da ficha e link no painel", () => {
   test("o painel da página inicial ganha o link para a temporada", () => {
     const html = painelHtml(montarPainel([jaEntregou("AAAA3"), aindaNao("BBBB3")], { total: 2 }));
     assert.match(html, /<p class="painel-link"><a href="temporada\/">Temporada de balanços<\/a>/);
+  });
+});
+
+// ---------- até que dia vão os dados ----------
+describe("dadosAte: a atualização mais recente dos arquivos da CVM", () => {
+  test("o Last-Modified mais recente entre os ZIPs que deram certo, no dia de Brasília", () => {
+    const indice = { coletadoEm: "2026-11-14T01:50:51.926Z", arquivos: {
+      "dfp_cia_aberta_2025.zip": { lastModified: "Sun, 01 Nov 2026 10:19:22 GMT", status: "ok" },
+      "itr_cia_aberta_2026.zip": { lastModified: "Sun, 08 Nov 2026 10:44:33 GMT", status: "ok" },
+      "dfp_cia_aberta_2026.zip": { lastModified: "Sun, 15 Nov 2026 10:14:22 GMT", status: "falhou" },
+    } };
+    // a coleta rodou em 13/11, mas os dados vão até 08/11
+    assert.equal(dadosAte(indice), "2026-11-08");
+    // 01:00 GMT ainda é o dia anterior em Brasília
+    assert.equal(dadosAte({ arquivos: { "a.zip": { lastModified: "Mon, 09 Nov 2026 01:00:00 GMT", status: "ok" } } }), "2026-11-08");
+  });
+
+  test("sem índice, sem arquivos ou sem data legível: null", () => {
+    assert.equal(dadosAte(null), null);
+    assert.equal(dadosAte({ arquivos: {} }), null);
+    assert.equal(dadosAte({ arquivos: { "a.zip": { lastModified: null, status: "ok" } } }), null);
   });
 });
 

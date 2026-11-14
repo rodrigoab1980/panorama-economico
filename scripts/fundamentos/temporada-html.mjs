@@ -57,9 +57,9 @@ export function cardDaTemporadaHtml(item) {
 function topoHtml(t) {
   const { referencia: ref } = t;
   const fracao = t.total > 0 ? Math.min(1, t.entregaram / t.total) : 0;
-  const coleta = t.coletadoEm ? `<p class="painel-carimbo">coleta de ${e(data(t.coletadoEm))}; entregas depois dessa data ainda não aparecem</p>` : "";
+  const dados = t.dadosAte ? `<p class="painel-carimbo">dados da CVM de ${e(data(t.dadosAte))}, atualizados uma vez por semana; entregas depois dessa data ainda não aparecem</p>` : "";
   return `<section class="temporada" aria-labelledby="t-temporada">
-<div class="temporada-topo"><h2 id="t-temporada">Temporada do ${e(ref.nome)}</h2>${coleta}</div>
+<div class="temporada-topo"><h2 id="t-temporada">Temporada do ${e(ref.nome)}</h2>${dados}</div>
 <div class="progresso">
 <p><strong class="n">${t.entregaram} de ${t.total}</strong> já entregaram ${artigo(ref.tipo)} ${e(ref.documento)}</p>
 <div class="progresso-trilho" aria-hidden="true"><span style="width:${(fracao * 100).toFixed(1)}%"></span></div>

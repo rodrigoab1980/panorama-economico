@@ -511,7 +511,7 @@ describe("build: a lista e uma página por companhia", () => {
     const dados = join(pasta, "dados");
     mkdirSync(join(dados, "fundamentos"), { recursive: true });
     for (const c of universo) writeFileSync(join(dados, "fundamentos", `${c.cdCvm}.json`), serializar({ ...ARQUIVO, cnpj: c.cnpj, cdCvm: c.cdCvm, composicoes: ARQUIVO.composicoes.map((x) => ({ ...x, cnpj: c.cnpj })) }));
-    writeFileSync(join(dados, "fundamentos", "indice.json"), JSON.stringify({ coletadoEm: "2026-11-14T00:57:29.000Z", companhias: {} }));
+    writeFileSync(join(dados, "fundamentos", "indice.json"), JSON.stringify({ coletadoEm: "2026-11-14T00:57:29.000Z", arquivos: { "itr_cia_aberta_2026.zip": { lastModified: "Sun, 08 Nov 2026 10:44:33 GMT", status: "ok" } }, companhias: {} }));
     writeFileSync(join(dados, "cotacoes-fundamentos.json"), JSON.stringify(COTACOES));
 
     const dist = join(pasta, "dist-com");
@@ -577,7 +577,7 @@ describe("build: a lista e uma página por companhia", () => {
     assert.match(weg, /<aside class="proximo-balanco"/);
     const json = JSON.parse(readFileSync(join(dist, "fundamentos", "dados", "temporada.json"), "utf8"));
     assert.match(json.hoje, /^\d{4}-\d{2}-\d{2}$/);
-    assert.equal(json.coletadoEm, "2026-11-13");
+    assert.equal(json.dadosAte, "2026-11-08");
     assert.equal(json.entregues.length, 64);
   });
 });

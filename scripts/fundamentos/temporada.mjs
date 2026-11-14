@@ -11,8 +11,9 @@
 //     ano para a frente. Sem esse documento, a data provável é o prazo legal.
 //   - Sábado e domingo passam para a segunda-feira, na data provável e no prazo legal. Feriado não
 //     entra na conta.
-//   - A página só sabe o que a coleta semanal já viu. Uma data que passou depois da última coleta não
-//     vira "ainda não entregou" nem "prazo vencido": a página diz que a coleta é anterior.
+//   - A página só sabe o que está nos arquivos da CVM, atualizados uma vez por semana. Uma data que
+//     passou depois da última atualização (`dadosAte`) não vira "ainda não entregou" nem "prazo
+//     vencido": a página diz que os dados são anteriores.
 // Nenhuma palavra de julgamento: nada de "atrasada". Depois do prazo legal, "prazo legal vencido" é fato.
 import { nomeCurto, referenciaDaTemporada } from "./painel.mjs";
 
@@ -110,21 +111,22 @@ function entregaDe(documento) {
 
 // ---------- uma companhia ----------
 
-// A situação do próximo documento, com a data de hoje e a da última coleta.
+// A situação do próximo documento, com a data de hoje e a da última atualização dos dados.
 //   previsto    hoje ainda não passou da data provável
-//   aguardando  a data provável passou, o prazo legal não, e a coleta é posterior à data provável
-//   vencido     o prazo legal passou, e a coleta é posterior a ele
-//   sem-coleta  a data (provável ou legal) passou, mas depois da última coleta: a página não sabe
-// Sem `coletadoEm`, a coleta vale como de hoje.
-export function situacaoDoProximo({ dataProvavel, prazo, origem, hoje, coletadoEm = null }) {
-  const coleta = dia(coletadoEm) ?? hoje;
+//   aguardando  a data provável passou, o prazo legal não, e os dados são posteriores à data provável
+//   vencido     o prazo legal passou, e os dados são posteriores a ele
+//   sem-coleta  a data (provável ou legal) passou, mas depois da última atualização dos dados: a
+//               página não sabe
+// Sem `dadosAte`, os dados valem como de hoje.
+export function situacaoDoProximo({ dataProvavel, prazo, origem, hoje, dadosAte = null }) {
+  const dados = dia(dadosAte) ?? hoje;
   if (hoje <= dataProvavel) return { id: "previsto", texto: `previsto para ${diaMes(dataProvavel)}` };
-  const aColetaNaoViu = (data) => coleta <= data;
+  const foraDosDados = (data) => dados <= data;
   if (hoje > prazo.data) {
-    if (aColetaNaoViu(prazo.data)) return { id: "sem-coleta", texto: `prazo legal em ${diaMes(prazo.data)}, depois da última coleta (${diaMes(coleta)})` };
+    if (foraDosDados(prazo.data)) return { id: "sem-coleta", texto: `prazo legal em ${diaMes(prazo.data)}, depois da última atualização dos dados (${diaMes(dados)})` };
     return { id: "vencido", texto: `prazo legal vencido em ${diaMes(prazo.data)}` };
   }
-  if (aColetaNaoViu(dataProvavel)) return { id: "sem-coleta", texto: `data provável em ${diaMes(dataProvavel)}, depois da última coleta (${diaMes(coleta)})` };
+  if (foraDosDados(dataProvavel)) return { id: "sem-coleta", texto: `data provável em ${diaMes(dataProvavel)}, depois da última atualização dos dados (${diaMes(dados)})` };
   const antes = origem.tipo === "ano-anterior" ? `; no ano anterior entregou em ${diaMes(origem.entregueEm)}` : "";
   return { id: "aguardando", texto: `ainda não entregou${antes}` };
 }
@@ -132,7 +134,7 @@ export function situacaoDoProximo({ dataProvavel, prazo, origem, hoje, coletadoE
 // A temporada de uma companhia.
 //   ficha       a ficha (precisa de `ticker`, `nome`, `documentoMaisRecente` e `documentos`)
 //   hoje        "AAAA-MM-DD", injetada
-//   coletadoEm  dia (ou instante ISO já no dia certo) da última coleta; sem ele, vale hoje
+//   dadosAte    dia da última atualização dos arquivos da CVM usados na coleta; sem ele, vale hoje
 // Devolve { ticker, nome, nomeCurto, ultimo, proximo, observacoes }:
 //   ultimo   { tipo, dtRefer, rotulo, entregueEm, reapresentadoEm, versao, link }, ou null sem documento
 //   proximo  { tipo, dtRefer, rotulo, prazoLegal, prazoCorrido, dataProvavel, estimada (true: é sempre
@@ -141,7 +143,7 @@ export function situacaoDoProximo({ dataProvavel, prazo, origem, hoje, coletadoE
 //               ou { tipo: "prazo-legal", motivo, texto }
 //     situacao  { id, texto } (ver situacaoDoProximo)
 //   observacoes  o que muda a leitura: exercício que mudou de mês, exercício de transição
-export function temporadaDaCompanhia(ficha, hoje, { coletadoEm = null } = {}) {
+export function temporadaDaCompanhia(ficha, hoje, { dadosAte = null } = {}) {
   if (!partes(hoje)) throw new Error(`data de hoje inválida: "${hoje}"`);
   const documentos = (ficha?.documentos ?? []).filter((d) => partes(d.dtRefer));
   const base = { ticker: ficha?.ticker ?? null, nome: ficha?.nome ?? null, nomeCurto: nomeCurto(ficha?.nome) };
@@ -192,7 +194,7 @@ export function temporadaDaCompanhia(ficha, hoje, { coletadoEm = null } = {}) {
     proximo: {
       tipo, dtRefer, rotulo: rotuloDoDocumento(tipo, dtRefer), prazoLegal: prazo.data, prazoCorrido: prazo.corrido,
       dataProvavel, estimada: true, origem,
-      situacao: situacaoDoProximo({ dataProvavel, prazo, origem, hoje, coletadoEm }),
+      situacao: situacaoDoProximo({ dataProvavel, prazo, origem, hoje, dadosAte }),
     },
     observacoes,
   };
@@ -210,22 +212,22 @@ const porData = (campo, sentido) => (a, b) => {
 // A temporada inteira.
 //   fichas      { TICKER: ficha } ou [ficha]
 //   hoje        "AAAA-MM-DD", injetada (nunca `new Date()` aqui dentro)
-//   coletadoEm  dia da última coleta dos fundamentos
+//   dadosAte    dia da última atualização dos arquivos da CVM usados na coleta
 //   semFicha    [{ ticker, nome, motivo }]: as companhias da página que ficaram sem ficha
 // Devolve null sem nenhum documento. Senão:
-//   { hoje, coletadoEm, referencia, total, entregaram, regras,
+//   { hoje, dadosAte, referencia, total, entregaram, regras,
 //     faltam     as que ainda não entregaram o documento de referência, pela data provável (a mais
 //                próxima primeiro; no empate, o ticker)
 //     semanas    as mesmas, agrupadas pela semana da data provável: [{ segunda, tickers }]
 //     entregues  as que já entregaram, pela data de entrega, da mais recente para a mais antiga
 //     semFicha }
 // Cada item de `faltam` e `entregues` é a saída de temporadaDaCompanhia.
-export function montarTemporada(fichas, { hoje, coletadoEm = null, semFicha = [] } = {}) {
+export function montarTemporada(fichas, { hoje, dadosAte = null, semFicha = [] } = {}) {
   if (!partes(hoje)) throw new Error(`data de hoje inválida: "${hoje}"`);
   const lista = (Array.isArray(fichas) ? fichas : Object.values(fichas ?? {})).filter(Boolean);
   const referencia = referenciaDaTemporada(lista);
   if (!referencia) return null;
-  const itens = lista.map((f) => temporadaDaCompanhia(f, hoje, { coletadoEm }));
+  const itens = lista.map((f) => temporadaDaCompanhia(f, hoje, { dadosAte }));
   const entregou = (i) => i.ultimo?.dtRefer === referencia.dtRefer && i.ultimo.tipo === referencia.tipo;
   const entregues = itens.filter(entregou).sort(porData((i) => i.ultimo.entregueEm ?? i.ultimo.reapresentadoEm, -1));
   const faltam = itens.filter((i) => !entregou(i)).sort(porData((i) => i.proximo?.dataProvavel ?? "9999", 1));
@@ -236,7 +238,7 @@ export function montarTemporada(fichas, { hoje, coletadoEm = null, semFicha = []
     semanas.at(-1).tickers.push(i.ticker);
   }
   return {
-    hoje, coletadoEm: dia(coletadoEm), referencia,
+    hoje, dadosAte: dia(dadosAte), referencia,
     total: lista.length + semFicha.length, entregaram: entregues.length,
     regras: { prazoItrDias: PRAZO_ITR_DIAS, prazoDfpMeses: PRAZO_DFP_MESES, fimDeSemana: "passa para a segunda-feira", feriados: "não entram na conta" },
     faltam, semanas, entregues,
