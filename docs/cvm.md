@@ -333,6 +333,12 @@ A série anual da TIM, depois da regra (R$ milhões):
 | 2024 | individual | 25.448 | 12.533 | 3.154 | 56.327 |
 | 2025 | individual | 26.625 | 13.422 | 4.312 | 56.939 |
 
+**Período com a demonstração zerada (#38).** A regra acima olha o documento inteiro, pelo ÚLTIMO. Sobra um caso que ela não pega: a coluna do ano anterior (PENÚLTIMO) vem zerada num documento cujo consolidado do próprio ano é válido, e não há outro documento para aquele exercício. É o Assaí em 2018: a companhia só passou a entregar DFP em 2019, o exercício de 2018 só existe na coluna do ano anterior da DFP de 2019, e no consolidado ela vem inteira em zero. Nesse caso o período fica **indisponível**, com o motivo "demonstração zerada no documento": todos os indicadores dele ficam `null`, em vez de receita, lucro e ativo iguais a 0. A conferência é pelo ativo total (conta 1) igual a 0 e fica em `adaptarPeriodo` (`scripts/cvm/indicadores.mjs`, `MOTIVO_DEMONSTRACAO_ZERADA`). Nas 64 companhias, de 929 períodos anuais, só esse cai na regra.
+
+O individual da mesma coluna do Assaí vem preenchido (ativo de 10,9 bilhões e receita de 23,0 bilhões em 2018), mas não é usado: o documento tem consolidado válido, e a escolha entre as bases é por documento, não por coluna.
+
+A Ambev em 2011 e 2012 **não** cai na regra: a série sai do individual, que tem ativo, e a receita informada é 0. Ali o zero é o que a CVM traz.
+
 Antes da regra, 2024 e 2025 saíam do consolidado zerado: receita, EBITDA, lucro e ativo iguais a 0. Os anos de 2017 a 2019 e 2021 já eram individuais, porque a TIM S.A. não entregou consolidado neles. A base de 12 meses dela continua indisponível: a DFP de 2025 é individual e o ITR de 2026 é consolidado, e as três parcelas têm de estar na mesma base.
 
 ## Ticker → CNPJ (FCA)

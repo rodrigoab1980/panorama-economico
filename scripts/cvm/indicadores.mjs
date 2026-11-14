@@ -57,6 +57,12 @@ export const DIVIDA_POR_DESCRICAO = {
   excecoes: [/compuls/i],
 };
 
+// Motivo do período cuja demonstração veio inteira em zero (ver adaptarPeriodo). É a continuação da
+// regra do consolidado zerado do leitor (leitor.mjs, consolidadosZerados): lá, o documento zerado cai
+// para o individual; aqui, quando não sobra outra fonte para o período, ele fica sem valor. Caso real:
+// o exercício de 2018 do Assaí só existe na coluna do ano anterior da DFP de 2019, e ela veio zerada.
+export const MOTIVO_DEMONSTRACAO_ZERADA = "demonstração zerada no documento";
+
 // Diluição acima deste tamanho, para cima ou para baixo, não é mostrada. O arquivo da CVM não traz os
 // desdobramentos e grupamentos: um desdobramento de 1 para 3 aparece como +200% e um grupamento de 15
 // para 1, como −93%, e nenhum dos dois muda a fatia do acionista. Por que 50%: emissão e recompra de
@@ -145,7 +151,6 @@ export const INDICADORES = [
   { id: "dividaCurtoPrazo", nome: "Dívida de curto prazo", unidade: "razão", formula: "Parte da dívida bruta que vence em até 12 meses: dívida de curto prazo ÷ dívida bruta" },
   { id: "despesasFinanceiras", nome: "Despesas financeiras", unidade: "R$ mil", formula: "Despesas financeiras do período (DRE, conta 3.06.02), com o sinal trocado" },
   { id: "coberturaJuros", nome: "Cobertura de juros", unidade: "razão", formula: `EBIT ÷ despesas financeiras, em número de vezes. ${APROXIMACAO}` },
-  { id: "custoDivida", nome: "Custo aproximado da dívida", unidade: "razão", formula: `Despesas financeiras do período ÷ dívida bruta no fim do período. ${APROXIMACAO}` },
   { id: "liquidezCorrente", nome: "Liquidez corrente", unidade: "razão", formula: "Ativo circulante ÷ passivo circulante" },
   { id: "liquidezImediata", nome: "Liquidez imediata", unidade: "razão", formula: "Caixa ÷ passivo circulante" },
   // Fluxo de caixa, capex, FCL, proventos e valores por ação (#36)
@@ -213,6 +218,17 @@ const dataBr = (iso) => String(iso).split("-").reverse().join("/");
 export function adaptarPeriodo(origem) {
   if (origem == null) return { tipo: "indisponivel", meses: null, motivo: "sem dados do período", ...VAZIO };
   if (typeof origem.fluxo === "function" && typeof origem.estoque === "function") return origem; // já adaptado
+  const adaptado = adaptarSemConferir(origem);
+  // Demonstração zerada: o ativo total (conta 1) do período é 0. Nenhuma companhia aberta tem ativo
+  // zero, então o que veio foi um formulário em branco, e não um ano de valores nulos. O período fica
+  // indisponível, com o motivo, em vez de mostrar receita, lucro e ativo iguais a 0.
+  if (adaptado.tipo !== "indisponivel" && adaptado.estoque("1") === 0) {
+    return { tipo: "indisponivel", meses: adaptado.meses, motivo: MOTIVO_DEMONSTRACAO_ZERADA, ...VAZIO };
+  }
+  return adaptado;
+}
+
+function adaptarSemConferir(origem) {
 
   // Base de 12 meses (saída de base12Meses).
   if ("fluxos" in origem) {
@@ -574,7 +590,6 @@ export function calcularIndicadores(periodo, contexto = {}) {
     dividaCurtoPrazo: sobreDivida(dividaDeCurtoPrazo(p)),
     despesasFinanceiras: despesas,
     coberturaJuros: comFluxo(() => dividir(ebit, despesas, "despesas financeiras zero ou negativas")),
-    custoDivida: comFluxo(() => (despesas.valor != null && despesas.valor <= 0 ? nulo("despesas financeiras zero ou negativas") : sobreDivida(despesas))),
     liquidezCorrente: liquidez(estoque(p, "1.01")),
     liquidezImediata: liquidez(cx),
 

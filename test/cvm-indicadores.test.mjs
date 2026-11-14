@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { interpretarArquivo, lerArquivos } from "../scripts/cvm/leitor.mjs";
 import { montarSeries } from "../scripts/cvm/series.mjs";
 import {
-  ALIQUOTA_ROIC, ARRENDAMENTOS, DIVIDA_POR_DESCRICAO, INDICADORES, LIMITE_DESPESA_SEM_DIVIDA, adaptarPeriodo, arrendamentos, caixa,
+  ALIQUOTA_ROIC, ARRENDAMENTOS, DIVIDA_POR_DESCRICAO, INDICADORES, LIMITE_DESPESA_SEM_DIVIDA, MOTIVO_DEMONSTRACAO_ZERADA, adaptarPeriodo, arrendamentos, caixa,
   calcularIndicadores, capitalInvestido, contasDeArrendamento, contasDeDividaPorDescricao, despesasFinanceiras, dividaBruta,
 } from "../scripts/cvm/indicadores.mjs";
 
@@ -18,9 +18,10 @@ const RAIA = seriesDe("raia-drogasil");
 const SAO_MARTINHO = seriesDe("sao-martinho");
 
 const ano = (serie, fim) => serie.anual.find((p) => p.fim === fim);
-// Os indicadores de resultado, retorno, caixa e dívida (#34 e #35) são os 28 primeiros da lista.
+// Os indicadores de resultado, retorno, caixa e dívida (#34 e #35) são os 27 primeiros da lista
+// (eram 28; o "custo aproximado da dívida" saiu na #38).
 // Os de fluxo de caixa e por ação (#36) vêm depois e têm os testes em cvm-fluxo-de-caixa.test.mjs.
-const ATE_35 = INDICADORES.slice(0, 28).map((i) => i.id);
+const ATE_35 = INDICADORES.slice(0, 27).map((i) => i.id);
 const ate35 = (ind) => Object.fromEntries(ATE_35.map((id) => [id, ind[id]]));
 const valores = (ind) => Object.fromEntries(Object.entries(ind).map(([id, r]) => [id, r.valor]));
 // Compara em R$ milhões, com tolerância de 0,5 (os números de referência são arredondados).
@@ -87,21 +88,25 @@ describe("INDICADORES: a lista que a página vai mostrar", () => {
       "resultadoFinanceiro", "lucroLiquido", "margemLiquida", "roe", "roa", "roic",
       "patrimonioLiquido", "caixa", "dividaBruta", "arrendamentos", "dividaBrutaComArrendamentos",
       "dividaLiquida", "dividaLiquidaComArrendamentos", "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda",
-      "dividaCurtoPrazo", "despesasFinanceiras", "coberturaJuros", "custoDivida", "liquidezCorrente", "liquidezImediata",
+      "dividaCurtoPrazo", "despesasFinanceiras", "coberturaJuros", "liquidezCorrente", "liquidezImediata",
     ]);
+    // Despesas financeiras ÷ dívida saiu: inclui câmbio e derivativos (na WEG dava de 41% a 64%).
+    // Ficou só o custo da dívida pelos juros pagos, da DFC.
+    assert.ok(!INDICADORES.some((i) => i.id === "custoDivida"));
+    assert.ok(INDICADORES.some((i) => i.id === "custoDividaJurosPagos"));
   });
 
   test("valores em R$ mil e razões estão marcados com a unidade certa", () => {
-    const razoes = INDICADORES.slice(0, 28).filter((i) => i.unidade === "razão").map((i) => i.id);
+    const razoes = INDICADORES.slice(0, 27).filter((i) => i.unidade === "razão").map((i) => i.id);
     assert.deepEqual(razoes, [
       "margemBruta", "margemEbitda", "margemLiquida", "roe", "roa", "roic",
-      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "coberturaJuros", "custoDivida",
+      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "coberturaJuros",
       "liquidezCorrente", "liquidezImediata",
     ]);
   });
 
-  test("cobertura e custo da dívida dizem que as despesas financeiras são uma aproximação dos juros", () => {
-    for (const id of ["coberturaJuros", "custoDivida"]) {
+  test("a cobertura de juros diz que as despesas financeiras são uma aproximação dos juros", () => {
+    for (const id of ["coberturaJuros"]) {
       const { formula } = INDICADORES.find((i) => i.id === id);
       assert.match(formula, /aproximação dos juros/, id);
       assert.match(formula, /variação cambial/, id);
@@ -161,7 +166,6 @@ describe("cada indicador, num exercício sintético", () => {
     dividaCurtoPrazo: 300 / 500,
     despesasFinanceiras: 50, // − 3.06.02
     coberturaJuros: 200 / 50, // EBIT ÷ despesas financeiras
-    custoDivida: 50 / 500,
     liquidezCorrente: 600 / 400, // 1.01 ÷ 2.01
     liquidezImediata: 150 / 400, // caixa ÷ 2.01
   };
@@ -259,8 +263,19 @@ describe("regras de null: nunca 0 no lugar de 'não deu'", () => {
     assert.equal(ind.roe.valor, 100 / 800);
   });
 
-  test("ativo zero (dado quebrado, como o consolidado zerado da TIM em 2025): ROA null", () => {
-    assert.deepEqual(calcularIndicadores(anual({ BPA: { "1": 0 } })).roa, { valor: null, motivo: "ativo total zero ou negativo" });
+  test("ativo total zero: a demonstração veio zerada, e o período inteiro fica sem valor, com o motivo", () => {
+    const ind = calcularIndicadores(anual({ BPA: { "1": 0 } }));
+    assert.equal(MOTIVO_DEMONSTRACAO_ZERADA, "demonstração zerada no documento");
+    for (const [id, r] of Object.entries(ind)) assert.deepEqual({ valor: r.valor, motivo: r.motivo }, { valor: null, motivo: "demonstração zerada no documento" }, id);
+    assert.deepEqual(Object.keys(ind), INDICADORES.map((i) => i.id));
+    // nem a receita, que no sintético é 1.000, aparece: o documento não é confiável
+    assert.equal(ind.receita.valor, null);
+  });
+
+  test("ativo total negativo ou ausente não é demonstração zerada: só o ROA fica null", () => {
+    assert.deepEqual(calcularIndicadores(anual({ BPA: { "1": -5 } })).roa, { valor: null, motivo: "ativo total zero ou negativo" });
+    assert.equal(calcularIndicadores(anual({ BPA: { "1": -5 } })).receita.valor, 1000);
+    assert.equal(calcularIndicadores(anual({ BPA: { "1": undefined } })).receita.valor, 1000);
   });
 
   test("sem D&A na DFC nem na DVA: D&A, EBITDA e margem EBITDA null; o EBIT não vira EBITDA", () => {
@@ -674,12 +689,11 @@ describe("dívida, caixa líquido e as razões: regras de null e de sinal", () =
     assert.deepEqual(calcularIndicadores(anual({ BPP: { "2.03": 0 } })).dividaBrutaSobrePl, { valor: null, motivo: "patrimônio líquido zero ou negativo" });
   });
 
-  test("dívida zero sem despesa financeira relevante: 'sem dívida financeira' no curto prazo e no custo; o resto continua", () => {
+  test("dívida zero sem despesa financeira relevante: 'sem dívida financeira' no curto prazo; o resto continua", () => {
     // despesa financeira de 5 em ativo de 2.000 = 0,25%, abaixo do limite do alerta
     const ind = calcularIndicadores(anual({ BPP: { "2.01.04": 0, "2.02.01": 0 }, DRE: { "3.06": 15, "3.06.02": -5 } }));
     assert.deepEqual(ind.dividaBruta, { valor: 0, motivo: null });
     assert.deepEqual(ind.dividaCurtoPrazo, { valor: null, motivo: "sem dívida financeira" });
-    assert.deepEqual(ind.custoDivida, { valor: null, motivo: "sem dívida financeira" });
     assert.deepEqual(ind.dividaLiquida, { valor: -150, motivo: null });
     assert.deepEqual(ind.dividaBrutaSobrePl, { valor: 0, motivo: null });
     assert.deepEqual(ind.dividaBrutaComArrendamentos, { valor: 80, motivo: null });
@@ -692,7 +706,7 @@ describe("dívida, caixa líquido e as razões: regras de null e de sinal", () =
     const ind = calcularIndicadores(anual({ BPP: { "2.01.04": 0, "2.02.01": 0 } }));
     const motivo = "a dívida pode estar fora das contas padrão (despesa financeira de R$ 50 mil sem empréstimos no balanço)";
     for (const id of ["dividaBruta", "dividaBrutaComArrendamentos", "dividaLiquida", "dividaLiquidaComArrendamentos",
-      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "custoDivida", "roic"]) {
+      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "roic"]) {
       assert.deepEqual(ind[id], { valor: null, motivo }, id);
     }
     // O que não depende da dívida continua.
@@ -725,18 +739,17 @@ describe("dívida, caixa líquido e as razões: regras de null e de sinal", () =
     assert.ok(Object.is(despesasFinanceiras(anual({ DRE: { "3.06": 0, "3.06.01": 0, "3.06.02": 0 } })).valor, 0));
   });
 
-  test("despesas financeiras zero ou negativas: cobertura e custo da dívida ficam null", () => {
+  test("despesas financeiras zero ou negativas: a cobertura de juros fica null", () => {
     for (const v of [0, 50]) {
       const ind = calcularIndicadores(anual({ DRE: { "3.06": 20 + -v, "3.06.02": v } }));
       assert.deepEqual(ind.coberturaJuros, { valor: null, motivo: "despesas financeiras zero ou negativas" }, String(v));
-      assert.deepEqual(ind.custoDivida, { valor: null, motivo: "despesas financeiras zero ou negativas" }, String(v));
     }
   });
 
   test("resultado financeiro informado só pelo líquido (3.06.01 e 3.06.02 zeradas): despesas null, não zero", () => {
     const ind = calcularIndicadores(anual({ DRE: { "3.06": -30, "3.06.01": 0, "3.06.02": 0 } }));
     const motivo = "a companhia não abre o resultado financeiro em receitas e despesas";
-    for (const id of ["despesasFinanceiras", "coberturaJuros", "custoDivida"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
+    for (const id of ["despesasFinanceiras", "coberturaJuros"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
     assert.equal(ind.resultadoFinanceiro.valor, -30);
     assert.equal(ind.dividaBruta.valor, 500);
   });
@@ -755,7 +768,7 @@ describe("dívida, caixa líquido e as razões: regras de null e de sinal", () =
   test("período de transição: os saldos saem; as razões que usam fluxo ficam null, sem anualizar", () => {
     const ind = calcularIndicadores(anual({}, { tipo: "transicao", meses: 9 }));
     const motivo = "período de 9 meses, indicador não anualizado";
-    for (const id of ["dividaLiquidaSobreEbitda", "coberturaJuros", "custoDivida"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
+    for (const id of ["dividaLiquidaSobreEbitda", "coberturaJuros"]) assert.deepEqual(ind[id], { valor: null, motivo }, id);
     // Balanço não se anualiza: saldos e razões só de balanço saem normalmente.
     assert.equal(ind.patrimonioLiquido.valor, 800);
     assert.equal(ind.caixa.valor, 150);
@@ -836,10 +849,9 @@ describe("balanço publicado: WEG em 31/12/2025", () => {
     assert.equal(ind.liquidezImediata.valor, BALANCO.disponibilidades / BALANCO.passivoCirculante);
   });
 
-  test("despesas financeiras, cobertura e custo aproximado (DRE 3.06.02 = −2.173.378)", () => {
+  test("despesas financeiras e cobertura (DRE 3.06.02 = −2.173.378)", () => {
     assert.equal(ind.despesasFinanceiras.valor, 2_173_378);
     assert.equal(ind.coberturaJuros.valor, 7_998_741 / 2_173_378);
-    assert.equal(ind.custoDivida.valor, 2_173_378 / 4_590_822);
   });
 
   test("a correção da 2.01.04.03 não muda o ROIC da WEG (a subconta vem zerada)", () => {
@@ -1036,7 +1048,6 @@ describe("Allos: a dívida está em outras obrigações (linhas da DFP de 31/12/
     assert.equal(ind.arrendamentos.valor, 27_042 + 193_326);
     assert.equal(ind.dividaBrutaComArrendamentos.valor, 5_879_310 + 220_368);
     assert.equal(ind.roic.valor, (200 * (1 - 0.34)) / (13_899_006 + 5_879_310 - 150));
-    assert.equal(ind.custoDivida.valor, 1_010_822 / 5_879_310);
   });
 
   test("sem as duas linhas, o mesmo período dispara o alerta de dívida fora das contas padrão", () => {

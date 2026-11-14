@@ -23,9 +23,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Spike dos dados abertos da CVM (#29): `docs/cvm.md` registra o que foi medido nos arquivos de DFP, ITR e FCA (URLs, formato, contas confirmadas, como o ITR acumula, reapresentações, volume e tempos para decidir entre JSON puro e SQLite) e os riscos para as próximas issues da v2.0. Três fixtures reais em `test/fixtures/cvm/` (WEG, Raia Drogasil e Hapvida), preservadas byte a byte pelo `.gitattributes`, com testes que confirmam esses fatos. As fixtures podem ser recriadas com `scripts/cvm/gerar-fixtures.mjs` (sem rede e sem ZIP), e as medições, com os scripts de `scripts/cvm/spike/` (seção "Como reproduzir").
 
 ### Corrigido
+- Demonstração zerada (#38): um período cujo ativo total vem igual a 0 fica indisponível, com o motivo "demonstração zerada no documento", em vez de mostrar receita, lucro e ativo iguais a 0. É o exercício de 2018 do Assaí, que só existe na coluna do ano anterior da DFP de 2019, zerada no consolidado.
 - Consolidado zerado (#37): um documento cujo consolidado tem o ativo total igual a 0 passa a ter o consolidado tratado como ausente, e vale o individual. A TIM deixa de sair com receita, EBITDA e ativo iguais a zero em 2024 e 2025.
 - Número de ações que diverge (#37): nos 12 meses, se o total de ações do documento mais recente diverge mais de 50% do documento anterior, o número de ações, os valores por ação e o valor de mercado ficam `null` com o motivo. O valor de mercado da Vivara deixa de sair 65% abaixo do real por causa do ITR de 30/09/2026.
 - A dívida bruta dos indicadores (#34) somava as contas 2.01.04 e 2.02.01 inteiras e, com isso, incluía o "Financiamento por Arrendamento" (2.01.04.03 e 2.02.01.03) das companhias que lançam os arrendamentos ali. Agora as duas subcontas são subtraídas, e o ROIC usa a dívida corrigida. Na DFP de 2025, isso muda o ROIC de 17 das 64 companhias da página (#35).
+
+### Removido
+- O indicador "Custo aproximado da dívida" (despesas financeiras ÷ dívida bruta) saiu da lista (#38). As despesas financeiras incluem variação cambial e derivativos, e o número enganava: na WEG dava de 41% a 64% ao ano. Fica o "Custo da dívida pelos juros pagos", calculado com os juros da DFC.
 
 ### Alterado
 - A coleta dos fundamentos passa a ler o índice de documentos de cada ZIP da CVM e guarda, de cada documento, a data de entrega e o link (`documentos` no arquivo da companhia). O formato do extrato muda, então a primeira coleta depois desta versão baixa todos os ZIPs de novo (#38).

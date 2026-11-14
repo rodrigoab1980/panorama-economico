@@ -9,7 +9,7 @@ import {
 } from "../scripts/cvm/coleta.mjs";
 import { consolidadosZerados, criarLeitor, escolherConsolidado, escolherVersao, interpretarArquivo, lerArquivos } from "../scripts/cvm/leitor.mjs";
 import { montarSeries } from "../scripts/cvm/series.mjs";
-import { calcularIndicadoresDaSerie, LIMITE_DILUICAO } from "../scripts/cvm/indicadores.mjs";
+import { INDICADORES, MOTIVO_DEMONSTRACAO_ZERADA, adaptarPeriodo, calcularIndicadoresDaSerie, LIMITE_DILUICAO, lucroDaControladora } from "../scripts/cvm/indicadores.mjs";
 import { calcularMultiplos, fundamentosParaMultiplos } from "../scripts/cvm/multiplos.mjs";
 import { lerComposicaoCapital } from "../scripts/cvm/composicao-capital.mjs";
 
@@ -464,6 +464,78 @@ describe("TIM: consolidado zerado conta como ausente", () => {
     assert.ok(cia.fatos.every((b) => b.consolidado === false));
     const { indice } = decidirSaida({ companhias: [TIM_CIA], arquivos: [arq("dfp_cia_aberta_2025.zip")], extratos, agora: new Date("2026-11-15T12:23:00Z"), anoCorrente: 2026 });
     assert.deepEqual(indice.companhias["024929"].avisos, cia.avisos);
+  });
+});
+
+describe("Assaí 2018: demonstração zerada no documento vira período sem valor, nunca 0", () => {
+  // Linhas exatas da DFP de 2019 da Sendas Distribuidora (Assaí), versão 3. O exercício de 2018 só
+  // existe na coluna do ano anterior (PENÚLTIMO) desse documento, e no consolidado ela vem inteira em
+  // zero. O consolidado de 2019 (ÚLTIMO) vem preenchido, então a regra do documento zerado (TIM) não
+  // se aplica: o documento tem consolidado válido, e o individual dele sai.
+  const CAB_BPA = "CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA";
+  const CAB_DRE = "CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_INI_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA";
+  const ASSAI = "06.057.223/0001-71;2019-12-31;3;SENDAS DISTRIBUIDORA S.A.;025372";
+  const arquivos = [
+    { nome: "dfp_cia_aberta_BPA_con_2019.csv", linhas: [CAB_BPA,
+      `${ASSAI};DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2018-12-31;1;Ativo Total;0.0000000000;S`,
+      `${ASSAI};DF Consolidado - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2019-12-31;1;Ativo Total;35905000.0000000000;S`] },
+    { nome: "dfp_cia_aberta_BPA_ind_2019.csv", linhas: [CAB_BPA,
+      `${ASSAI};DF Individual - Balanço Patrimonial Ativo;REAL;MIL;PENÚLTIMO;2018-12-31;1;Ativo Total;10933000.0000000000;S`,
+      `${ASSAI};DF Individual - Balanço Patrimonial Ativo;REAL;MIL;ÚLTIMO;2019-12-31;1;Ativo Total;23540000.0000000000;S`] },
+    { nome: "dfp_cia_aberta_DRE_con_2019.csv", linhas: [CAB_DRE,
+      `${ASSAI};DF Consolidado - Demonstração do Resultado;REAL;MIL;PENÚLTIMO;2018-01-01;2018-12-31;3.01;Receita de Venda de Bens e/ou Serviços;0.0000000000;S`,
+      `${ASSAI};DF Consolidado - Demonstração do Resultado;REAL;MIL;ÚLTIMO;2019-01-01;2019-12-31;3.01;Receita de Venda de Bens e/ou Serviços;30232000.0000000000;S`,
+      `${ASSAI};DF Consolidado - Demonstração do Resultado;REAL;MIL;PENÚLTIMO;2018-01-01;2018-12-31;3.11;Lucro/Prejuízo Consolidado do Período;0.0000000000;S`,
+      `${ASSAI};DF Consolidado - Demonstração do Resultado;REAL;MIL;ÚLTIMO;2019-01-01;2019-12-31;3.11;Lucro/Prejuízo Consolidado do Período;1060000.0000000000;S`] },
+    { nome: "dfp_cia_aberta_DRE_ind_2019.csv", linhas: [CAB_DRE,
+      `${ASSAI};DF Individual - Demonstração do Resultado;REAL;MIL;PENÚLTIMO;2018-01-01;2018-12-31;3.01;Receita de Venda de Bens e/ou Serviços;23017000.0000000000;S`,
+      `${ASSAI};DF Individual - Demonstração do Resultado;REAL;MIL;ÚLTIMO;2019-01-01;2019-12-31;3.01;Receita de Venda de Bens e/ou Serviços;28082000.0000000000;S`] },
+  ];
+  const fatos = lerArquivos(arquivos);
+  const series = montarSeries(fatos);
+  const calculado = calcularIndicadoresDaSerie(series);
+  const de = (fim) => calculado.anual.find((p) => p.fim === fim);
+
+  test("a regra da TIM não tira o consolidado: o ÚLTIMO do documento tem ativo", () => {
+    assert.deepEqual(consolidadosZerados(fatos), []);
+    assert.ok(fatos.every((f) => f.consolidado));
+    assert.deepEqual(series.anual.map((p) => p.fim), ["2018-12-31", "2019-12-31"]);
+  });
+
+  test("2018: todos os indicadores ficam null com o motivo, nenhum fica 0", () => {
+    const ind = de("2018-12-31").indicadores;
+    assert.equal(MOTIVO_DEMONSTRACAO_ZERADA, "demonstração zerada no documento");
+    assert.deepEqual(Object.keys(ind), INDICADORES.map((i) => i.id));
+    for (const [id, r] of Object.entries(ind)) {
+      assert.equal(r.valor, null, id);
+      assert.equal(r.motivo, "demonstração zerada no documento", id);
+    }
+    // antes desta regra, a receita e o lucro de 2018 saíam 0
+    assert.notEqual(ind.receita.valor, 0);
+    assert.notEqual(ind.lucroLiquido.valor, 0);
+  });
+
+  test("2019, do mesmo documento, não é afetado", () => {
+    const ind = de("2019-12-31").indicadores;
+    assert.equal(ind.receita.valor, 30_232_000);
+    assert.equal(ind.lucroLiquido.valor, 1_060_000);
+  });
+
+  test("o período zerado conta como indisponível para quem lê o período direto", () => {
+    const p2018 = series.anual.find((p) => p.fim === "2018-12-31");
+    const adaptado = adaptarPeriodo(p2018);
+    assert.deepEqual([adaptado.tipo, adaptado.motivo], ["indisponivel", "demonstração zerada no documento"]);
+    assert.equal(adaptado.fluxo("3.01"), null);
+    assert.deepEqual(lucroDaControladora(p2018), { valor: null, motivo: "demonstração zerada no documento" });
+    assert.deepEqual(fundamentosParaMultiplos(p2018, de("2018-12-31").indicadores).plControladora, { valor: null, motivo: "demonstração zerada no documento" });
+  });
+
+  test("base de 12 meses com o balanço zerado também fica indisponível", () => {
+    const conta = (valor, demonstrativo = "") => ({ demonstrativo, descricao: "", valor });
+    const doze = { tipo: "itr", motivo: null, fim: "2026-06-30", parcelas: {}, fluxos: { "3.01": conta(100) }, estoques: { data: "2026-06-30", origem: {}, contas: { "1": conta(0, "BPA") }, naoFixas: [] } };
+    assert.deepEqual([adaptarPeriodo(doze).tipo, adaptarPeriodo(doze).motivo], ["indisponivel", "demonstração zerada no documento"]);
+    doze.estoques.contas["1"] = conta(500, "BPA");
+    assert.equal(adaptarPeriodo(doze).tipo, "12-meses");
   });
 });
 

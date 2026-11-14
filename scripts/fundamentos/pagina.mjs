@@ -24,7 +24,7 @@ export const BLOCOS = [
     id: "caixa-e-divida", titulo: "Caixa e dívida",
     indicadores: [
       "patrimonioLiquido", "caixa", "dividaBruta", "arrendamentos", "dividaBrutaComArrendamentos", "dividaLiquida", "dividaLiquidaComArrendamentos",
-      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "despesasFinanceiras", "coberturaJuros", "custoDivida", "liquidezCorrente", "liquidezImediata",
+      "dividaBrutaSobrePl", "dividaLiquidaSobreEbitda", "dividaCurtoPrazo", "despesasFinanceiras", "coberturaJuros", "liquidezCorrente", "liquidezImediata",
     ],
   },
   {
