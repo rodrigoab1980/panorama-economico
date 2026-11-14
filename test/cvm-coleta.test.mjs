@@ -24,7 +24,7 @@ function extratoDaFixture(documento, ano, { companhias = [WEG, OUTRA], intrusas 
   for (const nome of readdirSync(new URL("weg/", DIR)).filter((n) => n.startsWith(`${documento}_cia_aberta_`) && n.endsWith(`_${ano}.csv`))) {
     const tipo = tipoDaEntrada(nome);
     if (!tipo) continue;
-    const receber = tipo === "demonstrativo" ? extrator.demonstrativo(nome) : extrator.composicao(nome);
+    const receber = extrator[tipo](nome);
     const linhas = texto("weg", nome).split("\n");
     // Linha de uma companhia de fora do universo, no meio do arquivo: tem de ser descartada.
     if (intrusas && linhas.length > 2) linhas.splice(2, 0, linhas[1].replace(WEG.cnpj, "11.111.111/0001-11"));
@@ -69,7 +69,9 @@ describe("o que baixar", () => {
     assert.equal(tipoDaEntrada("dfp_cia_aberta_DFC_MD_con_2025.csv"), "demonstrativo");
     assert.equal(tipoDaEntrada("dfp_cia_aberta_composicao_capital_2025.csv"), "composicao");
     assert.equal(tipoDaEntrada("itr_cia_aberta_composicao_capital_2026.csv"), "composicao");
-    for (const fora of ["dfp_cia_aberta_2025.csv", "dfp_cia_aberta_DMPL_con_2025.csv", "dfp_cia_aberta_DRA_ind_2025.csv", "dfp_cia_aberta_parecer_2025.csv", "leiame.txt"]) {
+    assert.equal(tipoDaEntrada("dfp_cia_aberta_2025.csv"), "indice");
+    assert.equal(tipoDaEntrada("itr_cia_aberta_2026.csv"), "indice");
+    for (const fora of ["dfp_cia_aberta_DMPL_con_2025.csv", "dfp_cia_aberta_DRA_ind_2025.csv", "dfp_cia_aberta_parecer_2025.csv", "leiame.txt"]) {
       assert.equal(tipoDaEntrada(fora), null, fora);
     }
   });
@@ -84,7 +86,7 @@ describe("extrato de um ZIP: só as companhias do universo, em blocos", () => {
     assert.ok(extrato.linhas.lidas > extrato.linhas.aproveitadas);
     const semIntrusas = extratoDaFixture("dfp", 2025, { intrusas: false });
     assert.deepEqual(semIntrusas.companhias, extrato.companhias);
-    assert.equal(extrato.linhas.lidas - semIntrusas.linhas.lidas, 6); // uma intrusa em cada um dos 6 arquivos
+    assert.equal(extrato.linhas.lidas - semIntrusas.linhas.lidas, 7); // uma intrusa em cada um dos 7 arquivos (5 demonstrativos, a composição e o índice)
     assert.equal(extrato.linhas.aproveitadas, semIntrusas.linhas.aproveitadas);
   });
 
@@ -105,6 +107,30 @@ describe("extrato de um ZIP: só as companhias do universo, em blocos", () => {
     assert.deepEqual(dre.contas[0], ["3.01", "Receita de Venda de Bens e/ou Serviços", 1, 40_804_110]);
     assert.equal(blocos.length, 10); // DRE, BPA, BPP, DFC e DVA, cada um com ÚLTIMO e PENÚLTIMO
     assert.equal(blocos.find((b) => b.demonstrativo === "BPA").inicio, null);
+  });
+
+  test("os documentos do índice vão junto: versão, data de entrega e o link que a CVM informa", () => {
+    assert.deepEqual(extrato.companhias["005410"].documentos, [{
+      documento: "dfp", dtRefer: "2025-12-31", versao: 1, idDoc: "154872", recebidoEm: "2026-02-25",
+      link: "http://www.rad.cvm.gov.br/ENETCONSULTA/frmDownloadDocumento.aspx?CodigoInstituicao=1&NumeroSequencialDocumento=154872",
+    }]);
+  });
+
+  test("índice: link que não é do sistema de documentos da CVM fica de fora; cabeçalho errado dá erro", () => {
+    const CAB = "CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;CATEG_DOC;ID_DOC;DT_RECEB;LINK_DOC";
+    const extrator = criarExtrator([WEG]);
+    const receber = extrator.indice("itr_cia_aberta_2026.csv");
+    for (const l of [CAB,
+      `${WEG.cnpj};2026-03-31;1;WEG S.A.;005410;ITR;1;2026-05-01;http://exemplo.invalid/doc?x=1`,
+      `${WEG.cnpj};2026-06-30;2;WEG S.A.;005410;ITR;2;2026-08-01;javascript:alert(1)`,
+      `${WEG.cnpj};2026-09-30;1;WEG S.A.;005410;ITR;3;2026-10-28;https://www.rad.cvm.gov.br/ENETCONSULTA/frmDownloadDocumento.aspx?CodigoInstituicao=1&NumeroSequencialDocumento=3`,
+      "11.111.111/0001-11;2026-09-30;1;OUTRA;099998;ITR;4;2026-10-28;http://www.rad.cvm.gov.br/x", ""]) receber(l);
+    const docs = extrator.extrato().companhias["005410"].documentos;
+    assert.deepEqual(docs.map((d) => [d.documento, d.dtRefer, d.versao, d.link]), [
+      ["itr", "2026-03-31", 1, null], ["itr", "2026-06-30", 2, null],
+      ["itr", "2026-09-30", 1, "https://www.rad.cvm.gov.br/ENETCONSULTA/frmDownloadDocumento.aspx?CodigoInstituicao=1&NumeroSequencialDocumento=3"],
+    ]);
+    assert.throws(() => criarExtrator([WEG]).indice("dfp_cia_aberta_2025.csv")("CNPJ_CIA;DT_REFER"), /dfp_cia_aberta_2025\.csv:1: cabeçalho sem a\(s\) coluna\(s\) VERSAO, ID_DOC, DT_RECEB, LINK_DOC/);
   });
 
   test("a composição do capital vai junto, como veio do arquivo", () => {
@@ -136,7 +162,7 @@ describe("arquivo de uma companhia", () => {
   const cia = montarCompanhia(WEG, EXTRATOS_WEG);
 
   test("junta os extratos de todos os ZIPs", () => {
-    assert.deepEqual(Object.keys(cia), ["cnpj", "cdCvm", "tickers", "fatos", "composicoes", "origem", "avisos"]);
+    assert.deepEqual(Object.keys(cia), ["cnpj", "cdCvm", "tickers", "fatos", "composicoes", "documentos", "origem", "avisos"]);
     assert.deepEqual([cia.cnpj, cia.cdCvm, cia.tickers], ["84.429.695/0001-11", "005410", ["WEGE3"]]);
     assert.deepEqual(cia.origem, [
       { arquivo: "dfp_cia_aberta_2025.zip", lastModified: "Sun, 08 Nov 2026 10:19:22 GMT" },
@@ -157,6 +183,13 @@ describe("arquivo de uma companhia", () => {
     const indicadores = (series) => calcularIndicadoresDaSerie(series, { composicoes: cia.composicoes });
     assert.deepEqual(indicadores(doArquivo).doze.indicadores, indicadores(direto).doze.indicadores);
     assert.equal(indicadores(doArquivo).anual.at(-1).indicadores.ebitda.valor, 9_000_037);
+  });
+
+  test("documentos: a maior versão de cada um, em ordem de data", () => {
+    assert.deepEqual(cia.documentos.map((d) => [d.documento, d.dtRefer, d.versao, d.recebidoEm]), [
+      ["itr", "2025-09-30", 1, "2025-10-22"], ["dfp", "2025-12-31", 1, "2026-02-25"], ["itr", "2026-09-30", 1, "2026-10-21"],
+    ]);
+    assert.ok(cia.documentos.every((d) => /^http:\/\/www\.rad\.cvm\.gov\.br\/ENETCONSULTA\/frmDownloadDocumento\.aspx\?/.test(d.link)));
   });
 
   test("documento mais recente: o ITR de 30/09/2026", () => {
