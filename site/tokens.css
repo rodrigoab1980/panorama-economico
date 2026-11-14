@@ -3,7 +3,7 @@
 
    Dois temas, desenhados juntos. O site segue o tema do aparelho (prefers-color-scheme); não há
    botão manual. O claro é papel frio com tinta azul-petróleo; o escuro é a "hora azul" do Diário.
-   Todo par texto/fundo daqui passa no contraste AA (4,5:1); test/tokens.test.mjs confere.
+   Todo par texto/fundo daqui passa no contraste AA (4,5:1); test/regua-tokens.test.mjs confere.
 
    Regra de uso das cores:
    - --atencao só nos pontos de atenção e no carimbo de dado desatualizado;
@@ -69,18 +69,6 @@
     --agora: #F2C14E;
     --sombra: rgba(3, 8, 15, .55);
   }
-}
-
-/* Nomes antigos do Diário (style.css e menu.css), apontando para os tokens. Saem no passo 2 do redesenho. */
-:root {
-  --madrugada: var(--fundo);
-  --pre-abertura: var(--superficie);
-  --elevado: var(--superficie-2);
-  --papel: var(--tinta);
-  --papel-2: var(--tinta-2);
-  --papel-3: var(--tinta-suave);
-  --primeira-luz: var(--agora);
-  --aviso: var(--atencao);
 }
 
 /* Base comum a todas as páginas. */
