@@ -3,7 +3,7 @@
 // Tudo é HTML estático, sem JS. As cores são as neutras do tema: nada aqui diz se um número é bom ou
 // ruim. O destaque dos pontos de atenção usa a cor de aviso, sempre com ícone e texto.
 import { escapar as e } from "./html.mjs";
-import { percentual, vezes } from "./formatar.mjs";
+import { moeda, percentual, vezes } from "./formatar.mjs";
 import { rotuloDoAno } from "./consistencia.mjs";
 
 export const LEGENDA_DA_ATENCAO = "Regras automáticas sobre os números entregues à CVM. Descrevem fatos, não são recomendação.";
@@ -11,14 +11,26 @@ const SEM_VALOR = "—";
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 const maiuscula = (t) => String(t).replace(/^./, (c) => c.toUpperCase());
 
-// Um cartão: o rótulo, o número grande e uma linha de explicação.
-const cartao = (rotulo, numero, explicacao) => `<li class="cartao"><span class="cartao-rotulo">${e(rotulo)}</span><strong class="cartao-numero">${e(numero)}</strong><span class="cartao-conta">${e(explicacao)}</span></li>`;
+const intervalo = (a, b) => (a === b ? rotuloDoAno(a) : `${rotuloDoAno(a)}–${rotuloDoAno(b)}`);
 
-// Cartão de crescimento: os dois prazos lado a lado.
+// O pé de um cartão: uma linha de apoio curta à vista e a frase completa da conta no `title` do
+// cartão. A frase completa também vai num texto só para leitor de tela, e a linha curta fica fora
+// dele, para a conta não ser lida duas vezes. Sem frase completa, a linha curta é o texto todo.
+const apoio = (curta, completa) => (completa && completa !== curta
+  ? `<span class="cartao-conta" aria-hidden="true">${e(curta)}</span><span class="so-leitor">${e(completa)}</span>`
+  : `<span class="cartao-conta">${e(curta)}</span>`);
+const abre = (curta, completa) => `<li class="cartao"${completa && completa !== curta ? ` title="${e(completa)}"` : ""}>`;
+
+// Um cartão: o rótulo, o número grande, a linha de apoio e a frase completa.
+const cartao = (rotulo, numero, curta, completa = null) => `${abre(curta, completa)}<span class="cartao-rotulo">${e(rotulo)}</span><strong class="cartao-numero">${e(numero)}</strong>${apoio(curta, completa)}</li>`;
+
+// Cartão de crescimento: os dois prazos lado a lado. A linha de apoio diz de que ano a que ano vai
+// cada prazo, ou por que não há cálculo; a conta com os valores fica na frase completa.
 function cartaoDeCrescimento(titulo, itens) {
   const prazos = itens.map((c) => `<span class="prazo"><strong class="cartao-numero">${e(c.valor == null ? SEM_VALOR : percentual(c.valor))}</strong><small>em ${c.anos} anos</small></span>`).join("");
-  const contas = itens.map((c) => `${c.anos} anos: ${c.valor == null ? `sem cálculo (${c.motivo})` : c.conta}`).join(". ");
-  return `<li class="cartao"><span class="cartao-rotulo">${e(titulo)}: crescimento ao ano</span><span class="prazos">${prazos}</span><span class="cartao-conta">${e(contas)}.</span></li>`;
+  const contas = `${itens.map((c) => `${c.anos} anos: ${c.valor == null ? `sem cálculo (${c.motivo})` : c.conta}`).join(". ")}.`;
+  const curta = [...new Set(itens.map((c) => (c.valor == null ? c.motivo : intervalo(c.inicio, c.fim))))].join(" · ");
+  return `${abre(curta, contas)}<span class="cartao-rotulo">${e(titulo)}: crescimento ao ano</span><span class="prazos">${prazos}</span>${apoio(curta, contas)}</li>`;
 }
 
 // Os cartões de consistência.
@@ -30,7 +42,8 @@ export function consistenciaHtml(c) {
   const fora = periodo.fora.length
     ? ` ${plural(periodo.fora.length, "período ficou", "períodos ficaram")} de fora das contas: ${periodo.fora.map((f) => `${f.rotulo} (${f.motivo})`).join("; ")}.`
     : "";
-  const fracao = (m) => (m.valor == null ? [SEM_VALOR, m.motivo] : [`${m.valor} de ${m.total}`, `${m.semDado ? `anos com dado, ${rotuloDoAno(m.inicio)}–${rotuloDoAno(m.fim)}; ${plural(m.semDado, "ano", "anos")} sem dado` : `anos, ${rotuloDoAno(m.inicio)}–${rotuloDoAno(m.fim)}`}`]);
+  // Cada cartão: [número, linha de apoio curta, frase completa da conta].
+  const fracao = (m) => (m.valor == null ? [SEM_VALOR, m.motivo] : [`${m.valor} de ${m.total}`, `${m.semDado ? `anos com dado, ${rotuloDoAno(m.inicio)}–${rotuloDoAno(m.fim)}; ${plural(m.semDado, "ano", "anos")} sem dado` : `anos, ${rotuloDoAno(m.inicio)}–${rotuloDoAno(m.fim)}`}`, m.conta]);
   const seq = c.sequenciaComLucro;
   const margem = c.estabilidadeDaMargem;
   const pior = c.piorAno;
@@ -38,10 +51,10 @@ export function consistenciaHtml(c) {
   const cartoes = [
     cartao("Anos com lucro", ...fracao(c.anosComLucro)),
     cartao("Anos com FCL positivo", ...fracao(c.anosComFclPositivo)),
-    cartao("Maior sequência com lucro", seq.valor == null ? SEM_VALOR : plural(seq.valor, "ano", "anos"), seq.valor == null ? seq.motivo : seq.conta),
+    cartao("Maior sequência com lucro", seq.valor == null ? SEM_VALOR : plural(seq.valor, "ano", "anos"), seq.valor == null ? seq.motivo : seq.inicio ? intervalo(seq.inicio, seq.fim) : seq.conta, seq.conta),
     ...crescimentos,
-    cartao("Margem líquida: da menor à maior", margem.valor == null ? SEM_VALOR : margem.texto, margem.valor == null ? margem.motivo : margem.conta),
-    cartao("Pior ano da série", pior.valor == null ? SEM_VALOR : rotuloDoAno(pior.fim), pior.valor == null ? pior.motivo : pior.conta),
+    cartao("Margem líquida: da menor à maior", margem.valor == null ? SEM_VALOR : margem.texto, margem.valor == null ? margem.motivo : `de ${percentual(margem.menor.valor)} a ${percentual(margem.maior.valor)}`, margem.conta),
+    cartao("Pior ano da série", pior.valor == null ? SEM_VALOR : rotuloDoAno(pior.fim), pior.valor == null ? pior.motivo : pior.valor < 0 ? `prejuízo de ${moeda(-pior.valor)}` : `lucro de ${moeda(pior.valor)}`, pior.conta),
   ];
   return `<h3>Ao longo dos anos</h3>
 <p class="explica">${e(serie + fora)}</p>

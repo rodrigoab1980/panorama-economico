@@ -147,8 +147,9 @@ describe("ficha da WEG: os números certos, já no HTML", () => {
   test("cabeçalho: nome, setor, ticker com a cotação, a fonte e o horário", () => {
     assert.match(HTML, /<h2>WEG S\.A\.<\/h2>/);
     assert.match(HTML, /<p class="setor">Bens industriais<\/p>/);
-    assert.match(HTML, /<li><strong>WEGE3<\/strong> <span class="n">R\$ 51,31<\/span> <time>13\/11\/2026 18:05<\/time><\/li>/);
-    assert.match(HTML, /Cotação: CNBC \(atraso de até 15 min\)\./);
+    // a cotação fica na linha do ticker, sem repetir o ticker à vista (só para o leitor de tela), e a fonte vem depois
+    assert.match(HTML, /<div class="cotacao"><p class="cotacao-principal"><span class="so-leitor">WEGE3: <\/span><span class="n">R\$ 51,31<\/span> <time>13\/11\/2026 18:05<\/time><\/p><p class="fonte">Cotação: CNBC \(atraso de até 15 min\)\. É o preço do último negócio de cada ticker, na data e hora ao lado\.<\/p><\/div>/);
+    assert.ok(!HTML.includes('<ul class="cotacoes">'), "com um ticker só, não há lista de outros tickers");
     assert.match(HTML, /<title>WEGE3 · WEG S\.A\. · Fundamentalista · Panorama Econômico<\/title>/);
   });
 
@@ -269,7 +270,7 @@ describe("carimbo e cotação na ficha", () => {
 
   test("sem cotação: o ticker aparece com —, e a página diz que não há cotação", () => {
     const html = fichaHtml(fichaDaWeg({ cotacoes: null }), { hoje: HOJE });
-    assert.match(html, /<li><strong>WEGE3<\/strong> <span class="vazio" title="sem cotação coletada para este ticker">—<\/span><\/li>/);
+    assert.match(html, /<p class="cotacao-principal"><span class="so-leitor">WEGE3: <\/span><span class="vazio" title="sem cotação coletada para este ticker">—<\/span><\/p>/);
     assert.match(html, /<p class="fonte">Sem cotação coletada\.<\/p>/);
     assert.match(html, /<th scope="col" class="hoje">Hoje<small>sem preço<\/small><\/th>/);
   });
@@ -277,8 +278,10 @@ describe("carimbo e cotação na ficha", () => {
   test("companhia com dois tickers: cada um com a sua cotação; o que não tem fica com —", () => {
     const companhia = { ...WEG, tickers: [{ ticker: "WEGE3", ibovespa: true }, { ticker: "WEGE4", ibovespa: false }] };
     const html = fichaHtml(fichaDaWeg({ companhia }), { hoje: HOJE });
-    assert.match(html, /<strong>WEGE3<\/strong> <span class="n">R\$ 51,31<\/span>/);
-    assert.match(html, /<strong>WEGE4<\/strong> <span class="vazio"/);
+    // o ticker da ficha vem sem o nome repetido; o outro vem na lista, com o seu
+    assert.match(html, /<p class="cotacao-principal"><span class="so-leitor">WEGE3: <\/span><span class="n">R\$ 51,31<\/span>/);
+    assert.match(html, /<ul class="cotacoes"><li><strong>WEGE4<\/strong> <span class="vazio" title="sem cotação coletada para este ticker">—<\/span><\/li><\/ul><p class="fonte">/);
+    assert.ok(!html.includes("<strong>WEGE3</strong>"));
   });
 });
 
@@ -439,6 +442,20 @@ describe("lista de companhias", () => {
     assert.match(html, /<li data-busca="wege3 weg s\.a\."><a href="wege3\/"><strong>WEGE3<\/strong> <span>WEG S\.A\.<\/span><\/a><\/li>/);
     for (const l of linksInternos(html)) assert.match(l, /^[a-z0-9]+\/$/);
     assert.equal(linksInternos(html).length, 4);
+  });
+
+  test("sem as fichas, a lista sai sem a régua e sem a legenda", () => {
+    assert.ok(!html.includes("regua"));
+  });
+
+  test("com as fichas, cada empresa ganha a régua de anos em miniatura dentro do link, e a lista ganha a legenda", () => {
+    const comRegua = listaHtml(indice, { fichas: { WEGE3: fichaDaWeg() } });
+    assert.match(comRegua, /<li data-busca="wege3 weg s\.a\."><a href="wege3\/"><strong>WEGE3<\/strong> <span>WEG S\.A\.<\/span> <div class="regua miniatura" role="img" aria-label="Resultado por exercício, 2024 a 2025: lucro em 2 de 2 exercícios\."><ol class="regua-anos"><li class="lucro" title="2024: lucro de R\$ 6,3 bi"><\/li><li class="lucro" title="2025: lucro de R\$ 6,8 bi"><\/li><\/ol><\/div><\/a><\/li>/);
+    // quem não tem a ficha no mapa fica sem a régua, e o resto da linha não muda
+    assert.match(comRegua, /<li data-busca="embj3 [^"]*"><a href="embj3\/"><strong>EMBJ3<\/strong> <span>[^<]+<\/span><\/a><\/li>/);
+    assert.equal((comRegua.match(/class="regua miniatura"/g) ?? []).length, 1);
+    assert.match(comRegua, /<div class="lista-legenda"><p>Resultado de cada exercício, ao lado de cada empresa:<\/p><ul class="regua-legenda" aria-hidden="true"><li class="lucro">lucro<\/li><li class="prejuizo">prejuízo<\/li><li class="sem-dado">sem dado<\/li><\/ul><\/div>/);
+    assert.deepEqual(linksInternos(comRegua), linksInternos(html));
   });
 
   test("companhia sem ficha aparece sem link, com o motivo", () => {

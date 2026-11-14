@@ -48,13 +48,18 @@ body.fundamentos { overflow-x: hidden; }
 .contagem { margin: 0 0 var(--e-4); font-size: var(--t-2); color: var(--tinta-suave); }
 .sem-dados { padding: var(--e-3); border: 1px dashed var(--linha-forte); border-radius: var(--raio); color: var(--tinta-2); }
 
-.setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: var(--e-4) var(--e-5); align-items: start; }
+/* A legenda da régua em miniatura: os mesmos três desenhos da ficha. */
+.lista-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-1) var(--e-3); margin: 0 0 var(--e-4); font-size: var(--t-1); color: var(--tinta-suave); }
+.lista-legenda p { margin: 0; color: var(--tinta-2); }
+
+.setores { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--e-4) var(--e-5); align-items: start; }
 .setor h3 { margin-bottom: var(--e-1); padding-bottom: var(--e-1); font-size: var(--t-3); border-bottom: 1px solid var(--linha-forte); display: flex; justify-content: space-between; gap: var(--e-2); }
 .setor h3 small { font-weight: 400; font-size: var(--t-2); color: var(--tinta-suave); }
 .setor ul { list-style: none; margin: 0; padding: 0; }
 .setor li { border-bottom: 1px solid var(--linha); }
-.setor li a, .setor li.sem-ficha { display: grid; grid-template-columns: 72px 1fr; gap: var(--e-2); align-items: baseline; padding: 7px 0; text-decoration: none; }
-.setor li.sem-ficha { grid-template-columns: 72px 1fr auto; color: var(--tinta-suave); }
+/* Cada linha: o ticker, o nome e a régua de anos em miniatura, encostada à direita. */
+.setor li a, .setor li.sem-ficha { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; gap: var(--e-2); align-items: baseline; padding: 7px 0; text-decoration: none; }
+.setor li.sem-ficha { color: var(--tinta-suave); }
 .setor li strong { font-weight: 700; font-stretch: var(--largo); font-size: var(--t-2); }
 .setor li span { color: var(--tinta-2); font-size: var(--t-2); font-stretch: var(--estreito); overflow-wrap: anywhere; }
 .setor li em { font-style: normal; font-size: var(--t-1); }
@@ -63,7 +68,9 @@ body.fundamentos { overflow-x: hidden; }
 /* ---------- ficha: identidade ---------- */
 .trilha { margin: 0 0 var(--e-4); font-size: var(--t-2); color: var(--tinta-2); }
 .ficha-cabecalho { margin-bottom: var(--e-5); }
-.identidade { display: grid; gap: 2px; }
+/* A cotação divide a linha com o ticker: à direita no desktop, abaixo do nome no celular. */
+.topo-da-ficha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--e-3) var(--e-5); align-items: start; }
+.identidade { display: grid; gap: 2px; min-width: 0; }
 /* O ticker é o nome pelo qual o leitor conhece a companhia: largura expandida e peso alto. */
 .ticker { margin: 0; font-size: var(--t-6); font-weight: 800; font-stretch: var(--largo); line-height: 1; letter-spacing: -.02em; }
 .identidade h2 { color: var(--tinta-2); margin-top: var(--e-1); }
@@ -71,14 +78,15 @@ body.fundamentos { overflow-x: hidden; }
 
 /* ---------- régua de anos ---------- */
 /* Um bloco por exercício. É fato, não julgamento: a mesma tinta nos três estados; só o preenchimento muda. */
-.regua { margin: var(--e-4) 0 0; max-width: 780px; }
+/* Cada exercício tem a mesma largura (--bloco): uma série curta fica curta, não estica até a borda.
+   Só quando a tela é estreita demais para a série inteira os blocos encolhem, todos juntos. */
+.regua { --bloco: 44px; margin: var(--e-4) 0 0; }
 .regua figcaption { font-size: var(--t-2); color: var(--tinta-2); }
 .regua figcaption strong { font-weight: 650; color: var(--tinta); }
 .regua-anos {
-  list-style: none; margin: var(--e-2) 0 0; padding: 0 0 20px;
-  display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 3px;
+  list-style: none; margin: var(--e-2) 0 0; padding: 0 0 20px; display: flex; gap: 3px;
 }
-.regua-anos li { position: relative; height: 34px; border-radius: 2px; cursor: help; }
+.regua-anos li { position: relative; flex: 0 1 var(--bloco); min-width: 0; height: 34px; border-radius: 2px; cursor: help; }
 .regua-anos .lucro { background: var(--tinta); }
 .regua-anos .prejuizo { box-shadow: inset 0 0 0 2px var(--tinta); }
 .regua-anos .sem-dado { border: 2px dashed var(--tinta); opacity: .55; }
@@ -93,20 +101,27 @@ body.fundamentos { overflow-x: hidden; }
 .regua-legenda .lucro::before { background: var(--tinta); }
 .regua-legenda .prejuizo::before { box-shadow: inset 0 0 0 2px var(--tinta); }
 .regua-legenda .sem-dado::before { border: 2px dashed var(--tinta); opacity: .55; }
-/* Miniatura, para a lista de empresas: sem anos e sem legenda. */
-.regua.miniatura { margin: 0; max-width: 150px; }
-.regua.miniatura .regua-anos { margin: 0; padding: 0; gap: 1px; }
-.regua.miniatura .regua-anos li { height: 12px; border-radius: 1px; }
+/* Miniatura, para a lista de empresas: sem anos e sem legenda. Encostada à direita, o exercício mais
+   recente de cada empresa fica na mesma coluna. */
+.regua.miniatura { --bloco: 6px; margin: 0; align-self: center; }
+.regua.miniatura .regua-anos { margin: 0; padding: 0; gap: 1px; justify-content: flex-end; }
+.regua.miniatura .regua-anos li { flex: 0 0 var(--bloco); height: 13px; border-radius: 1px; cursor: inherit; }
 .regua.miniatura .regua-anos .prejuizo { box-shadow: inset 0 0 0 1px var(--tinta); }
 .regua.miniatura .regua-anos .sem-dado { border-width: 1px; }
 
 /* ---------- ficha: cotação e carimbo ---------- */
-.cotacoes { list-style: none; margin: var(--e-4) 0 var(--e-1); padding: 0; display: flex; flex-wrap: wrap; gap: var(--e-1) var(--e-4); }
-.cotacoes li { display: flex; align-items: baseline; gap: 7px; }
+/* O preço do ticker da ficha vem grande e sem repetir o ticker; os outros tickers da companhia, numa
+   lista menor; a fonte, na menor letra da escala. */
+.cotacao { display: grid; justify-items: end; gap: var(--e-1); text-align: right; }
+.cotacao-principal { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 0 var(--e-2); line-height: 1.1; }
+.cotacao-principal .n, .cotacao-principal .vazio { font-size: var(--t-6); font-weight: 500; font-stretch: var(--estreito); letter-spacing: -.01em; }
+.cotacao-principal time { font-size: var(--t-2); color: var(--tinta-2); }
+.cotacoes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 var(--e-4); }
+.cotacoes li { display: flex; align-items: baseline; gap: 6px; }
 .cotacoes strong { font-weight: 650; font-size: var(--t-2); }
-.cotacoes .n { font-size: var(--t-4); font-weight: 500; }
+.cotacoes .n { font-size: var(--t-3); font-weight: 500; }
 .cotacoes time { font-size: var(--t-1); color: var(--tinta-suave); }
-.fonte { margin: 0; font-size: var(--t-1); color: var(--tinta-suave); max-width: 75ch; }
+.fonte { margin: 0; font-size: var(--t-1); line-height: 1.35; color: var(--tinta-suave); max-width: 44ch; }
 /* Dado desatualizado: a cor de atenção, com texto. */
 .carimbo {
   margin: var(--e-3) 0 0; padding: var(--e-2) var(--e-3); max-width: 75ch; font-size: var(--t-2); color: var(--atencao);
@@ -126,7 +141,9 @@ body.fundamentos { overflow-x: hidden; }
 .cartao { display: flex; flex-direction: column; gap: 3px; padding: var(--e-3); background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio-cartao); min-width: 0; }
 .cartao-rotulo { font-size: var(--t-1); color: var(--tinta-2); line-height: 1.25; }
 .cartao-numero { font-size: var(--t-5); font-weight: 650; line-height: 1.15; }
+/* A linha de apoio é curta; a frase completa da conta está no title do cartão (e no balão, com JS). */
 .cartao-conta { font-size: var(--t-1); color: var(--tinta-suave); line-height: 1.35; overflow-wrap: anywhere; }
+.cartao[title], .cartao[data-dica] { cursor: help; }
 .prazos { display: flex; gap: var(--e-3); flex-wrap: wrap; }
 .prazo { display: flex; flex-direction: column; }
 .prazo .cartao-numero { font-size: var(--t-4); }
@@ -196,6 +213,8 @@ body.fundamentos { overflow-x: hidden; }
 .serie .quebra { border-right: 2px dashed var(--atencao); }
 .serie tfoot td, .serie tfoot th { font-size: var(--t-1); color: var(--tinta-suave); border-bottom: 0; text-align: right; line-height: 1.35; vertical-align: top; }
 .serie tfoot .fixa { text-align: left; color: var(--tinta-suave); }
+/* Os links dos documentos ficam empilhados: cada um com 24 px de altura, o mínimo para o toque. */
+.serie tfoot a { display: inline-block; min-height: 24px; padding: 4px 0; }
 .serie tbody tr:hover th, .serie tbody tr:hover td { background: var(--superficie-2); }
 .serie.multiplos { width: 100%; }
 .serie.multiplos .motivo { text-align: left; white-space: normal; color: var(--tinta-suave); font-size: var(--t-1); min-width: 200px; }
@@ -229,6 +248,10 @@ body.fundamentos { overflow-x: hidden; }
   .cabeca { padding: var(--e-3); }
   .lista, .ficha { padding: var(--e-3) var(--e-3) var(--e-6); }
   .ticker { font-size: 2rem; }
+  .topo-da-ficha { grid-template-columns: minmax(0, 1fr); }
+  .cotacao { justify-items: start; text-align: left; }
+  .cotacao-principal, .cotacoes { justify-content: flex-start; }
+  .cotacao-principal .n, .cotacao-principal .vazio { font-size: var(--t-5); }
   .regua-anos li { height: 28px; }
   .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-2); }
   .cartao { padding: 10px; }

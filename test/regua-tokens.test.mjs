@@ -2,7 +2,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { reguaDeAnos, reguaHtml, resumoDaRegua } from "../scripts/fundamentos/regua.mjs";
+import { mostraAno, reguaDeAnos, reguaHtml, resumoDaRegua } from "../scripts/fundamentos/regua.mjs";
 import { fichaHtml } from "../scripts/fundamentos/pagina.mjs";
 import { MOTIVO_DEMONSTRACAO_ZERADA } from "../scripts/cvm/indicadores.mjs";
 import { HOJE, fichaDaWeg } from "./apoio/ficha.mjs";
@@ -84,7 +84,7 @@ describe("régua de anos: HTML", () => {
 
   test("uma lista ordenada com um item por exercício, cada um com o estado na classe e o ano e o lucro no title", () => {
     assert.match(html, /^<figure class="regua">/);
-    assert.match(html, /<ol class="regua-anos" style="--n:8">/);
+    assert.match(html, /<ol class="regua-anos">/);
     assert.equal((html.match(/<li class="(lucro|prejuizo|sem-dado)" title=/g) ?? []).length, 8);
     assert.match(html, /<li class="lucro" title="2010: lucro de R\$ 100 mil"><span class="so-leitor">2010: lucro de R\$ 100 mil<\/span>/);
     assert.match(html, /<li class="prejuizo" title="2015: prejuízo de R\$ 50 mil">/);
@@ -100,6 +100,24 @@ describe("régua de anos: HTML", () => {
     assert.deepEqual([...html.matchAll(/<small aria-hidden="true">(\d{4})<\/small>/g)].map((m) => m[1]), ["2010", "2015", "2017"]);
   });
 
+  test("um múltiplo de 5 colado no primeiro ou no último bloco fica sem o ano, para os números não se encostarem", () => {
+    const anos = (inicio, fim) => { const f2 = ficha(Array.from({ length: fim - inicio + 1 }, (_, i) => ano(inicio + i, 1))); return [...reguaHtml(f2).matchAll(/<small aria-hidden="true">(\d{4})<\/small>/g)].map((m) => m[1]); };
+    assert.deepEqual(anos(2010, 2026), ["2010", "2015", "2020", "2026"]);
+    assert.deepEqual(anos(2009, 2025), ["2009", "2015", "2020", "2025"]);
+    assert.deepEqual(anos(2010, 2025), ["2010", "2015", "2020", "2025"]);
+    assert.deepEqual(anos(2024, 2026), ["2024", "2026"]);
+    assert.equal(mostraAno({ rotulo: "03/2025" }, 3, 8), true);
+  });
+
+  test("largura fixa por exercício: a régua não leva o número de blocos para o CSS, e o CSS não estica o bloco", () => {
+    assert.ok(!html.includes("--n"));
+    const css = readFileSync(new URL("../site/fundamentos/fundamentos.css", import.meta.url), "utf8");
+    assert.match(css, /\.regua \{ --bloco: 44px;/);
+    // o bloco pode encolher (tela estreita), mas não cresce além da sua largura
+    assert.match(css, /\.regua-anos li \{[^}]*flex: 0 1 var\(--bloco\);/);
+    assert.ok(!/\.regua-anos \{[^}]*1fr/.test(css));
+  });
+
   test("legenda com os três estados, na mesma ordem", () => {
     assert.match(html, /<ul class="regua-legenda" aria-hidden="true"><li class="lucro">lucro<\/li><li class="prejuizo">prejuízo<\/li><li class="sem-dado">sem dado<\/li><\/ul>/);
   });
@@ -109,6 +127,9 @@ describe("régua de anos: HTML", () => {
     assert.match(mini, /^<div class="regua miniatura" role="img" aria-label="Resultado por exercício, 2010 a 2017: lucro em 6 de 8 exercícios, prejuízo em 1, 1 sem dado\.">/);
     assert.ok(!mini.includes("<small") && !mini.includes("regua-legenda") && !mini.includes("<figure"));
     assert.equal((mini.match(/<li class=/g) ?? []).length, 8);
+    // na miniatura o resumo já está no aria-label: cada bloco leva só o title
+    assert.ok(!mini.includes("so-leitor"));
+    assert.match(mini, /<li class="prejuizo" title="2015: prejuízo de R\$ 50 mil"><\/li>/);
   });
 
   test("texto vindo de dado é escapado", () => {
@@ -124,11 +145,12 @@ describe("régua de anos: HTML", () => {
 describe("régua de anos na ficha", () => {
   const html = fichaHtml(fichaDaWeg(), { hoje: HOJE });
 
-  test("fica logo abaixo do nome da companhia, antes da cotação e das tabelas", () => {
+  test("fica logo abaixo da linha do ticker (nome e cotação), antes dos cartões e das tabelas", () => {
     const nome = html.indexOf("<h2>WEG S.A.</h2>");
+    const cotacao = html.indexOf('<div class="cotacao">');
     const regua = html.indexOf('<figure class="regua">');
-    assert.ok(nome > 0 && regua > nome);
-    assert.ok(regua < html.indexOf('<ul class="cotacoes">'));
+    assert.ok(nome > 0 && cotacao > nome && regua > cotacao);
+    assert.match(html, /<\/div><\/div><figure class="regua">/);
     assert.ok(regua < html.indexOf('id="resumo-consistencia"'));
   });
 
@@ -139,7 +161,7 @@ describe("régua de anos na ficha", () => {
   });
 
   test("o ticker abre a ficha, antes do nome", () => {
-    assert.match(html, /<div class="identidade"><p class="ticker">WEGE3<\/p><h2>WEG S\.A\.<\/h2><p class="setor">Bens industriais<\/p><\/div>/);
+    assert.match(html, /<div class="topo-da-ficha"><div class="identidade"><p class="ticker">WEGE3<\/p><h2>WEG S\.A\.<\/h2><p class="setor">Bens industriais<\/p><\/div><div class="cotacao">/);
   });
 
   test("a ficha carrega os tokens e o CSS da página, e não mais o CSS do Diário", () => {
@@ -236,6 +258,28 @@ describe("CSS das páginas: as cores vêm dos tokens", () => {
     assert.match(ler("index.html"), /<link rel="stylesheet" href="tokens\.css">\r?\n<link rel="stylesheet" href="style\.css">/);
     assert.match(ler("fundamentos/index.html"), /<link rel="stylesheet" href="\.\.\/tokens\.css">\r?\n<link rel="stylesheet" href="fundamentos\.css">/);
     assert.match(ler("fundamentos/fundamentos.css"), /\.busca input \{[^}]*border: 1px solid var\(--tinta-suave\)/);
+  });
+
+  test("os nomes antigos de variável do Diário saíram de todo o site", () => {
+    for (const arquivo of ["style.css", "menu.css", "tokens.css", "fundamentos/fundamentos.css", "app.js", "index.html"]) {
+      assert.deepEqual(ler(arquivo).match(/--(madrugada|pre-abertura|elevado|papel(-[23])?|primeira-luz|aviso)\b/g) ?? [], [], arquivo);
+    }
+  });
+
+  test("toda variável usada no CSS está definida em tokens.css (ou no próprio arquivo)", () => {
+    const definidas = new Set([...TOKENS.matchAll(/(--[a-z0-9-]+):/g)].map((m) => m[1]));
+    for (const arquivo of ["style.css", "menu.css", "fundamentos/fundamentos.css"]) {
+      const css = ler(arquivo);
+      const locais = new Set([...css.matchAll(/(--[a-z0-9-]+):/g)].map((m) => m[1]));
+      for (const [, nome] of css.matchAll(/var\((--[a-z0-9-]+)/g)) assert.ok(definidas.has(nome) || locais.has(nome), `${arquivo}: ${nome}`);
+    }
+  });
+
+  test("tamanho de letra só nos degraus da escala: nenhum px solto no Diário nem no menu", () => {
+    for (const arquivo of ["style.css", "menu.css"]) {
+      const css = ler(arquivo).replace(/\/\*.*?\*\//gs, "");
+      assert.deepEqual(css.match(/font-size:\s*[\d.]+px/g) ?? [], [], arquivo);
+    }
   });
 
   test("nenhuma caixa-alta espaçada em rótulo", () => {

@@ -100,14 +100,14 @@ async function gerarPaginas({ fichas, indice }) {
 }
 
 // A lista entra em fundamentos/index.html mesmo sem dados (com o aviso de que ainda não foram coletados).
-async function gerarLista(indice) {
+async function gerarLista(indice, fichas) {
   const arquivo = join(destino, arquivoDaPagina(PAGINAS.find((p) => p.id === "fundamentos")));
-  await writeFile(arquivo, inserirLista(await readFile(arquivo, "utf8"), listaHtml(indice)));
+  await writeFile(arquivo, inserirLista(await readFile(arquivo, "utf8"), listaHtml(indice, { fichas })));
 }
 
 let resultado = null;
 try { resultado = await gerarFichas(); } catch (e) { console.warn(`aviso: fichas não geradas: ${e.message}`); }
 try { if (resultado) await gerarPaginas(resultado); } catch (e) { console.warn(`aviso: páginas das companhias não geradas: ${e.message}`); }
-await gerarLista(resultado?.indice ?? null);
+await gerarLista(resultado?.indice ?? null, resultado?.fichas ?? null);
 
 console.log(`build pronto em ${destino}`);

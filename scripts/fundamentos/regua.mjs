@@ -53,23 +53,32 @@ export function resumoDaRegua(blocos) {
 }
 
 // Quais blocos mostram o ano embaixo: o primeiro, o último e os anos múltiplos de 5 (os outros
-// ficam só no title, para a régua caber no celular).
-const mostraAno = (bloco, i, total) => i === 0 || i === total - 1 || Number(bloco.rotulo.slice(-4)) % 5 === 0;
+// ficam só no title, para a régua caber no celular). Um múltiplo de 5 colado no primeiro ou no último
+// bloco fica sem o ano: no celular os dois números se encostariam.
+export const mostraAno = (bloco, i, total) => i === 0 || i === total - 1
+  || (Number(bloco.rotulo.slice(-4)) % 5 === 0 && i !== 1 && i !== total - 2);
 
-// HTML da régua. `miniatura: true` tira os anos e a legenda (para a lista de companhias).
+// A legenda dos três estados, igual na ficha e na lista.
+export const LEGENDA_DA_REGUA = `<ul class="regua-legenda" aria-hidden="true"><li class="lucro">lucro</li><li class="prejuizo">prejuízo</li><li class="sem-dado">sem dado</li></ul>`;
+export const TITULO_DA_REGUA = "Resultado de cada exercício";
+
+// HTML da régua. Cada exercício tem a mesma largura (fixa no CSS): uma série curta fica curta, não
+// estica até a borda. `miniatura: true` tira os anos e a legenda (para a lista de companhias); ali o
+// resumo vai no aria-label e cada bloco só leva o title.
 export function reguaHtml(ficha, { miniatura = false } = {}) {
   const blocos = reguaDeAnos(ficha);
   if (blocos.length === 0) return "";
   const resumo = resumoDaRegua(blocos);
   const itens = blocos.map((b, i) => {
     const ano = !miniatura && mostraAno(b, i, blocos.length) ? `<small aria-hidden="true">${e(b.rotulo.slice(-4))}</small>` : "";
-    return `<li class="${b.estado}" title="${e(b.texto)}"><span class="so-leitor">${e(b.texto)}</span>${ano}</li>`;
+    return miniatura ? `<li class="${b.estado}" title="${e(b.texto)}"></li>`
+      : `<li class="${b.estado}" title="${e(b.texto)}"><span class="so-leitor">${e(b.texto)}</span>${ano}</li>`;
   }).join("");
-  const lista = `<ol class="regua-anos" style="--n:${blocos.length}">${itens}</ol>`;
+  const lista = `<ol class="regua-anos">${itens}</ol>`;
   if (miniatura) return `<div class="regua miniatura" role="img" aria-label="${e(`Resultado por exercício, ${resumo}`)}">${lista}</div>`;
   return `<figure class="regua">
-<figcaption><strong>Resultado de cada exercício</strong> <span class="regua-resumo">${e(resumo)}</span></figcaption>
+<figcaption><strong>${TITULO_DA_REGUA}</strong> <span class="regua-resumo">${e(resumo)}</span></figcaption>
 ${lista}
-<ul class="regua-legenda" aria-hidden="true"><li class="lucro">lucro</li><li class="prejuizo">prejuízo</li><li class="sem-dado">sem dado</li></ul>
+${LEGENDA_DA_REGUA}
 </figure>`;
 }
