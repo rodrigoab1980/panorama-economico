@@ -112,6 +112,8 @@ body.fundamentos .topo { grid-template-columns: 1fr auto; }
 .comparacao td:last-child { color: var(--papel-2); min-width: 220px; }
 .comparacao tbody tr:last-child th, .comparacao tbody tr:last-child td { border-bottom: 0; }
 .pares .rolagem { margin-top: 10px; }
+/* No celular a tabela rola para os lados; a posição fica numa linha só, para as linhas não ficarem altas. */
+@media (max-width: 767px) { .comparacao td:last-child { min-width: 320px; } .comparacao tbody th { min-width: 128px; } }
 
 /* ---------- ficha: blocos ---------- */
 .bloco { margin-top: 26px; scroll-margin-top: 110px; }
