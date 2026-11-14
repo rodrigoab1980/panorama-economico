@@ -139,4 +139,5 @@ jobs:
 
       # Commit só quando algo mudou; push com nova tentativa (o workflow de 15 min grava na mesma branch).
       - name: Gravar na branch de dados
-        run: node scripts/publicar-dados.mjs dados "$BRANCH_DE_DADOS" "dados: fundamentos de $(TZ=America/Sao_Paulo date +%F)"
+        run: |
+          node scripts/publicar-dados.mjs dados "$BRANCH_DE_DADOS" "dados: fundamentos de $(TZ=America/Sao_Paulo date +%F)"
