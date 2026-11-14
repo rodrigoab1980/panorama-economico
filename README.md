@@ -2,7 +2,11 @@
 
 [![CI](https://github.com/rodrigoab1980/panorama-economico/actions/workflows/ci.yml/badge.svg)](https://github.com/rodrigoab1980/panorama-economico/actions/workflows/ci.yml)
 
-Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos dias úteis.
+Painel matinal de mercado, publicado no GitHub Pages e atualizado sozinho nos dias úteis. O site tem duas páginas: o **Diário** (visão de trade, na raiz) e a **Fundamentalista** (em `fundamentos/`).
+
+**Fundamentalista (v2.0):** os fundamentos de 64 companhias do Ibovespa, sem bancos e seguradoras, tirados dos documentos entregues à CVM. Cada companhia tem uma ficha com a evolução ano a ano desde 2010 e os últimos 12 meses, com o fluxo de caixa no centro. Só dados e regras à vista: nada de "compre", "venda", nota ou preço-alvo. Veja [Página Fundamentalista](#página-fundamentalista), [Indicadores fundamentalistas](#indicadores-fundamentalistas) e [Limitações conhecidas](#limitações-conhecidas).
+
+**Diário:**
 
 - **Resumo do dia** escrito pelo Claude: tom do mercado, Ásia, Europa, EUA, Brasil e emergentes, commodities e juros, pontos-chave e as notícias que podem mexer com os preços. É refeito a cada hora, das 6h às 20h.
 - **Como estão os mercados**: placar com bolsas, câmbio, commodities e juros de 10 anos (CNBC), com a variação do dia, da semana e do mês. Semana e mês vêm do [histórico diário](#histórico-diário) próprio e mostram "—" até o histórico cobrir o período.
@@ -29,7 +33,7 @@ Navegador
   └─ o Diário (index.html, na raiz) lê os JSON a cada 5 min; os widgets da TradingView atualizam ao vivo
 ```
 
-O site tem mais de uma página, com um menu comum: o **Diário** (visão de trade) continua na raiz, e a **Fundamentalista** fica em `fundamentos/` (por enquanto, só um esqueleto; o conteúdo vem na #38). O build troca o marcador `<!-- menu -->` de cada página pelo menu, e o resto do HTML fica igual. Todos os links internos são relativos, porque o GitHub Pages serve o site num subcaminho (`/panorama-economico/`): um link que comece com `/` quebraria em produção. As páginas da v3 (Overview e Treinamentos) só entram no menu quando existirem.
+O site tem mais de uma página, com um menu comum: o **Diário** (visão de trade) continua na raiz, e a **Fundamentalista** fica em `fundamentos/`, com uma página por companhia. O build troca o marcador `<!-- menu -->` de cada página pelo menu, e o resto do HTML fica igual. Todos os links internos são relativos, porque o GitHub Pages serve o site num subcaminho (`/panorama-economico/`): um link que comece com `/` quebraria em produção. As páginas da v3 (Overview e Treinamentos) só entram no menu quando existirem.
 
 ### Estrutura do repositório
 
@@ -40,7 +44,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/`, insere o menu em cada página e gera as fichas das companhias em `dist/fundamentos/dados/`. Só lê e grava; a lógica fica em `scripts/paginas.mjs` e em `scripts/cvm/ficha.mjs`. |
 | `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
-| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): `formatar.mjs`, `pagina.mjs` (HTML da ficha e da lista), `csv.mjs` e `carimbo.mjs`. Veja [Página Fundamentalista](#página-fundamentalista). |
+| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): os números em pt-BR, o HTML da ficha, da lista e do painel, o CSV, o carimbo de desatualizado, a consistência, os pontos de atenção, a comparação com o setor e a régua de anos. A lista dos módulos está em [Como as fichas são geradas](#como-as-fichas-são-geradas). Veja [Página Fundamentalista](#página-fundamentalista). |
 | `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. |
 | `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
 | `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
@@ -70,6 +74,15 @@ As escolhas que moldam o projeto, com a alternativa considerada e o motivo. As m
 8. **Cotações da CNBC no servidor, widgets da TradingView no navegador.** O placar, o mapa, o histórico e os alertas usam a CNBC, porque precisam de números que o script consiga ler. As abas usam widgets prontos, que já atualizam ao vivo. *Por quê:* sem chave de API paga para nenhuma das duas.
 9. **Resumo pelo Claude no máximo de hora em hora** (`SUMMARY_INTERVAL_MIN`), só das 6h às 20h, e só se houver chave. *Por quê:* controla o custo; sem a chave, o resto do site funciona igual.
 10. **Node 24 ou mais novo, CI no 24 e no 26** (#12). *Por quê:* as actions do GitHub deixaram o Node 20; testar também a versão seguinte avisa cedo de incompatibilidades.
+
+### Decisões da v2.0 (página Fundamentalista)
+
+11. **Build próprio em Node** (`scripts/build.mjs` → `dist/`), sem framework e sem dependência nova (#30). *Alternativa:* um gerador de site pronto. *Por quê:* o site são poucas páginas com um menu comum; um script que copia `site/`, insere o menu e gera as fichas é pequeno, testável e não traz nada para atualizar.
+12. **Fundamentos num workflow semanal separado, gravando na branch `dados`** (#37). *Alternativa:* coletar a CVM no workflow de 15 minutos. *Por quê:* a CVM regrava os arquivos uma vez por semana e são 229 MB; a coleta pesada não pode atrasar nem derrubar o Diário.
+13. **Fatos brutos na `dados`, indicadores no build** (#37). O workflow semanal grava as linhas dos demonstrativos; a série, os 12 meses, os indicadores e os múltiplos são calculados a cada build. *Alternativa:* gravar os indicadores já prontos. *Por quê:* uma fórmula corrigida ou um preço novo aparecem no site na execução seguinte, sem coletar a CVM de novo.
+14. **JSON puro, com um formato intermediário normalizado** (#29, decidido no checkpoint). O leitor gera uma linha por valor (`cnpj`, `conta`, `início`, `fim`, `valor`, `versão`), o que permite trocar para SQLite depois sem reescrever a lógica. *Alternativa:* SQLite desde já. *Por quê:* o gargalo medido é ler os ZIPs, não armazenar, e o `node:sqlite` ainda é experimental. As medições estão em [docs/cvm.md](docs/cvm.md).
+15. **Universo: ações do Ibovespa, sem bancos e seguradoras** (#32). *Por quê:* o plano de contas de bancos e seguradoras é outro (as contas 3.01 e 2.03 têm outro significado), e as fórmulas da página não valem para eles. As holdings financeiras também ficam de fora. São 64 companhias na carteira de 13/11/2026.
+16. **B3 COTAHIST vetada pelos termos de uso** (#51). O arquivo oficial de cotações históricas da B3 funciona, mas a página dela veda a coleta automatizada, para qualquer finalidade. *Consequência:* o preço do dia vem da CNBC, isolada atrás de um adaptador, e o site não tem série histórica de preço. Veja [Fonte de preço](#fonte-de-preço).
 
 ## Identidade visual
 
@@ -132,7 +145,9 @@ Os três números são configuráveis (tabela abaixo). A lógica fica em `script
 
 ## Indicadores fundamentalistas
 
-A página Fundamentalista (em construção na v2.0) mostra, para cada exercício e para os últimos 12 meses, os indicadores abaixo. Eles saem das contas fixas das demonstrações consolidadas que a companhia entrega à CVM. Os valores ficam em R$ mil e as razões em fração, sem arredondar; a página é que arredonda e mostra em %. Cada indicador leva a fórmula em texto, que a página vai mostrar ao passar o mouse.
+A página Fundamentalista mostra, para cada exercício e para os últimos 12 meses, os indicadores abaixo. Eles saem das contas fixas das demonstrações consolidadas que a companhia entrega à CVM. Os valores ficam em R$ mil e as razões em fração, sem arredondar; a página é que arredonda e mostra em %. Cada indicador leva a fórmula em texto, que a página mostra num balão (e no `title`).
+
+Toda fórmula citada na página está numa tabela deste README: os indicadores e os múltiplos, os cartões de "Ao longo dos anos", as sete regras dos pontos de atenção, a comparação com o setor e os números do painel. O teste `test/readme-formulas.test.mjs` confere isso nome a nome e quebra se alguém criar um indicador sem documentar.
 
 | Indicador | Fórmula |
 |---|---|
@@ -140,8 +155,8 @@ A página Fundamentalista (em construção na v2.0) mostra, para cada exercício
 | Lucro bruto | DRE 3.03, como a companhia informa |
 | Margem bruta | Lucro bruto ÷ receita líquida |
 | EBIT | DRE 3.05 (resultado antes do resultado financeiro e dos tributos) |
-| Depreciação e amortização (D&A) | A da DFC (linhas de depreciação, amortização e exaustão nos ajustes do lucro); sem ela, DVA 7.04.01 com o sinal trocado |
-| EBITDA | EBIT + D&A |
+| Depreciação e amortização | A D&A da DFC (linhas de depreciação, amortização e exaustão nos ajustes do lucro); sem ela, DVA 7.04.01 com o sinal trocado |
+| EBITDA | EBIT + D&A, calculado das demonstrações entregues à CVM. Não é o "EBITDA ajustado" do release da companhia (veja a escolha 20) |
 | Margem EBITDA | EBITDA ÷ receita líquida |
 | Resultado financeiro | DRE 3.06 |
 | Lucro líquido | DRE 3.11 (consolidado, com a parte dos minoritários) |
@@ -161,7 +176,7 @@ Caixa, dívida e liquidez, sempre com o saldo do fim do período:
 | Dívida bruta | (BPP 2.01.04 − 2.01.04.03) + (2.02.01 − 2.02.01.03) + as linhas de empréstimos, financiamentos e debêntures em outras obrigações (2.01.05 e 2.02.02): sem arrendamentos |
 | Arrendamentos | 2.01.04.03 + 2.02.01.03 + as linhas de arrendamento em outras obrigações (2.01.05 e 2.02.02) |
 | Dívida bruta com arrendamentos | Dívida bruta + arrendamentos |
-| Dívida líquida | Dívida bruta − caixa. Negativa quer dizer mais caixa do que dívida |
+| Dívida líquida | Dívida bruta − caixa. Negativa quer dizer mais caixa do que dívida. O caixa é só 1.01.01 + 1.01.02; o release da companhia pode somar outras aplicações (veja a escolha 20) |
 | Dívida líquida com arrendamentos | Dívida bruta + arrendamentos − caixa |
 | Dívida bruta ÷ patrimônio líquido | Dívida bruta ÷ BPP 2.03 |
 | Dívida líquida ÷ EBITDA | Dívida líquida ÷ EBITDA do período |
@@ -187,9 +202,11 @@ Fluxo de caixa, proventos e valores por ação:
 
 | Indicador | Fórmula |
 |---|---|
-| FCO, FCI e FCF | DFC 6.01, 6.02 e 6.03 (caixa das atividades operacionais, de investimento e de financiamento) |
+| Fluxo de caixa operacional (FCO) | DFC 6.01 (caixa líquido das atividades operacionais) |
+| Fluxo de caixa de investimento (FCI) | DFC 6.02 (caixa líquido das atividades de investimento) |
+| Fluxo de caixa de financiamento (FCF) | DFC 6.03 (caixa líquido das atividades de financiamento) |
 | Capex | Pagamentos por imobilizado, intangível, ativo de contrato, ativo biológico e propriedade para investimento, achados pela descrição das linhas de 6.02 |
-| FCL | FCO − capex |
+| Fluxo de caixa livre (FCL) | FCO − capex |
 | FCL depois dos arrendamentos | FCO − capex − pagamentos de arrendamento que estão no financiamento (principal e juros) |
 | FCO ÷ EBITDA | FCO ÷ EBITDA |
 | Capex ÷ FCO | Capex ÷ FCO |
@@ -200,7 +217,9 @@ Fluxo de caixa, proventos e valores por ação:
 | Ações em circulação | Ações do capital − ações em tesouraria, no fim do período |
 | Diluição | Ações em circulação ÷ as do exercício anterior − 1 (só na série anual) |
 | Lucro por ação | Lucro da controladora (DRE 3.11.01) ÷ ações em circulação, em R$ |
-| FCO por ação e FCL por ação | FCO ÷ ações; FCL ÷ ações, em R$ |
+| Valor patrimonial por ação (VPA) | Patrimônio líquido da controladora (BPP 2.03 − não controladores, 2.03.09) ÷ ações em circulação, em R$ |
+| FCO por ação | FCO ÷ ações em circulação, em R$ |
+| FCL por ação | FCL (FCO − capex) ÷ ações em circulação, em R$ |
 
 As escolhas do fluxo de caixa:
 
@@ -215,6 +234,7 @@ As escolhas do fluxo de caixa:
 17. **O lucro por ação usa o lucro da controladora (3.11.01), não o consolidado (3.11).** A parte dos minoritários não pertence ao acionista. Quando a demonstração é individual, vale o 3.11. Quando a companhia não abre o lucro entre controladora e não controladores, o lucro por ação fica vazio.
 18. **O número de ações vem da composição do capital, convertido para unidades.** O arquivo da CVM não diz se a quantidade está em unidades ou em milhares, e cerca de um quarto das companhias informa em milhares. A escala é descoberta pelo lucro por ação que a própria companhia informa no mesmo documento; sem ele, pela ordem de grandeza (menos de 100 milhões está em milhares). É o único uso do lucro por ação informado: nenhum indicador é calculado com ele.
 19. **Diluição fora de −50% a +50% não é mostrada.** O arquivo da CVM não traz desdobramentos e grupamentos: um desdobramento de 1 para 3 apareceria como +200% (Direcional, 2025) e um grupamento de 15 para 1, como −94% (Hapvida, 2025), e nenhum dos dois muda a fatia do acionista. Fora da faixa, a diluição fica vazia, com o motivo "variação de N% sugere desdobramento ou grupamento". O limite (`LIMITE_DILUICAO`) tem dois efeitos colaterais conhecidos: uma emissão grande de verdade também fica vazia, e uma bonificação em ações abaixo de 50% passa como se fosse diluição.
+20. **O EBITDA é o das demonstrações, não o "ajustado" do release.** A página soma EBIT + D&A com os números entregues à CVM e não tira nenhum item não recorrente. O release de resultados costuma divulgar um EBITDA ajustado, e os dois podem ficar longe um do outro. Caso real, Equatorial em 2025: dívida líquida ÷ EBITDA dá **3,9x na página e 2,6x no release**, que usa o EBITDA ajustado (no 4T25, o reportado foi de R$ 1,6 bi e o ajustado, de R$ 3,1 bi). A dívida líquida também difere um pouco: a página conta como caixa só as contas 1.01.01 + 1.01.02 (R$ 10,5 bi), e o release soma outras aplicações (R$ 12,9 bi). O balão do EBITDA na ficha avisa: "calculado das demonstrações; pode diferir do EBITDA ajustado divulgado pela companhia". Tudo o que usa o EBITDA herda a diferença: margem EBITDA, dívida líquida ÷ EBITDA, FCO ÷ EBITDA, EV/EBITDA e a regra "Dívida líquida ÷ EBITDA alta".
 
 Nos últimos 12 meses, o resultado é a soma de 12 meses (ver `docs/cvm.md`) e o balanço é o da data do ITR mais recente. As linhas da DFC achadas pela descrição são classificadas em cada uma das três parcelas (o ano fechado, o acumulado do ITR atual e o acumulado do ITR do ano anterior) e só então somadas. Se a linha aparece numa parcela e não em outra, o indicador fica vazio, com o motivo dizendo em qual documento ela faltou. As ações são as do ITR mais recente.
 
@@ -230,9 +250,9 @@ A lógica fica em `scripts/cvm/indicadores.mjs` (`INDICADORES`, `calcularIndicad
 
 ## Múltiplos e fonte de preço
 
-Os múltiplos juntam o preço da ação com os fundamentos dos 12 meses. O fundamento é coletado uma vez por semana (CVM) e o preço, uma vez por dia; os dois se encontram na hora de montar o site. A lógica fica em `scripts/cvm/multiplos.mjs` (`MULTIPLOS`, `calcularMultiplos`, `valorDeMercado`, `fundamentosParaMultiplos`), pura e testada. A ficha de cada companhia, que mostra esses números, vem na #38.
+Os múltiplos juntam o preço da ação com os fundamentos dos 12 meses. O fundamento é coletado uma vez por semana (CVM) e o preço, uma vez por dia; os dois se encontram na hora de montar o site. A lógica fica em `scripts/cvm/multiplos.mjs` (`MULTIPLOS`, `calcularMultiplos`, `valorDeMercado`, `fundamentosParaMultiplos`), pura e testada. Eles aparecem no bloco Valuation da ficha de cada companhia, só na coluna de hoje.
 
-| Múltiplo | Conta |
+| Múltiplo | Fórmula |
 |---|---|
 | Valor de mercado | Soma, classe por classe, das ações em circulação (total menos tesouraria) vezes o último preço do ticker da classe |
 | P/L | Valor de mercado ÷ lucro líquido da controladora em 12 meses (conta 3.11.01) |
@@ -242,7 +262,8 @@ Os múltiplos juntam o preço da ação com os fundamentos dos 12 meses. O funda
 | Preço/EBIT | Valor de mercado ÷ EBIT dos 12 meses |
 | Earnings yield | Lucro líquido da controladora ÷ valor de mercado |
 | Dividend yield | Proventos pagos em 12 meses (da DFC) ÷ valor de mercado |
-| Preço/FCL | Valor de mercado ÷ FCL dos 12 meses, nas duas versões do FCL (antes e depois dos arrendamentos) |
+| Preço/FCL | Valor de mercado ÷ FCL dos 12 meses (FCO − capex) |
+| Preço/FCL depois dos arrendamentos | Valor de mercado ÷ FCL depois dos arrendamentos dos 12 meses (FCO − capex − pagamentos de arrendamento) |
 
 Regras à vista:
 
@@ -279,6 +300,18 @@ A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por iss
 - **`/fundamentos/`** abre com o [painel da temporada](#o-painel-da-temporada) e, logo abaixo, lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
 - **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
 
+**O que a página mostra:**
+
+- **Página inicial:** o painel da temporada (quem já entregou o documento do período e como veio o acumulado do ano) e a lista por setor, com a régua de anos em miniatura ao lado de cada empresa.
+- **Ficha:** a régua de anos sob o nome; o topo com a consistência ao longo dos anos, os pontos de atenção e a comparação com os pares do setor; e quatro blocos de tabelas (Resultado, Caixa e dívida, Fluxo de caixa e Valuation), com os 12 meses e os exercícios desde 2010.
+
+**Fontes:**
+
+- **CVM Dados Abertos**, para todos os fundamentos: a DFP (anual, de 2010 em diante), o ITR (trimestral, para a base de 12 meses) e a composição do capital que vem nos dois (número de ações). O FCA liga cada ticker ao CNPJ. Os arquivos são públicos, e cada coluna da ficha traz o link do documento de origem. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos) e [docs/cvm.md](docs/cvm.md).
+- **CNBC**, para o preço do dia (atraso de até 15 minutos), atrás de um adaptador. É um endpoint não oficial; veja [Fonte de preço](#fonte-de-preço).
+
+**Aviso legal:** toda página traz o texto "Dados para estudo, extraídos dos documentos entregues à CVM. Não é recomendação de investimento." O site não diz "compre" nem "venda", não dá nota e não calcula preço-alvo.
+
 **As tabelas vêm prontas no HTML.** O build gera uma página por companhia, e ela funciona sem JavaScript. O JS é só uma camada extra: a busca da lista e o balão que mostra a fórmula, o documento e o motivo de um vazio (sem JS, isso tudo está no `title`). Os links internos são todos relativos, porque o site fica em `/panorama-economico/`.
 
 ### O painel da temporada
@@ -307,6 +340,19 @@ Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhi
    - O motivo: uma companhia que sai de um prejuízo grande deixa a soma do ano anterior pequena, e o percentual sobre ela não diz nada. No 3T26, Energia e saneamento sairia com +2.776%, de R$ 410 mi para R$ 11,8 bi, só porque a AXIA3 tinha prejuízo de R$ 7,1 bi no ano anterior. O limite de R$ 50 milhões das companhias não pega esse caso, porque a soma anterior do setor está acima dele.
 4. **Pontos de atenção nas 64.** Quantas companhias acionam cada uma das sete regras, em ordem decrescente. Cada número abre a lista dos tickers, num `<details>`. Aqui entram todas as fichas, inclusive as de quem ainda não entregou o documento do período.
 
+**As contas do painel**, com o nome que a página usa:
+
+| Número | Fórmula |
+|---|---|
+| Lucro do acumulado maior que o do ano anterior | Companhias com o lucro líquido do acumulado maior que o do mesmo período do ano anterior, sobre as que entregaram e têm a comparação |
+| Receita maior | Companhias com a receita líquida do acumulado maior que a do ano anterior, sobre as que têm receita nos dois períodos |
+| Margem líquida maior | Companhias com lucro ÷ receita do acumulado maior que a do ano anterior, sobre as que têm receita positiva nos dois períodos |
+| Prejuízo no acumulado | Companhias com o lucro líquido do acumulado abaixo de zero, sobre as que têm a comparação |
+| Maiores variações do lucro no acumulado | Lucro do acumulado ÷ lucro do mesmo período do ano anterior − 1, só com lucro nos dois períodos e lucro anterior de R$ 50 milhões ou mais |
+| Lucro somado por setor | Soma do lucro do acumulado das companhias do setor com a comparação; a variação é soma atual ÷ soma do ano anterior − 1 |
+
+Quando o documento mais recente for a DFP, os mesmos números trocam "acumulado" por "exercício".
+
 **Na tela:** a temporada abre a página em largura total; os outros três blocos dividem a linha no desktop e empilham no celular. O verde e o vermelho do Diário só aparecem na variação percentual do lucro, sempre junto do sinal (+ ou −) e do número. As palavras são neutras: "maiores altas", "maiores quedas", "maior" e "menor". Não há logotipo de empresa; o ticker faz esse papel. O carimbo "dados de documentos entregues até DD/MM/AAAA" traz a data de entrega mais recente entre os documentos usados.
 
 ### A ficha
@@ -322,7 +368,7 @@ Cada bloco é uma tabela com **uma linha por indicador e uma coluna por período
 - **Período de transição** (exercício com menos de 12 meses): o cabeçalho da coluna diz quantos meses tem.
 - **Gráfico de tendência:** um SVG pequeno em cada linha, gerado no build, do exercício mais antigo ao mais recente. Ano sem valor fica como buraco na linha, e não como zero.
 - **Documento de origem:** o rodapé de cada tabela diz de qual documento saiu cada coluna, com o link que a própria CVM informa no índice de documentos do ZIP (`LINK_DOC`). O link baixa o documento entregue.
-- **Negativo:** leva o sinal de menos, e só o sinal ganha a cor de baixa. As faixas de cor ficam para a #39.
+- **Negativo:** leva o sinal de menos, e só o sinal ganha a cor de baixa. Nenhuma cor diz se o indicador é favorável.
 
 No **Valuation**, os múltiplos aparecem só na coluna de hoje: eles dependem do preço, e esta versão não tem preço histórico. Os valores por ação (lucro, valor patrimonial, FCO e FCL por ação) não dependem de preço e têm a série anual, com três ressalvas escritas na página:
 
@@ -343,18 +389,20 @@ Antes dos quatro blocos, a ficha responde "a empresa é boa e sempre foi?" só c
 
 **Ao longo dos anos** (`scripts/fundamentos/consistencia.mjs`): uma grade de cartões, cada um com o número e a conta.
 
-| Cartão | Conta |
+| Cartão | Fórmula |
 |---|---|
 | Anos com lucro | Anos com lucro líquido acima de zero, sobre os anos com dado |
 | Anos com FCL positivo | O mesmo, com o fluxo de caixa livre |
 | Maior sequência com lucro | Maior número de anos seguidos com lucro. Um ano sem dado quebra a sequência. Diz os anos e se ela vai até o último exercício |
-| Crescimento ao ano (receita, lucro e FCO) | `(fim ÷ início)^(1/n) − 1`, em 5 e em 10 anos, do exercício n anos antes ao último. Com o início ou o fim zero, negativo ou sem dado, fica vazio com o motivo ("lucro de 2015 negativo"); não se tenta o ano vizinho |
+| Receita: crescimento ao ano | `(fim ÷ início)^(1/n) − 1` da receita líquida, em 5 e em 10 anos, do exercício n anos antes ao último. Com o início ou o fim zero, negativo ou sem dado, fica vazio com o motivo; não se tenta o ano vizinho |
+| Lucro: crescimento ao ano | A mesma conta, com o lucro líquido. Exemplo de vazio: "lucro de 2015 negativo" |
+| FCO: crescimento ao ano | A mesma conta, com o fluxo de caixa operacional |
 | Margem líquida: da menor à maior | A maior menos a menor margem líquida da série, em pontos percentuais, com os dois anos |
 | Pior ano da série | O menor lucro e quanto ele representa da média. Com a média zero ou negativa, só o pior ano |
 
 **Pontos de atenção** (`scripts/fundamentos/atencao.mjs`): sete regras automáticas. A página mostra primeiro as acionadas, cada uma com a conta, os anos e o limite usado; depois, fechadas, as sete com o estado de cada uma ("não acionada" ou "não avaliada: motivo"). O destaque usa a cor de aviso, sempre com ícone e texto.
 
-| Regra | Limite padrão | Detalhes |
+| Regra | Fórmula e limite padrão | Detalhes |
 |---|---|---|
 | Lucro que não vira caixa | FCO ÷ lucro abaixo de 0,8 em 3 dos últimos 5 exercícios | Só avalia ano com lucro; o ano com prejuízo fica fora, e o texto diz. Precisa de 3 anos avaliáveis |
 | Proventos maiores que o FCL | Soma dos proventos pagos maior que a soma do FCL nos últimos 5 exercícios com dado | Precisa de 3 exercícios com os dois dados. A conta mostra as duas somas, os anos e em quais deles os proventos passaram do FCL. Os 12 meses entram só como contexto |
@@ -367,6 +415,19 @@ Antes dos quatro blocos, a ficha responde "a empresa é boa e sempre foi?" só c
 Os limites ficam em `LIMITES_ATENCAO`, e quatro deles podem ser trocados por variáveis do Actions (veja [Configuração](#configuração)), no mesmo padrão dos alertas do Diário. O limite exato não aciona: 0,8, 3,0, 50% e 2,0% ficam do lado de "não acionada".
 
 **Comparação com o setor** (`scripts/fundamentos/pares.mjs`): a posição da companhia em relação à mediana das outras do mesmo setor, em oito indicadores: margem líquida, ROIC, ROE, dívida líquida ÷ EBITDA, FCO ÷ EBITDA, capex ÷ FCO, crescimento da receita em 5 anos e a parte da série com lucro.
+
+| Linha | Fórmula |
+|---|---|
+| Margem líquida | A do exercício comparado (lucro líquido ÷ receita líquida) |
+| ROIC | O do exercício comparado |
+| ROE | O do exercício comparado |
+| Dívida líquida ÷ EBITDA | A do exercício comparado, sem arrendamentos |
+| FCO ÷ EBITDA | O do exercício comparado |
+| Capex ÷ FCO | O do exercício comparado |
+| Crescimento da receita em 5 anos (ao ano) | O crescimento ao ano da receita em 5 anos, do cartão "Receita: crescimento ao ano" |
+| Anos com lucro (parte da série) | Anos com lucro ÷ anos com dado, do cartão "Anos com lucro" |
+
+Em cada linha, a mediana é a do mesmo número nas empresas do setor com dado.
 
 - **Período:** o mesmo exercício anual para todas, que é o último que a maioria do setor já entregou. Quem não tem esse exercício sai da mediana. Os 12 meses ficam de fora, porque as datas dos ITR variam.
 - **Mediana:** só com 3 ou mais empresas com dado naquele indicador. Abaixo disso, a linha diz "setor com menos de 3 empresas com dado". Em Serviços financeiros só há a B3, então não há mediana.
@@ -404,6 +465,17 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
 Aqui só há dados e regras à vista. Nada na página é recomendação de investimento.
+
+## Limitações conhecidas
+
+O que a v2.0 não faz. São as pendências que ficam para a v3:
+
+1. **Séries por ação sem ajuste por desdobramento ou grupamento.** O arquivo da CVM não traz esses eventos. O lucro, o valor patrimonial, o FCO e o FCL por ação de antes de um desdobramento não são comparáveis com os de depois; a ficha marca a quebra com uma borda tracejada e uma nota, e não ajusta os valores antigos. O número de ações só existe de 2020 em diante.
+2. **Preço do dia, sem série histórica.** Os múltiplos aparecem só na coluna de hoje, e não há gráfico de lucro × cotação. A CNBC não tem histórico, e a B3 veda a coleta automatizada do arquivo oficial. A CNBC é um endpoint não oficial: a fonte tem de ser revista antes de o site ter qualquer parte paga.
+3. **Bancos e seguradoras fora.** O plano de contas deles é outro, e as fórmulas da página não valem. As holdings financeiras também ficam de fora.
+4. **EBITDA reportado, não ajustado.** O EBITDA é EBIT + D&A das demonstrações, sem tirar itens não recorrentes. Pode ficar longe do EBITDA ajustado que a companhia divulga, e tudo o que depende dele herda a diferença (veja a escolha 20 em [Indicadores fundamentalistas](#indicadores-fundamentalistas)).
+
+Outras limitações estão descritas junto de cada regra: o painel compara os números como entregues à CVM, sem ajuste de não recorrentes; os futuros do Diário usam sempre o 1º vencimento; e os dias úteis da cotação não descontam feriados.
 
 ## Coleta dos fundamentos
 
@@ -574,6 +646,8 @@ npm test
 ```
 
 Os testes usam o executor nativo do Node (`node:test`), sem dependências extras, e ficam em `test/`. Eles cobrem a regra de dado desatualizado (`site/atraso.js`) e a lógica pura de `scripts/logica.mjs`: leitura dos feeds, filtro e deduplicação das notícias, cotações, mapa de ações, agenda, histórico diário com variação semanal e mensal, alertas de movimento fora do padrão e a regra que decide quando gerar um novo resumo. O `scripts/update.mjs` só cuida da coleta (rede), da gravação dos JSON e da chamada ao Claude.
+
+Na página Fundamentalista, os testes cobrem o leitor da CVM, a série anual e os 12 meses, os indicadores e os múltiplos (conferidos com as demonstrações de 2025 da WEG e da Raia Drogasil), a coleta, a ficha, a página, o painel, os pontos de atenção, a régua e o contraste dos tokens. As fixtures em `test/fixtures/cvm/` são recortes reais dos arquivos da CVM. O `test/readme-formulas.test.mjs` confere que toda fórmula citada na página está neste README.
 
 O workflow [CI](.github/workflows/ci.yml) roda os testes em todo pull request e em cada push na `main`, no Node 24 e no 26. Ele não publica nada nem usa segredos.
 

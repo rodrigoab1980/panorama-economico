@@ -2,6 +2,8 @@
 
 Medições feitas em 12/11/2026 sobre os arquivos do portal de dados abertos da CVM, para orientar as issues da v2.0 (página Fundamentalista). Tudo abaixo vem dos arquivos de verdade, não do planejamento.
 
+> **Na v2.0 (14/11/2026).** Este documento é o registro das medições e do que cada issue descobriu nos dados. As fórmulas de cada indicador, as decisões de arquitetura e as limitações conhecidas estão no [README](../README.md). Os riscos do fim deste documento foram tratados nas issues #31 a #36.
+
 **Amostra usada:** 95 tickers do Ibovespa sem bancos e seguradoras, que viraram 81 CNPJs com dados (vários tickers por empresa, como PETR3/PETR4, e nomes antigos e novos, como ELET3/AXIA3). A lista oficial do universo é da #32; esta serve só para medir.
 
 ## Onde estão os arquivos
@@ -427,6 +429,31 @@ Leitura para o checkpoint "JSON puro × SQLite":
 A v2 usa **JSON puro**. O leitor gera um formato intermediário normalizado, com uma linha por valor: `cnpj`, `conta`, `início`, `fim`, `valor` e `versão`. Com isso, dá para trocar para SQLite depois sem reescrever a lógica.
 
 Motivo: o gargalo é ler os ZIPs, não armazenar (ver Volume acima). E as regras difíceis (classificador de contas, IFRS 16, exercício fora de dezembro) ficam em JS testado.
+
+## Decisões da v2.0 que saíram destas medições
+
+- **Build próprio em Node**, sem framework: `scripts/build.mjs` monta `dist/` e gera as fichas.
+- **Workflow semanal separado**, gravando na branch `dados`: a CVM regrava os ZIPs aos domingos, e a coleta pesada não entra no workflow de 15 minutos do Diário.
+- **Fatos brutos na `dados`, indicadores no build**: uma fórmula corrigida aparece no site sem coletar a CVM de novo.
+- **JSON puro, com formato intermediário migrável para SQLite** (a decisão do checkpoint, acima).
+- **Universo: Ibovespa sem bancos e seguradoras**, porque o plano de contas deles é outro (ver "Contas confirmadas").
+- **B3 COTAHIST vetada pelos termos de uso**: o download do arquivo de cotações históricas funciona, mas a página da B3 veda a coleta automatizada. O preço do dia vem da CNBC, atrás de um adaptador, e não há série histórica de preço.
+
+O motivo e a alternativa de cada uma estão em "Decisões de arquitetura", no README.
+
+## EBITDA das demonstrações × EBITDA ajustado do release (checkpoint de 14/11/2026)
+
+O EBITDA da página é **EBIT (DRE 3.05) + D&A**, com os números entregues à CVM. Não é o "EBITDA ajustado" que a companhia divulga no release de resultados, que tira itens não recorrentes e não está nos dados abertos.
+
+Caso real, Equatorial em 2025:
+
+| | Página (demonstrações) | Release da companhia |
+|---|---|---|
+| Dívida líquida ÷ EBITDA | 3,9x | 2,6x (com o EBITDA ajustado) |
+| EBITDA do 4T25 | R$ 1,6 bi (reportado) | R$ 3,1 bi (ajustado) |
+| Caixa usado na dívida líquida | R$ 10,5 bi (contas 1.01.01 + 1.01.02) | R$ 12,9 bi (soma outras aplicações) |
+
+A conta não muda na v2.0. O balão do EBITDA na ficha avisa que ele "pode diferir do EBITDA ajustado divulgado pela companhia", e o README registra a diferença na fórmula do EBITDA, na da dívida líquida e em "Limitações conhecidas". A diferença muda o lado do limite de 3x da regra "Dívida líquida ÷ EBITDA alta": 3,9x fica acima e 2,6x, abaixo.
 
 ## O que a série inteira mostra nos pontos de atenção (#39)
 
