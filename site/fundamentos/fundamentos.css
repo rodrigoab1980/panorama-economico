@@ -21,7 +21,16 @@ body.fundamentos { overflow-x: hidden; }
 }
 .cabeca-marca { font-size: var(--t-3); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.01em; text-decoration: none; }
 /* Nas páginas de fundamentos o menu é sempre a lista em linha: são poucos itens e cabem no celular. */
-.cabeca .menu-site-lista { display: flex; flex-wrap: wrap; gap: 0 var(--e-4); }
+/* O menu nunca quebra em duas linhas: se não couber, a lista rola para os lados, sozinha, sem a página rolar. */
+.cabeca .menu-site { min-width: 0; max-width: 100%; }
+.cabeca .menu-site-lista { display: flex; flex-wrap: nowrap; gap: var(--e-4); overflow-x: auto; scrollbar-width: thin; }
+.cabeca .menu-site-lista a { white-space: nowrap; }
+@media (max-width: 767px) {
+  /* No celular, a margem do cabeçalho é a do conteúdo e os itens ficam mais juntos: os quatro cabem em 360 px. */
+  .cabeca { padding-left: var(--e-3); padding-right: var(--e-3); }
+  .cabeca .menu-site-lista { gap: var(--e-3); }
+}
+@media (max-width: 380px) { .cabeca .menu-site-lista { gap: var(--e-2); } }
 .cabeca .menu-site-gaveta { display: none; }
 .cabeca .menu-site a { color: var(--tinta-2); border-bottom-color: transparent; }
 .cabeca .menu-site a:hover { color: var(--tinta); }

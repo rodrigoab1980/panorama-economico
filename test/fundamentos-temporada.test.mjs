@@ -2,6 +2,7 @@
 // a página e o card da ficha. A data de hoje é sempre injetada.
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   PRAZO_DFP_MESES, PRAZO_ITR_DIAS, levarAnos, mesDoExercicio, montarTemporada, prazoLegal, proximoDiaDeSemana, proximoPeriodo,
   rotuloDoDocumento, segundaDaSemana, situacaoDoProximo, somarDias, somarMeses, temporadaDaCompanhia,
@@ -410,6 +411,24 @@ describe("temporada: card da ficha e link no painel", () => {
   test("o painel da página inicial ganha o link para a temporada", () => {
     const html = painelHtml(montarPainel([jaEntregou("AAAA3"), aindaNao("BBBB3")], { total: 2 }));
     assert.match(html, /<p class="painel-link"><a href="temporada\/">Temporada de balanços<\/a>/);
+  });
+});
+
+// ---------- menu com quatro itens ----------
+describe("menu das páginas de fundamentos: uma linha só", () => {
+  const css = readFileSync(new URL("../site/fundamentos/fundamentos.css", import.meta.url), "utf8").replace(/\/\*.*?\*\//gs, "");
+  const regra = /\.cabeca \.menu-site-lista \{([^}]*)\}/.exec(css)[1];
+
+  test("a lista não quebra em duas linhas: se não couber, rola para os lados, sem a página rolar", () => {
+    assert.match(regra, /flex-wrap:\s*nowrap/);
+    assert.match(regra, /overflow-x:\s*auto/);
+    assert.match(css, /\.cabeca \.menu-site-lista a \{[^}]*white-space:\s*nowrap/);
+    assert.match(css, /\.cabeca \.menu-site \{[^}]*min-width:\s*0/);
+    assert.ok(!/\.menu-site-lista \{[^}]*flex-wrap:\s*wrap/.test(css));
+  });
+
+  test("no celular os itens ficam mais juntos, para os quatro caberem em 360 px", () => {
+    assert.match(css, /@media \(max-width: 380px\) \{\s*\.cabeca \.menu-site-lista \{\s*gap: var\(--e-2\);/);
   });
 });
 
