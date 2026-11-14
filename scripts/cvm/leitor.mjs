@@ -139,11 +139,30 @@ export function escolherVersao(fatos) {
   return fatos.filter((f) => f.versao === maior.get(chaveDoc(f)));
 }
 
+// Documentos cujo consolidado veio zerado: o ativo total (BPA, conta 1) do exercício do próprio
+// documento (ÚLTIMO) é 0. Toda companhia aberta tem ativo maior que zero, então isso só acontece
+// quando o formulário consolidado foi entregue em branco. É o caso da DFP de 2025 da TIM: o
+// consolidado inteiro vem em zero e o individual vem preenchido.
+// Devolve [{ cnpj, cdCvm, documento, dtRefer }], em ordem. Use depois de escolherVersao.
+export function consolidadosZerados(fatos) {
+  const zerados = new Map();
+  for (const f of fatos) {
+    if (f.consolidado && f.demonstrativo === "BPA" && f.conta === "1" && f.ordem === "ultimo" && f.valor === 0) {
+      zerados.set(chaveDoc(f), { cnpj: f.cnpj, cdCvm: f.cdCvm, documento: f.documento, dtRefer: f.dtRefer });
+    }
+  }
+  return [...zerados.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([, d]) => d);
+}
+
 // Consolidado × individual, por documento (não por conta): se o documento tem consolidado,
 // saem todos os fatos individuais dele; o individual só fica quando não há consolidado.
+// O consolidado zerado (consolidadosZerados) conta como ausente: saem os fatos consolidados do
+// documento e vale o individual dele.
 export function escolherConsolidado(fatos) {
-  const comConsolidado = new Set(fatos.filter((f) => f.consolidado).map(chaveDoc));
-  return fatos.filter((f) => f.consolidado || !comConsolidado.has(chaveDoc(f)));
+  const zerados = new Set(consolidadosZerados(fatos).map(chaveDoc));
+  const validos = zerados.size === 0 ? fatos : fatos.filter((f) => !(f.consolidado && zerados.has(chaveDoc(f))));
+  const comConsolidado = new Set(validos.filter((f) => f.consolidado).map(chaveDoc));
+  return validos.filter((f) => f.consolidado || !comConsolidado.has(chaveDoc(f)));
 }
 
 // Conveniência (testes e conjuntos pequenos): [{ nome, linhas }] → fatos já com versão e
