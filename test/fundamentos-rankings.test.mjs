@@ -1,8 +1,10 @@
 // Rankings por indicador (#67): a ordenação de cada critério, as duas pontas, quem fica fora e o HTML.
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
-  CRITERIOS, GRUPOS, MOTIVO_EBITDA, SERIE_MINIMA, TAMANHO_DA_LISTA, escrever, exercicioDeReferencia, montarRankings, pontas, textoDoPeriodo,
+  CRITERIOS, GRUPOS, MOTIVO_EBITDA, SERIE_MINIMA, SETAS, TAMANHO_DA_LISTA, escrever, exercicioDeReferencia, linhaDoSentido, montarRankings, pontas,
+  rankingDoCriterio, textoDoPeriodo,
 } from "../scripts/fundamentos/rankings.mjs";
 import { LEGENDA_DOS_RANKINGS, MARCADOR_DOS_RANKINGS, NOTA_DOS_MULTIPLOS, inserirRankings, rankingsHtml } from "../scripts/fundamentos/rankings-html.mjs";
 import { calcularConsistencia } from "../scripts/fundamentos/consistencia.mjs";
@@ -269,7 +271,9 @@ describe("rankings: o HTML", () => {
     cia("MAL<3", { nome: "Fulano & <b>Filhos</b> S.A.", ind: { roic: 0.9 } }),
   ].map((f) => [f.ticker, f]));
   const comPagina = new Set(Object.keys(fichas).filter((t) => t !== "EBIT3"));
-  const html = rankingsHtml(montarRankings(fichas), { fichas, comPagina });
+  const R = montarRankings(fichas);
+  const FICHAS = Object.values(fichas);
+  const html = rankingsHtml(R, { fichas, comPagina });
   const bloco = (id) => new RegExp(`<section class="criterio" id="${id}"[\\s\\S]*?</section>`).exec(html)[0];
   // O que o leitor vê e ouve: o texto e os atributos de texto, sem os nomes de classe.
   const visivel = html.replace(/\s(?:class|id|href|aria-labelledby)="[^"]*"/g, "");
@@ -289,13 +293,102 @@ describe("rankings: o HTML", () => {
     for (const id of ancoras) assert.ok(html.includes(`<section class="criterio" id="${id}"`), id);
   });
 
-  test("cada critério tem a regra, o período e as duas listas, 'Maiores' e 'Menores'", () => {
+  test("cada critério tem a regra, o período e as duas listas, a dos maiores e a dos menores valores", () => {
     for (const c of CRITERIOS) {
       const b = bloco(c.id);
       assert.ok(b.includes(`<p class="criterio-regra">${c.regra.replace(/&/g, "&amp;")}</p>`), c.id);
       assert.match(b, /<p class="criterio-periodo">Período: /, c.id);
-      assert.deepEqual([...b.matchAll(/<h4>([^<]+)<\/h4>/g)].map((m) => m[1]), ["Maiores", "Menores"], c.id);
+      assert.deepEqual([...b.matchAll(/<h4>[^<]+ <small>([^<]+)<\/small><\/h4>/g)].map((m) => m[1]), ["maiores valores", "menores valores"], c.id);
     }
+  });
+
+  // ---------- o sentido de cada critério (#81) ----------
+  // O que a página tem de dizer em cada um dos 11 critérios: a linha do sentido e o título das duas listas.
+  const SENTIDOS = {
+    "anos-com-lucro": ["↑ maior = lucro em mais anos da série", "Lucro em mais anos", "Lucro em menos anos"],
+    "sequencia-com-lucro": ["↑ maior = mais anos seguidos com lucro", "Sequências mais longas com lucro", "Sequências mais curtas com lucro"],
+    "anos-com-fcl-positivo": ["↑ maior = FCL positivo em mais anos da série", "FCL positivo em mais anos", "FCL positivo em menos anos"],
+    "crescimento-da-receita": ["↑ maior = a receita cresceu mais rápido", "Receita cresceu mais", "Receita cresceu menos ou caiu"],
+    "crescimento-do-lucro": ["↑ maior = o lucro cresceu mais rápido", "Lucro cresceu mais", "Lucro cresceu menos ou caiu"],
+    roic: ["↑ maior = mais retorno por real de capital investido", "Mais retorno sobre o capital investido", "Menos retorno sobre o capital investido"],
+    roe: ["↑ maior = mais lucro por real de patrimônio líquido", "Mais retorno sobre o patrimônio", "Menos retorno sobre o patrimônio"],
+    "margem-liquida": ["↑ maior = mais lucro em cada real de receita", "Margens mais largas", "Margens mais estreitas"],
+    "fco-sobre-ebitda": ["↑ maior = mais do EBITDA virou caixa", "Mais EBITDA virou caixa", "Menos EBITDA virou caixa"],
+    "divida-liquida-sobre-ebitda": ["↓ menor = menos endividada", "Mais endividadas", "Menos endividadas"],
+    "pontos-de-atencao": ["↓ menor = menos pontos de atenção acionados", "Mais pontos de atenção acionados", "Menos pontos de atenção acionados"],
+  };
+
+  test("os 11 critérios têm o sentido definido, num só lugar: direção, significado e o título das duas listas", () => {
+    assert.equal(CRITERIOS.length, 11);
+    assert.deepEqual(Object.keys(SENTIDOS), CRITERIOS.map((c) => c.id));
+    for (const c of CRITERIOS) {
+      assert.deepEqual(Object.keys(c.sentido), ["direcao", "significa", "maiores", "menores"], c.id);
+      assert.ok(["maior", "menor"].includes(c.sentido.direcao), c.id);
+      for (const campo of ["significa", "maiores", "menores"]) assert.ok(typeof c.sentido[campo] === "string" && c.sentido[campo].length > 3, `${c.id}: ${campo}`);
+      assert.notEqual(c.sentido.maiores, c.sentido.menores, c.id);
+      const [linha, maiores, menores] = SENTIDOS[c.id];
+      assert.equal(linhaDoSentido(c.sentido), linha, c.id);
+      assert.equal(c.sentido.maiores, maiores, c.id);
+      assert.equal(c.sentido.menores, menores, c.id);
+    }
+  });
+
+  test("a linha do sentido: seta para cima no maior e para baixo no menor; direção desconhecida dá erro", () => {
+    assert.deepEqual(SETAS, { maior: "↑", menor: "↓" });
+    assert.equal(linhaDoSentido({ direcao: "menor", significa: "menos endividada" }), "↓ menor = menos endividada");
+    assert.equal(linhaDoSentido({ direcao: "maior", significa: "mais do EBITDA virou caixa" }), "↑ maior = mais do EBITDA virou caixa");
+    assert.throws(() => linhaDoSentido({ direcao: "melhor", significa: "x" }), /direção desconhecida/);
+    assert.throws(() => linhaDoSentido(undefined), /direção desconhecida/);
+  });
+
+  test("na página, cada critério mostra a linha do sentido, antes da regra, e as listas com o título do significado", () => {
+    for (const c of CRITERIOS) {
+      const b = bloco(c.id);
+      const [linha, maiores, menores] = SENTIDOS[c.id];
+      const [seta, ...resto] = linha.split(" ");
+      assert.ok(b.includes(`<p class="criterio-sentido"><span aria-hidden="true">${seta}</span> ${resto.join(" ")}</p>\n<p class="criterio-regra">`), c.id);
+      assert.deepEqual([...b.matchAll(/<h4>([^<]+) <small>/g)].map((m) => m[1]), [maiores, menores], c.id);
+      assert.equal((b.match(/class="criterio-sentido"/g) ?? []).length, 1, c.id);
+    }
+  });
+
+  test("o README traz o sentido dos 11 critérios, igual ao do código", () => {
+    const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+    for (const c of CRITERIOS) {
+      const linha = `| ${c.titulo} | ${linhaDoSentido(c.sentido)} | ${c.sentido.maiores} | ${c.sentido.menores} |`;
+      assert.ok(readme.includes(linha), `falta no README: ${linha}`);
+    }
+  });
+
+  test("o sentido vai no JSON de cada critério, com a linha pronta", () => {
+    for (const c of R.criterios) {
+      assert.equal(c.sentido.linha, SENTIDOS[c.id][0], c.id);
+      assert.deepEqual(Object.keys(c.sentido), ["direcao", "significa", "maiores", "menores", "linha"], c.id);
+    }
+  });
+
+  test("o sentido descreve, não julga: nada de melhor, pior, bom, ruim ou recomendação nos 11 critérios", () => {
+    for (const c of CRITERIOS) {
+      const texto = [c.sentido.significa, c.sentido.maiores, c.sentido.menores].join(" | ");
+      assert.doesNotMatch(texto, /melhor|pior|\bbo[am]s?\b|ru[ií]m|ruins|saud[áa]ve|\bfort|\bfrac|compr|vend|recomend|atrativ|barat|\bcar[ao]s?\b|oportunidade|risco|segur/i, c.id);
+    }
+  });
+
+  test("o sentido é só texto: nenhuma conta muda (mesma ordem, mesmas posições, mesmos valores)", () => {
+    const semSentido = CRITERIOS.map((c) => ({ ...c, sentido: { direcao: c.sentido.direcao === "maior" ? "menor" : "maior", significa: "outro texto", maiores: "A", menores: "B" } }));
+    for (const [i, c] of CRITERIOS.entries()) {
+      const { sentido: _a, ...antes } = rankingDoCriterio(c, FICHAS, R.exercicio);
+      const { sentido: _b, ...depois } = rankingDoCriterio(semSentido[i], FICHAS, R.exercicio);
+      assert.deepEqual(depois, antes, c.id);
+    }
+    // a lista dos maiores continua vindo antes da dos menores, e o maior valor continua em 1º
+    const roic = R.criterios.find((c) => c.id === "roic");
+    assert.ok(roic.maiores.itens[0].valor > roic.maiores.itens.at(-1).valor);
+    assert.ok(roic.menores.itens[0].valor < roic.menores.itens.at(-1).valor);
+    assert.ok(roic.maiores.itens.at(-1).valor > roic.menores.itens.at(-1).valor);
+    // no critério de sentido "menor" (dívida), a lista dos maiores valores continua sendo a primeira
+    const divida = bloco("divida-liquida-sobre-ebitda");
+    assert.ok(divida.indexOf("Mais endividadas <small>maiores valores") < divida.indexOf("Menos endividadas <small>menores valores"));
   });
 
   test("a linha mostra posição, ticker com link para a ficha, nome curto, régua em miniatura e valor", () => {
@@ -326,8 +419,8 @@ describe("rankings: o HTML", () => {
   test("empate em massa vira uma linha só, com a contagem e os tickers", () => {
     const b = bloco("anos-com-lucro");
     assert.match(b, /<p class="ranking-massa"><strong>17 empresas<\/strong> com lucro em todos os exercícios da série \(100,0%\): /);
-    assert.ok(!/<h4>Maiores<\/h4><ol>/.test(b));
-    assert.match(b, /<h4>Menores<\/h4><ol>/);
+    assert.match(b, /<h4>Lucro em mais anos <small>maiores valores<\/small><\/h4><p class="ranking-massa">/);
+    assert.match(b, /<h4>Lucro em menos anos <small>menores valores<\/small><\/h4><ol>/);
   });
 
   test("nenhuma palavra de recomendação e nenhum múltiplo de preço", () => {

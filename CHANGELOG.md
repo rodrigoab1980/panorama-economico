@@ -16,6 +16,9 @@ A v2.1 está em andamento.
 - **Card do próximo balanço na ficha**, abaixo da régua de anos: o próximo documento, a data provável com a origem, o prazo legal e o último documento entregue (#68).
 - A coleta guarda `primeiraEntrega` em cada documento: a data de entrega mais antiga entre as versões. Num documento reapresentado, a data que já era guardada é a da reapresentação. O build grava `dist/fundamentos/dados/temporada.json`, e o índice das fichas ganha `dadosAte`, o dia até onde vão os arquivos da CVM (#68).
 
+### Alterado
+- **Rankings: o sentido de cada critério fica à vista.** Cada um dos onze critérios ganha uma linha curta com o que o número quer dizer (por exemplo, "↓ menor = menos endividada"), e as listas "Maiores" e "Menores" passam a ter um título com o significado ("Mais endividadas" e "Menos endividadas"), ao lado de "maiores valores" e "menores valores". O texto descreve o que o critério mede, sem "melhores", "piores" ou recomendação. Nenhuma conta mudou: a ordenação, as posições e os valores são os mesmos. O `rankings.json` ganha o campo `sentido` em cada critério (#81).
+
 ### Corrigido
 - **Menu sobreposto ao quadro de mercados no Diário.** O site passa a ter uma barra de topo única, igual em todas as páginas (Diário, Fundamentalista, Rankings, Temporada e as fichas) e gerada num só lugar do código: o nome do site à esquerda e os quatro itens à direita, com o atual marcado. A barra fica no fluxo da página, e nada se sobrepõe a ela. Abaixo de 640 px ela vira um botão de menu acessível (`aria-expanded`, teclado, sem biblioteca), que substitui a gaveta do Diário. O menu antigo do Diário e o cabeçalho próprio das páginas de fundamentos foram removidos (#79).
 - Painel da temporada: o número "prejuízo no acumulado" passa a contar também a companhia com lucro igual a zero, como já faziam as listas de variação, a soma por setor e a régua de anos. Antes, só contava lucro abaixo de zero (#72).

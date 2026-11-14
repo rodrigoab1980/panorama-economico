@@ -4,7 +4,8 @@
 // rankings-html.mjs.
 //
 // Não há nota única, soma de critérios nem lista de "ações": cada critério é uma ordenação simples
-// de um número que já está na ficha. As palavras são neutras ("maiores", "menores", "posição").
+// de um número que já está na ficha. As palavras são neutras ("maiores", "menores", "posição"), e
+// o sentido de cada critério (#81) descreve o que o número mede, sem dizer se é bom ou ruim.
 //
 // Regras gerais:
 //   - Exercício de referência: o último exercício anual de 12 meses que a maioria das companhias já
@@ -122,6 +123,13 @@ function pontosDeAtencao(ficha) {
 
 // Os critérios, na ordem da página.
 //   regra     a regra de cálculo, em uma linha, que a página mostra
+//   sentido   o que o número quer dizer, para o leitor não ter de lembrar (#81). Descreve o que o
+//             critério mede; não diz se é bom ou ruim, e não usa "melhor" nem "pior":
+//               direcao   "maior" ou "menor": o lado que a linha do sentido explica
+//               significa o que esse lado quer dizer ("menos endividada")
+//               maiores   o título da lista dos maiores valores ("Mais endividadas")
+//               menores   o título da lista dos menores valores ("Menos endividadas")
+//             É só texto: a ordenação, as posições e os valores não dependem dele.
 //   periodo   "serie" (a série inteira de cada companhia), "cinco" (5 anos até o exercício de
 //             referência), "exercicio" (o exercício de referência) ou "atencao" (as regras da ficha)
 //   valor     (ficha, exercicio) → { valor, detalhe } ou { valor: null, motivo }
@@ -129,64 +137,83 @@ function pontosDeAtencao(ficha) {
 export const CRITERIOS = [
   {
     id: "anos-com-lucro", grupo: "consistencia", titulo: "Parte dos anos com lucro", formato: "pct", periodo: "serie",
+    sentido: { direcao: "maior", significa: "lucro em mais anos da série", maiores: "Lucro em mais anos", menores: "Lucro em menos anos" },
     regra: `Anos com lucro líquido acima de zero ÷ anos com dado, na série inteira da companhia. Só entra quem tem ${SERIE_MINIMA} ou mais exercícios com dado.`,
     valor: (ficha) => parteDosAnos(ficha.consistencia?.anosComLucro),
     empate: (v) => (v === 1 ? "com lucro em todos os exercícios da série" : v === 0 ? "sem lucro em nenhum exercício da série" : null),
   },
   {
     id: "sequencia-com-lucro", grupo: "consistencia", titulo: "Maior sequência de anos com lucro", formato: "anos", periodo: "serie",
+    sentido: { direcao: "maior", significa: "mais anos seguidos com lucro", maiores: "Sequências mais longas com lucro", menores: "Sequências mais curtas com lucro" },
     regra: `Maior número de exercícios seguidos com lucro líquido acima de zero; ano sem dado quebra a sequência. Só entra quem tem ${SERIE_MINIMA} ou mais exercícios na série.`,
     valor: sequencia,
     empate: (v) => (v > 0 ? `com lucro em ${plural(v, "exercício seguido", "exercícios seguidos")}` : "sem nenhum exercício com lucro"),
   },
   {
     id: "anos-com-fcl-positivo", grupo: "consistencia", titulo: "Parte dos anos com FCL positivo", formato: "pct", periodo: "serie",
+    sentido: { direcao: "maior", significa: "FCL positivo em mais anos da série", maiores: "FCL positivo em mais anos", menores: "FCL positivo em menos anos" },
     regra: `Anos com fluxo de caixa livre (FCO − capex) acima de zero ÷ anos com dado, na série inteira da companhia. Só entra quem tem ${SERIE_MINIMA} ou mais exercícios com dado.`,
     valor: (ficha) => parteDosAnos(ficha.consistencia?.anosComFclPositivo),
     empate: (v) => (v === 1 ? "com FCL positivo em todos os exercícios da série" : v === 0 ? "sem FCL positivo em nenhum exercício da série" : null),
   },
   {
     id: "crescimento-da-receita", grupo: "crescimento", titulo: "Crescimento da receita em 5 anos", formato: "pct", periodo: "cinco",
+    sentido: { direcao: "maior", significa: "a receita cresceu mais rápido", maiores: "Receita cresceu mais", menores: "Receita cresceu menos ou caiu" },
     regra: "Crescimento anual composto da receita líquida: (receita do exercício de referência ÷ receita de 5 anos antes)^(1/5) − 1. Fica fora quem tem receita zero, negativa ou sem dado numa das pontas.",
     valor: crescimento("receita"),
   },
   {
     id: "crescimento-do-lucro", grupo: "crescimento", titulo: "Crescimento do lucro em 5 anos", formato: "pct", periodo: "cinco",
+    sentido: { direcao: "maior", significa: "o lucro cresceu mais rápido", maiores: "Lucro cresceu mais", menores: "Lucro cresceu menos ou caiu" },
     regra: "Crescimento anual composto do lucro líquido: (lucro do exercício de referência ÷ lucro de 5 anos antes)^(1/5) − 1. Fica fora quem tem lucro zero, prejuízo ou sem dado numa das pontas.",
     valor: crescimento("lucroLiquido"),
   },
   {
     id: "roic", grupo: "rentabilidade", titulo: "ROIC", formato: "pct", periodo: "exercicio",
+    sentido: { direcao: "maior", significa: "mais retorno por real de capital investido", maiores: "Mais retorno sobre o capital investido", menores: "Menos retorno sobre o capital investido" },
     regra: "EBIT × (1 − 34%) ÷ capital investido no fim do exercício (patrimônio líquido + dívida bruta − caixa).",
     valor: doExercicio("roic"),
   },
   {
     id: "roe", grupo: "rentabilidade", titulo: "ROE", formato: "pct", periodo: "exercicio",
+    sentido: { direcao: "maior", significa: "mais lucro por real de patrimônio líquido", maiores: "Mais retorno sobre o patrimônio", menores: "Menos retorno sobre o patrimônio" },
     regra: "Lucro líquido ÷ patrimônio líquido no fim do exercício, os dois com minoritários.",
     valor: doExercicio("roe"),
   },
   {
     id: "margem-liquida", grupo: "rentabilidade", titulo: "Margem líquida", formato: "pct", periodo: "exercicio",
+    sentido: { direcao: "maior", significa: "mais lucro em cada real de receita", maiores: "Margens mais largas", menores: "Margens mais estreitas" },
     regra: "Lucro líquido ÷ receita líquida do exercício.",
     valor: doExercicio("margemLiquida"),
   },
   {
     id: "fco-sobre-ebitda", grupo: "caixa", titulo: "FCO ÷ EBITDA", formato: "pct", periodo: "exercicio",
+    sentido: { direcao: "maior", significa: "mais do EBITDA virou caixa", maiores: "Mais EBITDA virou caixa", menores: "Menos EBITDA virou caixa" },
     regra: "Fluxo de caixa das operações ÷ EBITDA do exercício: quanto do EBITDA virou caixa.",
     valor: doExercicio("fcoSobreEbitda"),
   },
   {
     id: "divida-liquida-sobre-ebitda", grupo: "divida", titulo: "Dívida líquida ÷ EBITDA", formato: "vezes", periodo: "exercicio",
+    sentido: { direcao: "menor", significa: "menos endividada", maiores: "Mais endividadas", menores: "Menos endividadas" },
     regra: "Dívida líquida no fim do exercício ÷ EBITDA do exercício, sem os arrendamentos. Valor negativo é caixa maior que a dívida. Com EBITDA negativo ou zero, a companhia fica fora.",
     valor: dividaSobreEbitda,
   },
   {
     id: "pontos-de-atencao", grupo: "atencao", titulo: "Pontos de atenção acionados", formato: "regras", periodo: "atencao",
+    sentido: { direcao: "menor", significa: "menos pontos de atenção acionados", maiores: "Mais pontos de atenção acionados", menores: "Menos pontos de atenção acionados" },
     regra: "Quantas das sete regras de pontos de atenção da ficha a companhia aciona hoje. Regra não avaliada não conta como acionada.",
     valor: pontosDeAtencao,
     empate: (v) => (v === 0 ? "sem nenhum ponto de atenção acionado" : null),
   },
 ];
+
+// A linha do sentido de um critério: "↓ menor = menos endividada" ou "↑ maior = mais do EBITDA virou caixa".
+export const SETAS = { maior: "↑", menor: "↓" };
+export function linhaDoSentido(sentido) {
+  const seta = SETAS[sentido?.direcao];
+  if (!seta) throw new Error(`direção desconhecida no sentido do critério: ${sentido?.direcao}`);
+  return `${seta} ${sentido.direcao} = ${sentido.significa}`;
+}
 
 // ---------- ordenação ----------
 
@@ -257,6 +284,7 @@ export function rankingDoCriterio(criterio, fichas, exercicio, tamanho = TAMANHO
     : ponta);
   return {
     id: criterio.id, grupo: criterio.grupo, titulo: criterio.titulo, regra: criterio.regra, formato: criterio.formato,
+    sentido: { ...criterio.sentido, linha: linhaDoSentido(criterio.sentido) },
     periodo: textoDoPeriodo(criterio.periodo, exercicio),
     empresas: dados.length,
     maiores: comFrase(maiores),
