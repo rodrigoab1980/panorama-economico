@@ -1,4 +1,4 @@
-// Páginas do site e funções puras do build: menu comum, inserção no HTML e leitura de links.
+// Páginas do site e funções puras do build: a barra de topo comum, a inserção no HTML e a leitura de links.
 // Sem disco: quem lê site/ e grava dist/ é scripts/build.mjs.
 //
 // O site é servido num subcaminho (/panorama-economico/ no GitHub Pages), então todo link
@@ -34,22 +34,33 @@ export function hrefPara(pagina, prof) {
   return raiz === "./" ? pagina.pasta : `${raiz}${pagina.pasta}`;
 }
 
-// HTML do menu para a página `ativa` (id), vista de `prof` pastas abaixo da raiz.
-// Duas formas, escolhidas só por CSS (site/menu.css), sem JS: lista em linha no desktop e
-// <details>/<summary> no celular. A que não serve fica com display:none (some também para leitores de tela).
+export const NOME_DO_SITE = "Panorama Econômico";
+// Abaixo desta largura (em px), a barra vira o botão de menu. O mesmo número está em site/menu.css
+// e em site/menu.js; test/build.test.mjs confere os três.
+export const LARGURA_DO_BOTAO = 640;
+
+// A barra de topo do site, para a página `ativa` (id), vista de `prof` pastas abaixo da raiz.
+// É o único lugar que gera a barra: o Diário, a Fundamentalista, os Rankings, a Temporada e as fichas
+// recebem este mesmo HTML, e só mudam o item atual e o caminho relativo dos links.
+//   - o nome do site à esquerda (link para a raiz) e os itens à direita, com o atual em aria-current;
+//   - o botão de menu vem escondido (hidden): quem o liga é site/menu.js, que também controla o
+//     aria-expanded. Sem JS, a lista fica à vista em qualquer largura.
+// A barra fica no fluxo da página (nada de position), então nada se sobrepõe a ela.
 export function menuHtml(paginas, ativa, prof) {
-  const atual = paginas.find((p) => p.id === ativa);
-  if (!atual) throw new Error(`página ativa desconhecida: ${ativa}`);
+  if (!paginas.some((p) => p.id === ativa)) throw new Error(`página ativa desconhecida: ${ativa}`);
   const itens = paginas.map((p) => {
     const marca = p.id === ativa ? ' aria-current="page"' : "";
     return `<li><a href="${esc(hrefPara(p, prof))}"${marca} title="${esc(p.subtitulo)}">${esc(p.titulo)}</a></li>`;
   }).join("");
-  const css = prof > 0 ? `${paraRaiz(prof)}menu.css` : "menu.css";
-  return `<link rel="stylesheet" href="${css}">`
-    + `<nav class="menu-site" aria-label="Seções do site">`
-    + `<ul class="menu-site-lista">${itens}</ul>`
-    + `<details class="menu-site-gaveta"><summary>${esc(atual.titulo)}</summary><ul>${itens}</ul></details>`
-    + `</nav>`;
+  const raiz = prof > 0 ? paraRaiz(prof) : "";
+  return `<link rel="stylesheet" href="${raiz}menu.css">`
+    + `<header class="barra-site">`
+    + `<a class="barra-marca" href="${paraRaiz(prof)}">${esc(NOME_DO_SITE)}</a>`
+    + `<button class="barra-botao" type="button" aria-expanded="false" aria-controls="barra-menu" hidden>`
+    + `<span class="barra-botao-icone" aria-hidden="true"></span>Menu</button>`
+    + `<nav class="barra-nav" id="barra-menu" aria-label="Seções do site"><ul>${itens}</ul></nav>`
+    + `</header>`
+    + `<script src="${raiz}menu.js"></script>`;
 }
 
 // Troca o marcador pelo bloco do menu. O bloco começa no marcador e termina em <!-- /menu -->,

@@ -316,7 +316,7 @@ function blocoHtml(bloco, ficha, colunas) {
     + `</section>`;
 }
 
-// Página da ficha de uma companhia. `menu` é o marcador que o build troca pelo menu comum.
+// Página da ficha de uma companhia. `menu` é o marcador que o build troca pela barra de topo comum.
 //   hoje        "AAAA-MM-DD" do dia do build, para o carimbo
 //   coletadoEm  data da coleta dos fundamentos (ISO), do índice
 //   dadosAte    "AAAA-MM-DD" da última atualização dos arquivos da CVM, para a situação do próximo balanço
@@ -343,13 +343,10 @@ export function fichaHtml(ficha, { hoje, coletadoEm = null, dadosAte = null, men
 </head>
 <body class="fundamentos">
 
-<header class="cabeca">
-  <a class="cabeca-marca" href="../../">Panorama Econômico</a>
-  <h1 class="so-leitor">Fundamentalista: ${e(ficha.ticker)}, ${e(periodo)}</h1>
-  ${menu}
-</header>
+${menu}
 
 <main class="ficha" data-ticker="${e(ficha.ticker)}">
+<h1 class="so-leitor">Fundamentalista: ${e(ficha.ticker)}, ${e(periodo)}</h1>
 ${cabecalhoDaFicha(ficha, { hoje, dadosAte })}
 <section class="resumo" id="resumo-consistencia"${ficha.consistencia || ficha.atencao || ficha.pares ? "" : " hidden"}>
 ${resumoHtml(ficha)}
