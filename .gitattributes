@@ -1,2 +1,8 @@
+# Todo arquivo de texto fica com LF, no repositório e na pasta de trabalho, em qualquer máquina.
+# Sem isto, um checkout no Windows (core.autocrlf=true) troca para CRLF, e um teste que lê um
+# arquivo do repositório pode passar no CI e falhar na máquina local.
+* text=auto eol=lf
+
 # Fixtures da CVM ficam byte a byte como vêm do portal (latin1, ";" e CRLF).
+# Esta regra tem de vir depois da geral: a última que casa é a que vale.
 test/fixtures/cvm/** -text
