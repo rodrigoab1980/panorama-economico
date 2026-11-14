@@ -16,6 +16,7 @@ A v2.1 está em andamento.
 - A coleta guarda `primeiraEntrega` em cada documento: a data de entrega mais antiga entre as versões. Num documento reapresentado, a data que já era guardada é a da reapresentação. O build grava `dist/fundamentos/dados/temporada.json`, e o índice das fichas ganha `dadosAte`, o dia até onde vão os arquivos da CVM (#68).
 
 ### Corrigido
+- **Menu sobreposto ao quadro de mercados no Diário.** O site passa a ter uma barra de topo única, igual em todas as páginas (Diário, Fundamentalista, Rankings, Temporada e as fichas) e gerada num só lugar do código: o nome do site à esquerda e os quatro itens à direita, com o atual marcado. A barra fica no fluxo da página, e nada se sobrepõe a ela. Abaixo de 640 px ela vira um botão de menu acessível (`aria-expanded`, teclado, sem biblioteca), que substitui a gaveta do Diário. O menu antigo do Diário e o cabeçalho próprio das páginas de fundamentos foram removidos (#79).
 - Painel da temporada: o número "prejuízo no acumulado" passa a contar também a companhia com lucro igual a zero, como já faziam as listas de variação, a soma por setor e a régua de anos. Antes, só contava lucro abaixo de zero (#72).
 - O balão do capex na ficha passa a citar a propriedade para investimento, que já entrava na conta. Nenhuma conta mudou (#72).
 - `npm test` passa inteiro num checkout do Windows: o `.gitattributes` fixa o fim de linha em LF para todo arquivo de texto (as fixtures da CVM continuam byte a byte), e o teste dos tokens de cor não depende mais do fim de linha (#72).
