@@ -44,7 +44,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/`, insere o menu em cada página e gera as fichas das companhias em `dist/fundamentos/dados/`. Só lê e grava; a lógica fica em `scripts/paginas.mjs` e em `scripts/cvm/ficha.mjs`. |
 | `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
-| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): os números em pt-BR, o HTML da ficha, da lista e do painel, o CSV, o carimbo de desatualizado, a consistência, os pontos de atenção, a comparação com o setor e a régua de anos. A lista dos módulos está em [Como as fichas são geradas](#como-as-fichas-são-geradas). Veja [Página Fundamentalista](#página-fundamentalista). |
+| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): os números em pt-BR, o HTML da ficha, da lista e do painel, o CSV, o carimbo de desatualizado, a consistência, os pontos de atenção, a comparação com o setor, a régua de anos e os rankings por indicador. A lista dos módulos está em [Como as fichas são geradas](#como-as-fichas-são-geradas). Veja [Página Fundamentalista](#página-fundamentalista). |
 | `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. |
 | `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
 | `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
@@ -299,10 +299,12 @@ A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por iss
 
 - **`/fundamentos/`** abre com o [painel da temporada](#o-painel-da-temporada) e, logo abaixo, lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
 - **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
+- **`/fundamentos/rankings/`** traz os [rankings por indicador](#rankings-por-indicador): em cada critério, a lista dos maiores e a dos menores valores.
 
 **O que a página mostra:**
 
 - **Página inicial:** o painel da temporada (quem já entregou o documento do período e como veio o acumulado do ano) e a lista por setor, com a régua de anos em miniatura ao lado de cada empresa.
+- **Rankings:** onze critérios, cada um com as duas pontas da ordenação, a regra de cálculo e quem ficou sem dado. Não há nota única nem lista de "ações".
 - **Ficha:** a régua de anos sob o nome; o topo com a consistência ao longo dos anos, os pontos de atenção e a comparação com os pares do setor; e quatro blocos de tabelas (Resultado, Caixa e dívida, Fluxo de caixa e Valuation), com os 12 meses e os exercícios desde 2010.
 
 **Fontes:**
@@ -354,6 +356,47 @@ Quem abre `/fundamentos/` vê de relance o que está acontecendo nas 64 companhi
 Quando o documento mais recente for a DFP, os mesmos números trocam "acumulado" por "exercício".
 
 **Na tela:** a temporada abre a página em largura total; os outros três blocos dividem a linha no desktop e empilham no celular. O verde e o vermelho do Diário só aparecem na variação percentual do lucro, sempre junto do sinal (+ ou −) e do número. As palavras são neutras: "maiores altas", "maiores quedas", "maior" e "menor". Não há logotipo de empresa; o ticker faz esse papel. O carimbo "dados de documentos entregues até DD/MM/AAAA" traz a data de entrega mais recente entre os documentos usados.
+
+### Rankings por indicador
+
+A página `/fundamentos/rankings/` (#67, v2.1) ordena as companhias **em cada indicador, um de cada vez**. Cada critério tem a sua lista dos maiores e a dos menores valores. Não há nota única, soma de critérios nem lista de "ações": isso seria recomendação, e o site não faz. A legenda fixa no topo da página diz: "Ordenação simples de cada indicador, calculado dos documentos entregues à CVM. Estar no topo ou no fim de uma lista não diz se a empresa é um bom investimento."
+
+Os rankings saem das fichas que o build já monta (`consistencia`, `atencao` e `anual`); nada novo vem de fora. A lógica fica em `scripts/fundamentos/rankings.mjs` e o HTML em `rankings-html.mjs`, os dois puros e testados. O build grava `dist/fundamentos/rankings/index.html` e `dist/fundamentos/dados/rankings.json`. Um erro nos rankings não derruba o resto do site: a página sai com um aviso, e as fichas e a lista continuam.
+
+**Os critérios**, com o nome que a página usa:
+
+| Critério | Fórmula | Período |
+|---|---|---|
+| Parte dos anos com lucro | Anos com lucro líquido acima de zero ÷ anos com dado | Série inteira da companhia |
+| Maior sequência de anos com lucro | Maior número de exercícios seguidos com lucro líquido acima de zero; ano sem dado quebra a sequência | Série inteira da companhia |
+| Parte dos anos com FCL positivo | Anos com fluxo de caixa livre (FCO − capex) acima de zero ÷ anos com dado | Série inteira da companhia |
+| Crescimento da receita em 5 anos | (Receita do exercício de referência ÷ receita de 5 anos antes)^(1/5) − 1 | 5 anos até o exercício de referência |
+| Crescimento do lucro em 5 anos | (Lucro do exercício de referência ÷ lucro de 5 anos antes)^(1/5) − 1 | 5 anos até o exercício de referência |
+| ROIC | EBIT × (1 − 34%) ÷ capital investido no fim do exercício | Exercício de referência |
+| ROE | Lucro líquido ÷ patrimônio líquido no fim do exercício | Exercício de referência |
+| Margem líquida | Lucro líquido ÷ receita líquida | Exercício de referência |
+| FCO ÷ EBITDA | FCO ÷ EBITDA do exercício | Exercício de referência |
+| Dívida líquida ÷ EBITDA | Dívida líquida no fim do exercício ÷ EBITDA do exercício, sem os arrendamentos | Exercício de referência |
+| Pontos de atenção acionados | Quantas das sete regras de pontos de atenção a companhia aciona (0 a 7) | As regras da ficha, hoje |
+
+**Regras:**
+
+- **Exercício de referência:** o último exercício anual de 12 meses que a maioria das 64 já entregou. É o mesmo critério da comparação com o setor (`exercicioDoSetor`), aplicado ao universo inteiro. Os 12 meses ficam de fora, porque as datas dos ITR variam de companhia para companhia. Quem não tem esse exercício sai dos critérios que dependem dele, e a página conta quantas ficaram fora.
+- **Série mínima:** os três critérios de consistência exigem 5 exercícios (`SERIE_MINIMA`). Abaixo disso, a companhia fica fora, com o motivo "série curta". O tamanho da série vai ao lado do valor ("15 de 16"). Esses critérios usam a série inteira de cada companhia e não dependem do exercício de referência.
+- **Sem dado não é zero:** a companhia sem o dado do critério fica fora daquele ranking. Abaixo de cada bloco, a página informa quantas ficaram e, num `<details>`, os tickers e o motivo.
+- **Crescimento:** vale a regra da ficha. Com valor zero, negativo ou sem dado numa das duas pontas, não há taxa, e a companhia fica fora, com o motivo ("lucro de 2020 negativo").
+- **Dívida líquida ÷ EBITDA:** caixa maior que a dívida dá valor negativo e fica na ponta dos menores. Com EBITDA negativo ou zero, a razão não diz nada, e a companhia fica fora. A base é a sem arrendamentos, como na ficha.
+- **Múltiplos de preço fora, de propósito:** P/L, P/VPA, dividend yield e EV/EBITDA não entram. Uma lista de "menores P/L" se lê como lista de ações baratas, e isso é recomendação. A página explica isso numa linha no pé, sem citar nenhum múltiplo.
+
+**As listas:**
+
+- **Tamanho:** até 10 companhias em cada ponta (`TAMANHO_DA_LISTA`). Com menos de 20 companhias no critério, o universo é dividido ao meio; com número ímpar, a do meio fica nos maiores.
+- **Sem repetição:** a mesma companhia nunca aparece nos maiores e nos menores do mesmo critério.
+- **Posição e empate:** a lista é ordenada, então a posição é legítima. Empate recebe a mesma posição ("3º" duas vezes, depois "5º"), e o desempate de exibição é por ticker. Nos menores, a 1ª posição é a do menor valor. Quando companhias fora da lista têm o mesmo valor da última linha, a página diz quantas são.
+- **Empate em massa:** se mais de 10 companhias empatam na ponta, a lista vira uma linha só, com a contagem e os tickers ("31 empresas com lucro em todos os exercícios da série"). A outra ponta continua em lista, com quem sobrou.
+- **Cada linha:** posição, ticker (com link para a ficha), nome curto, a régua de anos em miniatura e o valor, escrito como na ficha.
+
+**Na tela:** um índice curto no topo, com âncoras, agrupa os critérios em Consistência, Crescimento, Rentabilidade, Caixa, Dívida e Atenção. As duas listas ficam lado a lado no desktop e empilhadas no celular. As palavras são neutras ("Maiores", "Menores", "posição"), e nenhuma lista tem cor de favorável ou desfavorável. A página é HTML estático, sem JavaScript.
 
 ### A ficha
 
@@ -461,8 +504,10 @@ O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de c
 | `regua.mjs` | A régua de anos: um bloco por exercício, cheio (lucro), vazado (prejuízo) ou tracejado (sem dado) |
 | `painel.mjs` | O painel da temporada: o progresso, os quatro números, as variações do lucro, a soma por setor e os pontos de atenção nas 64 |
 | `painel-html.mjs` | O HTML do painel, no topo de `/fundamentos/` |
+| `rankings.mjs` | Os rankings por indicador: os critérios, o exercício de referência, as duas pontas de cada critério e quem ficou fora |
+| `rankings-html.mjs` | O HTML da página `/fundamentos/rankings/` |
 
-Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
+Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão), `lista.js` (a busca) e `rankings/index.html` (o molde da página de rankings). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
 
 Aqui só há dados e regras à vista. Nada na página é recomendação de investimento.
 
