@@ -101,7 +101,7 @@ export function proximoPeriodo(dtRefer, mesExercicio = 12) {
 
 // A data em que o documento chegou à CVM pela primeira vez. Quando a coleta só tem a data da versão
 // mais nova de um documento reapresentado, vale essa, e `reapresentacao` avisa.
-function entregaDe(documento) {
+export function entregaDe(documento) {
   if (!documento) return null;
   const primeira = dia(documento.primeiraEntrega);
   if (primeira) return { data: primeira, reapresentacao: false };
