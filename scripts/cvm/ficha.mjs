@@ -18,8 +18,23 @@ export const INDICE_DAS_FICHAS = "indice.json";
 // O ticker que dá nome ao arquivo da ficha: o que está no Ibovespa; sem ele, o primeiro da lista.
 export const tickerPrincipal = (companhia) => (companhia.tickers.find((t) => t.ibovespa) ?? companhia.tickers[0]).ticker;
 
+// O acumulado do ano e o do mesmo período do ano anterior, como entregue (#66): a receita (3.01) e o
+// lucro líquido (3.11) das parcelas `acumuladoAtual` e `acumuladoAnterior` dos 12 meses, em R$ mil.
+// Só existe quando o documento mais recente é um ITR e os 12 meses foram calculados: aí as duas
+// parcelas cobrem o mesmo intervalo, um ano depois da outra, na mesma base. Senão é null.
+//   { atual: { inicio, fim, dtRefer, consolidado, receita, lucroLiquido }, anterior: { ... } }
+export function acumuladoDoAno(doze) {
+  const p = doze?.parcelas;
+  if (doze?.tipo !== "itr" || !p?.acumuladoAtual || !p?.acumuladoAnterior) return null;
+  const lado = (parcela, chave) => ({
+    inicio: parcela.inicio, fim: parcela.fim, dtRefer: parcela.dtRefer, consolidado: parcela.consolidado ?? null,
+    receita: doze.fluxos?.["3.01"]?.[chave] ?? null, lucroLiquido: doze.fluxos?.["3.11"]?.[chave] ?? null,
+  });
+  return { atual: lado(p.acumuladoAtual, "acumuladoAtual"), anterior: lado(p.acumuladoAnterior, "acumuladoAnterior") };
+}
+
 // Monta a ficha de uma companhia.
-//   companhia    entrada do universo: { cnpj, cdCvm, nome, setor, tickers: [{ ticker, ibovespa }] }
+//   companhia   entrada do universo: { cnpj, cdCvm, nome, setor, tickers: [{ ticker, ibovespa }] }
 //   arquivo      o arquivo dela gravado pela coleta (fundamentos/<cdCvm>.json)
 //   cotacoes     o arquivo de preços ({ coletadoEm, fonte, precos }) ou null
 //   hoje         "AAAA-MM-DD" do dia do build
@@ -29,7 +44,8 @@ export const tickerPrincipal = (companhia) => (companhia.tickers.find((t) => t.i
 //   anual      [{ inicio, fim, tipo, meses, origem, composicao, indicadores }], um item por exercício, do
 //              mais antigo ao mais novo. `origem` é o documento de onde saiu a DRE do período:
 //              { documento, dtRefer, versao, consolidado, reapresentado, recebidoEm, link }
-//   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], composicao, indicadores }
+//   doze       { fim, tipo, motivo, origem: [as parcelas dos 12 meses], acumulado, composicao, indicadores }
+//              `acumulado` é a saída de acumuladoDoAno: o acumulado do ano e o do ano anterior
 //   multiplos  a saída de calcularMultiplos
 //   consistencia  o topo da ficha (fundamentos/consistencia.mjs)
 //   atencao       as sete regras de pontos de atenção (fundamentos/atencao.mjs), com os limites usados
@@ -75,6 +91,7 @@ export function montarFicha({ companhia, arquivo, cotacoes = null, hoje, excecoe
     })),
     doze: {
       fim: calculado.doze.fim, tipo: calculado.doze.tipo, motivo: series.doze?.motivo ?? null, origem: parcelas,
+      acumulado: acumuladoDoAno(series.doze),
       composicao: acoes(calculado.doze.composicao), indicadores: calculado.doze.indicadores,
     },
     multiplos,

@@ -34,6 +34,92 @@ body.fundamentos { overflow-x: hidden; }
 .fundamentos h4 { margin: var(--e-4) 0 var(--e-1); font-size: var(--t-3); font-weight: 650; }
 .explica { margin: var(--e-1) 0 var(--e-2); max-width: 75ch; font-size: var(--t-2); color: var(--tinta-2); }
 
+/* ---------- painel da temporada (#66) ---------- */
+/* A temporada abre a página em largura total e com mais peso; os outros três blocos dividem a linha
+   no desktop e empilham no celular. Não são cartões: a separação vem da linha e do espaço. */
+.painel { margin-bottom: var(--e-6); }
+.painel .n { font-variant-numeric: tabular-nums; }
+.painel-nota { margin: var(--e-3) 0 0; max-width: 95ch; font-size: var(--t-1); line-height: 1.4; color: var(--tinta-suave); }
+.painel-vazio { margin: var(--e-2) 0 0; font-size: var(--t-2); color: var(--tinta-suave); }
+.painel-carimbo { margin: 0; font-size: var(--t-1); color: var(--tinta-suave); }
+
+.temporada { padding-bottom: var(--e-4); border-bottom: 1px solid var(--linha-forte); }
+.temporada-topo { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--e-1) var(--e-4); }
+.lista .temporada h2 { font-size: var(--t-6); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+.progresso { margin-top: var(--e-3); max-width: 640px; }
+.progresso p { margin: 0 0 var(--e-2); color: var(--tinta-2); }
+.progresso strong { color: var(--tinta); font-weight: 700; }
+.progresso-trilho { height: 10px; border-radius: 2px; background: var(--superficie-2); box-shadow: inset 0 0 0 1px var(--linha-forte); overflow: hidden; }
+.progresso-trilho span { display: block; height: 100%; background: var(--tinta); }
+.temporada-base { margin: var(--e-4) 0 0; font-size: var(--t-2); color: var(--tinta-2); }
+.temporada-numeros { list-style: none; margin: var(--e-2) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.temporada-numeros li { display: flex; flex-direction: column; gap: 2px; padding: 0 var(--e-4); border-left: 1px solid var(--linha); }
+.temporada-numeros li:first-child { padding-left: 0; border-left: 0; }
+.temporada-numeros strong { font-size: var(--t-6); font-weight: 650; font-stretch: var(--estreito); line-height: 1.1; white-space: nowrap; }
+.temporada-numeros small { font-size: var(--t-3); font-weight: 400; color: var(--tinta-suave); }
+.temporada-numeros span { font-size: var(--t-2); line-height: 1.3; color: var(--tinta-2); }
+
+.painel-blocos { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--e-5); margin-top: var(--e-4); align-items: start; }
+.painel-bloco { min-width: 0; }
+.painel-bloco h3 { padding-bottom: var(--e-2); border-bottom: 1px solid var(--linha-forte); font-size: var(--t-3); font-weight: 700; }
+.painel-bloco h4 { margin: var(--e-3) 0 0; font-size: var(--t-2); font-weight: 500; color: var(--tinta-suave); }
+
+/* Variação do lucro: a cor de alta e de baixa do Diário, sempre com o sinal e o número. */
+.variacao { font-weight: 500; white-space: nowrap; }
+b.variacao.alta { color: var(--alta); }
+b.variacao.baixa { color: var(--baixa); }
+.variacoes-lista ol { list-style: none; margin: var(--e-1) 0 0; padding: 0; }
+.variacoes-lista li { border-bottom: 1px solid var(--linha); }
+.variacoes-lista li a, .variacoes-lista li .sem-link { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: var(--e-2); align-items: baseline; padding: 6px 0; text-decoration: none; }
+.variacoes-lista strong { font-weight: 700; font-stretch: var(--largo); font-size: var(--t-2); }
+.variacoes-lista li span:not(.sem-link) { font-size: var(--t-2); font-stretch: var(--estreito); color: var(--tinta-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.variacoes-lista li a:hover strong { color: var(--acao); }
+.variacoes-a-parte { list-style: none; margin: var(--e-3) 0 0; padding: 0; font-size: var(--t-2); color: var(--tinta-2); }
+.variacoes-a-parte li { margin-bottom: 2px; }
+
+.setores-soma { list-style: none; margin: 0; padding: 0; }
+.setores-soma li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--e-2); align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--linha); font-size: var(--t-2); }
+.setor-nome small { margin-left: 4px; font-size: var(--t-1); color: var(--tinta-suave); white-space: nowrap; }
+.setor-valor { text-align: right; white-space: nowrap; }
+.setor-valor .variacao { margin-left: 4px; }
+span.variacao { font-weight: 400; color: var(--tinta-2); }
+.setores-soma .poucas { color: var(--tinta-2); }
+.setores-soma .poucas .setor-valor { font-size: var(--t-1); }
+/* A barra parte do zero. Mesma tinta para lucro e prejuízo; o prejuízo é vazado, como na régua. */
+.setor-barra { grid-column: 1 / -1; display: block; height: 8px; }
+.setor-barra i { display: block; height: 100%; min-width: 2px; border-radius: 1px; }
+.setor-barra .lucro { background: var(--tinta); }
+.setor-barra .prejuizo { box-shadow: inset 0 0 0 2px var(--tinta); }
+
+.atencao-contagem { list-style: none; margin: var(--e-1) 0 0; padding: 0; font-size: var(--t-2); }
+.atencao-contagem li { border-bottom: 1px solid var(--linha); }
+.atencao-contagem summary, .atencao-contagem .regra-sem { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; gap: var(--e-2); align-items: baseline; margin: 0; padding: 7px 0; }
+.atencao-contagem summary { cursor: pointer; list-style: none; }
+.atencao-contagem summary::-webkit-details-marker { display: none; }
+.atencao-contagem summary::after { content: "ver"; font-size: var(--t-1); color: var(--tinta-suave); text-decoration: underline; text-decoration-color: var(--linha-forte); text-underline-offset: 3px; }
+.atencao-contagem details[open] summary::after { content: "fechar"; }
+.atencao-contagem summary:hover::after { color: var(--acao); }
+.atencao-contagem strong { font-size: var(--t-4); font-weight: 650; text-align: right; line-height: 1; }
+.atencao-contagem .regra-sem { color: var(--tinta-suave); }
+.atencao-contagem details p { margin: 0 0 var(--e-1) calc(2.2em + var(--e-2)); line-height: 1.7; color: var(--tinta-2); overflow-wrap: anywhere; }
+.atencao-contagem details small { display: block; margin: 0 0 var(--e-2) calc(2.2em + var(--e-2)); font-size: var(--t-1); color: var(--tinta-suave); }
+.atencao-painel .painel-nota { margin-top: var(--e-2); }
+
+@media (max-width: 1000px) {
+  .painel-blocos { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .painel-blocos .variacoes { grid-column: 1 / -1; }
+  .variacoes-listas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 var(--e-5); }
+}
+@media (max-width: 767px) {
+  .lista .temporada h2 { font-size: 2rem; }
+  .temporada-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e-3) 0; }
+  .temporada-numeros li { padding: 0 var(--e-3); }
+  .temporada-numeros li:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .temporada-numeros strong { font-size: var(--t-5); }
+  .painel-blocos, .variacoes-listas { grid-template-columns: minmax(0, 1fr); }
+  .painel-blocos { gap: var(--e-4); }
+}
+
 /* ---------- lista ---------- */
 .lista h2 { font-size: var(--t-5); font-weight: 750; font-stretch: var(--largo); letter-spacing: -.015em; }
 .lista .abre { max-width: 70ch; margin: var(--e-2) 0 var(--e-4); color: var(--tinta-2); }

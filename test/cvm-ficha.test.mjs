@@ -168,7 +168,7 @@ describe("build: fichas em dist/fundamentos/dados/", () => {
     assert.equal(indice.companhias.length, 64);
     assert.equal(indice.companhias.filter((c) => c.ficha).length, 1);
     assert.equal(indice.coletadoEm, "2026-11-08T12:23:00.000Z");
-    assert.deepEqual(readdirSync(join(dist, PASTA_DAS_FICHAS)).sort(), ["WEGE3.json", "indice.json"]);
+    assert.deepEqual(readdirSync(join(dist, PASTA_DAS_FICHAS)).sort(), ["WEGE3.json", "indice.json", "painel.json"]);
     // o Diário e a página continuam saindo
     assert.ok(existsSync(join(dist, "index.html")));
   });
