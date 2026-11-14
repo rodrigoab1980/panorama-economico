@@ -1,0 +1,569 @@
+{
+ "arquivos": {
+  "dfp_cia_aberta_2010.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:54:19 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 8900829
+  },
+  "dfp_cia_aberta_2011.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:51:26 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 9225478
+  },
+  "dfp_cia_aberta_2012.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:48:19 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 9201737
+  },
+  "dfp_cia_aberta_2013.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:45:27 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 9171449
+  },
+  "dfp_cia_aberta_2014.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:42:29 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 9079931
+  },
+  "dfp_cia_aberta_2015.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:39:26 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 8987623
+  },
+  "dfp_cia_aberta_2016.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:36:30 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 9832691
+  },
+  "dfp_cia_aberta_2017.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:33:20 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 10150935
+  },
+  "dfp_cia_aberta_2018.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:30:25 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 10237924
+  },
+  "dfp_cia_aberta_2019.zip": {
+   "lastModified": "Mon, 05 Aug 2024 20:27:38 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 11185526
+  },
+  "dfp_cia_aberta_2020.zip": {
+   "lastModified": "Sun, 29 Dec 2024 10:27:05 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 12637854
+  },
+  "dfp_cia_aberta_2021.zip": {
+   "lastModified": "Sun, 28 Dec 2025 10:30:57 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 13283026
+  },
+  "dfp_cia_aberta_2022.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:34:25 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 13449824
+  },
+  "dfp_cia_aberta_2023.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:29:15 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 13563493
+  },
+  "dfp_cia_aberta_2024.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:24:14 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 13397599
+  },
+  "dfp_cia_aberta_2025.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:19:22 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 12863166
+  },
+  "dfp_cia_aberta_2026.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:14:22 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 243348
+  },
+  "itr_cia_aberta_2025.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:59:06 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 31684923
+  },
+  "itr_cia_aberta_2026.zip": {
+   "lastModified": "Sun, 08 Nov 2026 10:44:33 GMT",
+   "motivo": null,
+   "status": "ok",
+   "tamanho": 22183718
+  }
+ },
+ "coletadoEm": "2026-11-14T00:57:14.301Z",
+ "companhias": {
+  "002437": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["AXIA3","AXIA7"]
+  },
+  "002453": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CMIG3","CMIG4"]
+  },
+  "003980": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["GGBR3","GGBR4"]
+  },
+  "004030": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CSNA3"]
+  },
+  "004170": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":2},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["VALE3"]
+  },
+  "005258": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["RADL3"]
+  },
+  "005410": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["WEGE3"]
+  },
+  "008133": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["LREN3"]
+  },
+  "008451": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["POMO3","POMO4"]
+  },
+  "008656": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["GOAU3","GOAU4"]
+  },
+  "008672": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["IGTI11","IGTI3","IGTI4"]
+  },
+  "009512": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["PETR3","PETR4"]
+  },
+  "012653": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["KLBN11"]
+  },
+  "013986": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["SUZB3"]
+  },
+  "014311": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CPLE3"]
+  },
+  "014320": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["USIM3","USIM5","USIM6"]
+  },
+  "014443": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["SBSP3"]
+  },
+  "014460": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CYRE3","CYRE4"]
+  },
+  "015253": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ENGI11","ENGI3","ENGI4"]
+  },
+  "017329": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["EGIE3"]
+  },
+  "017450": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["RAIL3"]
+  },
+  "017671": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["VIVT3"]
+  },
+  "017973": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["COGN3"]
+  },
+  "018376": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ISAE3","ISAE4"]
+  },
+  "018465": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["UGPA3"]
+  },
+  "018660": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CPFE3"]
+  },
+  "018821": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["MOTV3"]
+  },
+  "019445": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CSMG3"]
+  },
+  "019550": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["NATU3"]
+  },
+  "019739": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["RENT3","RENT4"]
+  },
+  "019836": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CSAN3"]
+  },
+  "019992": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["TOTS3"]
+  },
+  "020010": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["EQTL3"]
+  },
+  "020087": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["EMBJ3"]
+  },
+  "020257": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["TAEE11","TAEE3","TAEE4"]
+  },
+  "020788": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["MBRF3"]
+  },
+  "020915": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["MRVE3"]
+  },
+  "020931": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":2},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["BEEF3"]
+  },
+  "020982": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["MULT3"]
+  },
+  "021016": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["YDUQ3"]
+  },
+  "021148": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["TEND3"]
+  },
+  "021237": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ENEV3"]
+  },
+  "021350": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["DIRR3"]
+  },
+  "021431": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["HYPE3"]
+  },
+  "021610": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["B3SA3"]
+  },
+  "021881": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["FLRY3"]
+  },
+  "022187": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["PRIO3"]
+  },
+  "022349": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":2},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["AZZA3"]
+  },
+  "022357": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ALOS3"]
+  },
+  "022470": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["MGLU3"]
+  },
+  "023264": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ABEV3"]
+  },
+  "024260": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["SMFT3"]
+  },
+  "024295": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["VBBR3"]
+  },
+  "024392": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["HAPV3"]
+  },
+  "024716": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["VAMO3"]
+  },
+  "024805": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["VIVA3"]
+  },
+  "024821": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["RDOR3"]
+  },
+  "024848": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CEAB3"]
+  },
+  "024929": {
+   "avisos": ["consolidado zerado na DFP de 31/12/2024: vale o individual","consolidado zerado na DFP de 31/12/2025: vale o individual"],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["TIMS3"]
+  },
+  "025100": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CURY3"]
+  },
+  "025291": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["BRAV3"]
+  },
+  "025372": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["ASAI3"]
+  },
+  "025585": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["CMIN3"]
+  },
+  "026620": {
+   "avisos": [],
+   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "motivo": null,
+   "status": "ok",
+   "tickers": ["AURE3"]
+  }
+ }
+}
