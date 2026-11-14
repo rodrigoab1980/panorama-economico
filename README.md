@@ -40,6 +40,7 @@ O site tem mais de uma página, com um menu comum: o **Diário** (visão de trad
 | `scripts/guarda.mjs` | Decide se a execução agendada (reserva) pula porque o gatilho externo já rodou. |
 | `scripts/build.mjs` | Monta `dist/` a partir de `site/`, insere o menu em cada página e gera as fichas das companhias em `dist/fundamentos/dados/`. Só lê e grava; a lógica fica em `scripts/paginas.mjs` e em `scripts/cvm/ficha.mjs`. |
 | `scripts/precos/` | Preço das ações do universo. `fonte.mjs` define o contrato de uma fonte de preço e as regras puras da coleta; `cnbc.mjs` é o adaptador da CNBC, o único arquivo que conhece o serviço dela. Veja [Fonte de preço](#fonte-de-preço). |
+| `scripts/fundamentos/` | A página Fundamentalista (lógica pura, testada): `formatar.mjs`, `pagina.mjs` (HTML da ficha e da lista), `csv.mjs` e `carimbo.mjs`. Veja [Página Fundamentalista](#página-fundamentalista). |
 | `scripts/zip.mjs` | Leitor de ZIP mínimo (lógica pura, só com `node:zlib`): métodos 0 e 8, com conferência de tamanho e de CRC-32. Lança erro claro para ZIP64, criptografia e arquivo em vários discos. |
 | `scripts/zip-fluxo.mjs` | O mesmo leitor em fluxo, direto do disco: descomprime cada arquivo do ZIP aos pedaços, linha a linha, sem carregar nada inteiro. É o que lê os ZIPs da CVM. |
 | `scripts/coletar-fundamentos.mjs` | Coleta semanal dos fundamentos (rede e disco): `HEAD`, download, extrato de cada ZIP e gravação em `dados/fundamentos/`. As regras ficam em `scripts/cvm/coleta.mjs`. Veja [Coleta dos fundamentos](#coleta-dos-fundamentos). |
@@ -246,6 +247,58 @@ São só dados e regras à vista. Nada aqui é recomendação de investimento.
 - **Risco registrado:** a CNBC é um endpoint **não oficial**, sem contrato e sem garantia de continuar no ar. A fonte tem de ser revista, com um distribuidor licenciado ou com parecer jurídico, **antes de o site ter qualquer parte paga** (v3). Os dados ficam só para consulta e não são revendidos.
 - **Por que não a B3:** o arquivo oficial de cotações históricas foi testado em 13/11/2026 e o download funciona, mas a página da B3 diz que os dados "destinam-se estritamente à consulta informativa" e veda a coleta automatizada, para qualquer finalidade. Nada desse arquivo entrou no repositório. A consequência é que a CNBC não tem série histórica: o gráfico de lucro × cotação da v3 vai precisar de outra fonte.
 
+## Página Fundamentalista
+
+A página responde a uma pergunta: **esta empresa é boa e sempre foi?** Por isso o centro da ficha é a série anual, de 2010 em diante. Os 12 meses e os múltiplos são a coluna de hoje dessa história.
+
+- **`/fundamentos/`** lista as 64 companhias, agrupadas por setor, com um campo de busca por ticker ou nome.
+- **`/fundamentos/<ticker>/`** (por exemplo, `/fundamentos/wege3/`) é a ficha de uma companhia. Cada uma tem a sua página e o seu link.
+
+**As tabelas vêm prontas no HTML.** O build gera uma página por companhia, e ela funciona sem JavaScript. O JS é só uma camada extra: a busca da lista e o balão que mostra a fórmula, o documento e o motivo de um vazio (sem JS, isso tudo está no `title`). Os links internos são todos relativos, porque o site fica em `/panorama-economico/`.
+
+### A ficha
+
+1. **Cabeçalho:** nome, setor, a cotação de cada ticker com a data e a hora do último negócio, a fonte do preço e, quando for o caso, o carimbo de dado desatualizado.
+2. **Quatro blocos**, nesta ordem: Resultado, Caixa e dívida, Fluxo de caixa e Valuation. A lista de qual indicador vai em qual bloco fica em `BLOCOS` (`scripts/fundamentos/pagina.mjs`).
+3. **Rodapé:** o aviso legal, a fonte e a data da coleta.
+
+Cada bloco é uma tabela com **uma linha por indicador e uma coluna por período**: primeiro os 12 meses, depois o exercício mais recente, e assim até o mais antigo. No celular, rolar para a direita é voltar no tempo. A primeira coluna (o nome do indicador) fica fixa, e quem rola é a tabela, não a página.
+
+- **Sem valor:** a célula mostra "—", com o motivo no `title` e no balão. Nunca 0.
+- **Período de transição** (exercício com menos de 12 meses): o cabeçalho da coluna diz quantos meses tem.
+- **Gráfico de tendência:** um SVG pequeno em cada linha, gerado no build, do exercício mais antigo ao mais recente. Ano sem valor fica como buraco na linha, e não como zero.
+- **Documento de origem:** o rodapé de cada tabela diz de qual documento saiu cada coluna, com o link que a própria CVM informa no índice de documentos do ZIP (`LINK_DOC`). O link baixa o documento entregue.
+- **Negativo:** leva o sinal de menos, e só o sinal ganha a cor de baixa. As faixas de cor ficam para a #39.
+
+No **Valuation**, os múltiplos aparecem só na coluna de hoje: eles dependem do preço, e esta versão não tem preço histórico. Os valores por ação (lucro, valor patrimonial, FCO e FCL por ação) não dependem de preço e têm a série anual, com três ressalvas escritas na página:
+
+- **Antes de 2020** a linha fica vazia, com o motivo "a CVM só informa o número de ações a partir de 2020".
+- **Desdobramento ou grupamento:** quando o número de ações muda mais de 50% de um exercício para o outro, a tabela ganha uma borda tracejada entre os dois anos e uma nota dizendo que os valores por ação antes disso não são comparáveis. Os valores antigos **não são ajustados**.
+- **Escala das ações:** as nove mudanças de escala (unidade ↔ mil) da série foram conferidas uma a uma; em todas a companhia mudou a forma de informar, e o lucro por ação calculado bate com o informado.
+
+### Carimbo de desatualizado
+
+A ficha ganha o carimbo, na cor que o site reserva para dado desatualizado, quando o documento mais recente da companhia é mais antigo do que o último que já deveria ter sido entregue. Os prazos são os da CVM: 45 dias depois do trimestre para o ITR e 90 dias depois do exercício para a DFP. Os trimestres seguem o exercício da própria companhia (quem fecha em março tem ITR em junho, setembro e dezembro). Exemplo: "Dados até o ITR de 30/06/2026. O ITR de 30/09/2026 já deveria ter sido entregue (prazo do ITR: 14/11/2026)." A regra fica em `scripts/fundamentos/carimbo.mjs`.
+
+### CSV
+
+Cada bloco tem um link "baixar CSV" (`/fundamentos/wege3/resultado.csv`, `caixa-e-divida.csv`, `fluxo-de-caixa.csv` e `valuation.csv`). O arquivo é feito para abrir certo no Excel brasileiro: separador `;`, vírgula decimal, UTF-8 com BOM e CRLF. Os valores vão sem abreviação (R$ mil inteiros e razões em fração), a coluna "Unidade" diz qual é, e o que não tem valor fica vazio.
+
+### Como as fichas são geradas
+
+O build (`scripts/build.mjs`) lê os fatos da branch `dados`, monta a ficha de cada companhia (`scripts/cvm/ficha.mjs`) e chama os módulos de `scripts/fundamentos/`, todos puros e testados:
+
+| Módulo | O que faz |
+|---|---|
+| `formatar.mjs` | Números em pt-BR: "R$ 40,8 bi", "33,5%", "12,3x", "R$ 1,52" e "—" |
+| `pagina.mjs` | O HTML da ficha e da lista. Todo texto que vem de dado passa por `escapar()` |
+| `csv.mjs` | O CSV de cada bloco |
+| `carimbo.mjs` | Decide se o dado está desatualizado |
+
+Os arquivos fixos da página ficam em `site/fundamentos/`: `fundamentos.css`, `ficha.js` (o balão) e `lista.js` (a busca). As 64 fichas, os CSVs e os JSON somam cerca de 10 MB em `dist/fundamentos/`, e o build leva cerca de 10 s a mais com elas.
+
+Aqui só há dados e regras à vista. Nada na página é recomendação de investimento.
+
 ## Coleta dos fundamentos
 
 Os dados da CVM chegam ao site por este caminho:
@@ -297,12 +350,12 @@ O Diário não é afetado por nenhuma delas: é outro workflow, e o build não f
 
 Na branch de dados:
 
-- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, origem, avisos }`. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
+- `fundamentos/<código CVM>.json`: `{ cnpj, cdCvm, tickers, fatos, composicoes, documentos, origem, avisos }`. `documentos` traz, de cada documento, a versão, a data de entrega e o link que a CVM informa. Os `fatos` vêm em blocos, um por (documento, data, versão, base, demonstrativo, coluna), cada um com as contas `[conta, descrição, fixa, valor]`, em R$ mil. `origem` lista os ZIPs de onde saíram, com o `Last-Modified`. São 64 arquivos e 47 MB.
 - `fundamentos/indice.json`: `{ coletadoEm, arquivos, companhias }`. De cada ZIP, o `Last-Modified`, o tamanho e o estado. De cada companhia, os tickers, o **documento mais recente** (`{ tipo, dtRefer, versao }`, para o carimbo de desatualizado), o estado (`ok`, `mantido` ou `falhou`), o motivo e os avisos.
 
 No site (`dist/fundamentos/dados/`, gerado pelo build):
 
-- `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores), a base de 12 meses, os múltiplos e os avisos. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
+- `<TICKER>.json`: a ficha da companhia, com a série anual (um item por exercício, com todos os indicadores e o documento de origem), a base de 12 meses, as cotações, os múltiplos e os avisos. É o que alimenta a página de cada companhia. Vão só os indicadores calculados, não as contas dos demonstrativos: as 64 fichas somam 2,9 MB.
 - `indice.json`: a lista das companhias, com o documento mais recente de cada uma, as datas da coleta e do preço, e o motivo de quem ficou sem ficha.
 
 ### Avisos
