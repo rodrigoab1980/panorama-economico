@@ -1,6 +1,6 @@
 {
   "name": "panorama-economico",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "Panorama econômico matinal: mercados, notícias, agenda e resumo do dia.",
