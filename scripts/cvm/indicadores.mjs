@@ -184,6 +184,10 @@ export const INDICADORES = [
   },
   { id: "fcoPorAcao", nome: "FCO por ação", unidade: "R$ por ação", formula: "FCO ÷ ações em circulação" },
   { id: "fclPorAcao", nome: "FCL por ação", unidade: "R$ por ação", formula: "FCL (FCO − capex) ÷ ações em circulação" },
+  {
+    id: "valorPatrimonialPorAcao", nome: "Valor patrimonial por ação (VPA)", unidade: "R$ por ação",
+    formula: "Patrimônio líquido da controladora (conta 2.03 menos a participação dos não controladores, 2.03.09) ÷ ações em circulação. Os não controladores saem porque essa parte do patrimônio não pertence ao acionista da companhia",
+  },
 ];
 
 const ok = (valor) => ({ valor, motivo: null });
@@ -591,6 +595,8 @@ export function calcularIndicadores(periodo, contexto = {}) {
     lucroPorAcao: porAcao(lucroDaControladora(p)),
     fcoPorAcao: porAcao(fco),
     fclPorAcao: porAcao(fcl),
+    // Sem a conta 2.03.09 o balanço é o individual, que não tem não controladores.
+    valorPatrimonialPorAcao: porAcao(combinar([pl], (v) => v - (p.estoque("2.03.09") ?? 0))),
   };
 }
 
