@@ -73,49 +73,49 @@
    "tamanho": 13283026
   },
   "dfp_cia_aberta_2022.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:34:25 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:35:13 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13449824
+   "tamanho": 13449819
   },
   "dfp_cia_aberta_2023.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:29:15 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:29:43 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13563493
+   "tamanho": 13563405
   },
   "dfp_cia_aberta_2024.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:24:14 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:24:28 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13397599
+   "tamanho": 13397608
   },
   "dfp_cia_aberta_2025.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:19:22 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:19:28 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 12863166
+   "tamanho": 12863177
   },
   "dfp_cia_aberta_2026.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:14:22 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:14:20 GMT",
    "motivo": null,
    "status": "ok",
    "tamanho": 243348
   },
   "itr_cia_aberta_2025.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:59:06 GMT",
+   "lastModified": "Sun, 15 Nov 2026 11:03:44 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 31684923
+   "tamanho": 31684925
   },
   "itr_cia_aberta_2026.zip": {
-   "lastModified": "Sun, 08 Nov 2026 10:44:33 GMT",
+   "lastModified": "Sun, 15 Nov 2026 10:48:31 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 22183718
+   "tamanho": 28783604
   }
  },
- "coletadoEm": "2026-11-14T15:24:10.722Z",
+ "coletadoEm": "2026-11-15T18:59:18.797Z",
  "companhias": {
   "002437": {
    "avisos": [],
@@ -126,7 +126,7 @@
   },
   "002453": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CMIG3","CMIG4"]
@@ -140,7 +140,7 @@
   },
   "004030": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CSNA3"]
@@ -189,14 +189,14 @@
   },
   "008672": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["IGTI11","IGTI3","IGTI4"]
   },
   "009512": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["PETR3","PETR4"]
@@ -217,7 +217,7 @@
   },
   "014311": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CPLE3"]
@@ -238,42 +238,42 @@
   },
   "014460": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CYRE3","CYRE4"]
   },
   "015253": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["ENGI11","ENGI3","ENGI4"]
   },
   "017329": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["EGIE3"]
   },
   "017450": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["RAIL3"]
   },
   "017671": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["VIVT3"]
   },
   "017973": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["COGN3"]
@@ -287,14 +287,14 @@
   },
   "018465": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["UGPA3"]
   },
   "018660": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CPFE3"]
@@ -308,14 +308,14 @@
   },
   "019445": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CSMG3"]
   },
   "019550": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["NATU3"]
@@ -329,7 +329,7 @@
   },
   "019836": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CSAN3"]
@@ -343,42 +343,42 @@
   },
   "020010": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["EQTL3"]
   },
   "020087": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["EMBJ3"]
   },
   "020257": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["TAEE11","TAEE3","TAEE4"]
   },
   "020788": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["MBRF3"]
   },
   "020915": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["MRVE3"]
   },
   "020931": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":2},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["BEEF3"]
@@ -392,7 +392,7 @@
   },
   "021016": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["YDUQ3"]
@@ -406,14 +406,14 @@
   },
   "021237": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["ENEV3"]
   },
   "021350": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["DIRR3"]
@@ -427,7 +427,7 @@
   },
   "021610": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":2},
    "motivo": null,
    "status": "ok",
    "tickers": ["B3SA3"]
@@ -448,7 +448,7 @@
   },
   "022349": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":2},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["AZZA3"]
@@ -462,7 +462,7 @@
   },
   "022470": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["MGLU3"]
@@ -490,7 +490,7 @@
   },
   "024392": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["HAPV3"]
@@ -504,14 +504,14 @@
   },
   "024805": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":2},
    "motivo": null,
    "status": "ok",
    "tickers": ["VIVA3"]
   },
   "024821": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["RDOR3"]
@@ -525,21 +525,21 @@
   },
   "024929": {
    "avisos": ["consolidado zerado na DFP de 31/12/2024: vale o individual","consolidado zerado na DFP de 31/12/2025: vale o individual"],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["TIMS3"]
   },
   "025100": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CURY3"]
   },
   "025291": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["BRAV3"]
@@ -553,14 +553,14 @@
   },
   "025585": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["CMIN3"]
   },
   "026620": {
    "avisos": [],
-   "documentoMaisRecente": {"dtRefer":"2026-06-30","tipo":"itr","versao":1},
+   "documentoMaisRecente": {"dtRefer":"2026-09-30","tipo":"itr","versao":1},
    "motivo": null,
    "status": "ok",
    "tickers": ["AURE3"]
