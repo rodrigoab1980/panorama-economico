@@ -73,49 +73,49 @@
    "tamanho": 13283026
   },
   "dfp_cia_aberta_2022.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:35:13 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:40:33 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13449819
+   "tamanho": 13449826
   },
   "dfp_cia_aberta_2023.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:29:43 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:34:56 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13563405
+   "tamanho": 13563506
   },
   "dfp_cia_aberta_2024.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:24:28 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:28:52 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 13397608
+   "tamanho": 13397597
   },
   "dfp_cia_aberta_2025.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:19:28 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:22:30 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 12863177
+   "tamanho": 12898422
   },
   "dfp_cia_aberta_2026.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:14:20 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:17:02 GMT",
    "motivo": null,
    "status": "ok",
    "tamanho": 243348
   },
   "itr_cia_aberta_2025.zip": {
-   "lastModified": "Sun, 15 Nov 2026 11:03:44 GMT",
+   "lastModified": "Sun, 22 Nov 2026 11:11:34 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 31684925
+   "tamanho": 31724828
   },
   "itr_cia_aberta_2026.zip": {
-   "lastModified": "Sun, 15 Nov 2026 10:48:31 GMT",
+   "lastModified": "Sun, 22 Nov 2026 10:56:43 GMT",
    "motivo": null,
    "status": "ok",
-   "tamanho": 28783604
+   "tamanho": 29511192
   }
  },
- "coletadoEm": "2026-11-15T18:59:18.797Z",
+ "coletadoEm": "2026-11-22T19:51:29.613Z",
  "companhias": {
   "002437": {
    "avisos": [],
